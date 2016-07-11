@@ -1,0 +1,6 @@
+.DS_Store
+Sources/main.swift
+.build
+Packages
+Database
+*.xcodeproj
