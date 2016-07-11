@@ -1,4 +1,4 @@
-# SQLite Driver for Fluent
+# SQLite 3 for Swift
 
 ## Install SQLite3-Dev
 
