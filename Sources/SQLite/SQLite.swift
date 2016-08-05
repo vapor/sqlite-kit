@@ -36,7 +36,7 @@ public class SQLite {
     public init(path: String) throws {
         let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
         if sqlite3_open_v2(path, &database, options, nil) != SQLITE_OK {
-            throw Error.connection(database?.errorMessage ?? "")
+            throw SQLiteError.connection(database?.errorMessage ?? "")
         }
     }
 
@@ -64,20 +64,20 @@ public class SQLite {
     */
     public func execute(_ queryString: String, prepareClosure: PrepareClosure = { _ in }) throws -> [Result.Row] {
         guard let database = self.database else {
-            throw Error.execute("No database")
+            throw SQLiteError.execute("No database")
         }
 
-        let statementContainer = UnsafeMutablePointer<OpaquePointer?>.init(allocatingCapacity: 1)
+        let statementContainer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
         defer {
-            statementContainer.deallocateCapacity(1)
+            statementContainer.deallocate(capacity: 1)
         }
 
         if sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil) != SQLITE_OK {
-            throw Error.prepare(database.errorMessage)
+            throw SQLiteError.prepare(database.errorMessage)
         }
 
         guard let statementPointer = statementContainer.pointee else {
-            throw Error.execute("Statement pointer errror")
+            throw SQLiteError.execute("Statement pointer errror")
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
@@ -95,7 +95,7 @@ public class SQLite {
 
                 var value: String? = nil
                 if let text = text {
-                    value = String(cString: UnsafePointer(text))
+                    value = String(cString: text)
                 }
 
                 let column: String
@@ -112,7 +112,7 @@ public class SQLite {
         }
         
         if sqlite3_finalize(statement.pointer) != SQLITE_OK {
-            throw Error.execute(database.errorMessage)
+            throw SQLiteError.execute(database.errorMessage)
         }
         
         return result.rows
@@ -132,7 +132,7 @@ public class SQLite {
     }
 
     //MARK: Error
-    public enum Error: ErrorProtocol {
+    public enum SQLiteError: Error {
         case connection(String)
         case close(String)
         case prepare(String)
@@ -170,7 +170,7 @@ extension SQLite.Database {
     */
     var errorMessage: String {
         if let raw = sqlite3_errmsg(self) {
-            return String(cString: raw) ?? "Unknown"
+            return String(cString: raw)
         } else {
             return "Unknown"
         }
@@ -210,20 +210,20 @@ extension SQLite {
 
         public func bind(_ value: Double) throws {
             if sqlite3_bind_double(pointer, nextBindPosition, value) != SQLITE_OK {
-                throw Error.bind(database.errorMessage)
+                throw SQLiteError.bind(database.errorMessage)
             }
         }
 
         public func bind(_ value: Int) throws {
             if sqlite3_bind_int(pointer, nextBindPosition, Int32(value)) != SQLITE_OK {
-                throw Error.bind(database.errorMessage)
+                throw SQLiteError.bind(database.errorMessage)
             }
         }
 
         public func bind(_ value: String) throws {
             let strlen = Int32(value.characters.count)
             if sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT) != SQLITE_OK {
-                throw Error.bind(database.errorMessage)
+                throw SQLiteError.bind(database.errorMessage)
             }
         }
 
