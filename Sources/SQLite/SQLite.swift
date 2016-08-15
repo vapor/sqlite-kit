@@ -230,6 +230,13 @@ extension SQLite {
         public func bind(_ value: Bool) throws {
             try bind(value ? 1 : 0)
         }
+        
+        //binds a null value, useful for inserting new rows without having to put an id
+        public func null()  throws {
+            if sqlite3_bind_null(pointer, nextBindPosition) != SQLITE_OK {
+                throw SQLiteError.bind(database.errorMessage)
+            }
+        }
     }
 }
 
