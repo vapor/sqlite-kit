@@ -1,7 +1,7 @@
 #if os(Linux)
 
 import XCTest
-@testable import SQLite3Tests
+@testable import SQLiteTests
 
 XCTMain([
     testCase(SQLite3Tests.allTests),
