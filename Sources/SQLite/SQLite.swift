@@ -221,7 +221,7 @@ extension SQLite {
         }
 
         public func bind(_ value: String) throws {
-            let strlen = Int32(value.characters.count)
+            let strlen = Int32(value.utf8CString.count)
             if sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT) != SQLITE_OK {
                 throw SQLiteError.bind(database.errorMessage)
             }
@@ -231,7 +231,7 @@ extension SQLite {
             try bind(value ? 1 : 0)
         }
         
-        //binds a null value, useful for inserting new rows without having to put an id
+
         public func null()  throws {
             if sqlite3_bind_null(pointer, nextBindPosition) != SQLITE_OK {
                 throw SQLiteError.bind(database.errorMessage)
