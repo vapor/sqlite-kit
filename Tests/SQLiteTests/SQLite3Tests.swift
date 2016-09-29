@@ -2,7 +2,8 @@ import XCTest
 @testable import SQLite
 
 class SQLite3Tests: XCTestCase {
-    static let allTests = [""]
+    static let allTests = ["testTables": testTables,
+                           "testUnicode": testUnicode]
 
     var database:SQLite!
     
@@ -44,7 +45,7 @@ class SQLite3Tests: XCTestCase {
         }
     }
     
-    func testUnicodeStrings() {
+    func testUnicode() {
         
         do {
             
