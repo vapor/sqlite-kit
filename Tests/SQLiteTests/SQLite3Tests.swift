@@ -59,20 +59,14 @@ class SQLite3Tests: XCTestCase {
             try _ = database.execute("INSERT INTO `foo` VALUES(?)") { statement in
                 try statement.bind(unicode)
             }
-
-            if let results = try database.execute("SELECT * FROM `foo`").first {
-                XCTAssertEqual(results.data["bar"], unicode)
-            }
-            else {
-                XCTFail("The query should return a result.")
-            }
             
-            if let results = try database.execute("SELECT * FROM `foo` WHERE bar = '\(unicode)'").first {
-                XCTAssertEqual(results.data["bar"], unicode)
-            }
-            else {
-                XCTFail("The query should return a result.")
-            }
+            let selectAllResults = try database.execute("SELECT * FROM `foo`").first
+            XCTAssertNotNil(selectAllResults)
+            XCTAssertEqual(selectAllResults!.data["bar"], unicode)
+            
+            let selectWhereResults = try database.execute("SELECT * FROM `foo` WHERE bar = '\(unicode)'").first
+            XCTAssertNotNil(selectWhereResults)
+            XCTAssertEqual(selectWhereResults!.data["bar"], unicode)
             
         } catch {
             XCTFail(error.localizedDescription)
