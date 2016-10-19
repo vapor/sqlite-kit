@@ -63,6 +63,17 @@ class SQLite3Tests: XCTestCase {
             if let results = try database.execute("SELECT * FROM `foo`").first {
                 XCTAssertEqual(results.data["bar"], unicode)
             }
+            else {
+                XCTFail("The query should return a result.")
+            }
+            
+            if let results = try database.execute("SELECT * FROM `foo` WHERE bar = '\(unicode)'").first {
+                XCTAssertEqual(results.data["bar"], unicode)
+            }
+            else {
+                XCTFail("The query should return a result.")
+            }
+            
         } catch {
             XCTFail(error.localizedDescription)
         }
