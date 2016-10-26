@@ -17,10 +17,15 @@ extension SQLite {
             init() {
                 data = [:]
             }
-            
+            /**
+                Binds a Result.Row result at a certain position
+                to a proper SQLite.DataType enum.
+                - parameter i : position in current row
+                - parameter pointer : the current sqlite pointer
+            */
             public mutating func bind(at i: Int32, pointer: Statement.Pointer) throws {
+                //Retrieve column name at i
                 let name = sqlite3_column_name(pointer, i)
-                
                 let column: String
                 if let name = name {
                     column = String(cString: name)
@@ -28,6 +33,7 @@ extension SQLite {
                     column = ""
                 }
                 
+                //Iterates over possible SQLite datatypes.
                 switch sqlite3_column_type(pointer, i) {
                 case SQLITE_TEXT:
                     let text = sqlite3_column_text(pointer, i)

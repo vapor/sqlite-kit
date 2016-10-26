@@ -1,10 +1,7 @@
 extension SQLite {
     /**
-     enumerates all possible SQLite datatypes :
-     - integer
-     - text
-     - double
-     - null
+        Encapsulates every possible SQLite data type 
+        including : Integer, Floating number, Text and Null.
      */
     public enum DataType: Equatable {
         case integer(Int)
