@@ -249,7 +249,7 @@ extension SQLite {
         }
 
         public func bind(_ value: String) throws {
-            let strlen = Int32(value.utf8CString.count)
+            let strlen = Int32(value.utf8.count)
             if sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT) != SQLITE_OK {
                 throw SQLiteError.bind(database.errorMessage)
             }
