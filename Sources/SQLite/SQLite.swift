@@ -90,22 +90,41 @@ public class SQLite {
             let count = sqlite3_column_count(statement.pointer)
 
             for i in 0..<count {
-                let text = sqlite3_column_text(statement.pointer, i)
                 let name = sqlite3_column_name(statement.pointer, i)
-
-                var value: String? = nil
-                if let text = text {
-                    value = String(cString: text)
-                }
-
+                
                 let column: String
                 if let name = name {
                     column = String(cString: name)
                 } else {
                     column = ""
                 }
+                
+                switch sqlite3_column_type(statement.pointer, i) {
+                case SQLITE_TEXT:
+                    let text = sqlite3_column_text(statement.pointer, i)
+                    
+                    var value: String = ""
+                    if let text = text {
+                        value = String(cString: text)
+                    
+                    }
+                    
+                    row.data[column] = .text(value)
+                    
+                case SQLITE_INTEGER:
+                    let integer = sqlite3_column_int(statement.pointer, i)
+                    row.data[column] = .integer(Int(integer))
+                    
+                case SQLITE_FLOAT:
+                    let double = Double(sqlite3_column_double(statement.pointer, i))
+                    row.data[column] = .double(double)
+                case SQLITE_NULL:
+                    row.data[column] = .null
+                    
+                default:
+                    throw SQLiteError.execute("unsupported type")
+                }
 
-                row.data[column] = value
             }
 
             result.rows.append(row)
@@ -147,12 +166,21 @@ extension SQLite {
         a SQLite table.
     */
     public struct Result {
+        
+        public enum DataType {
+            case integer(Int)
+            case text(String)
+            case double(Double)
+            case null
+        }
+        
         public struct Row {
-            public var data: [String: String]
+            public var data: [String: DataType]
 
             init() {
                 data = [:]
             }
+            
         }
 
         var rows: [Row]
