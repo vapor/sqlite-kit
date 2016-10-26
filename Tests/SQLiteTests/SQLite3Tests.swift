@@ -14,29 +14,30 @@ class SQLite3Tests: XCTestCase {
     func testTables() {
         do {
             try _ = database.execute("DROP TABLE IF EXISTS foo")
-            try _ = database.execute("CREATE TABLE foo (bar INT(4), baz VARCHAR(16))")
-            try _ = database.execute("INSERT INTO foo VALUES (42, 'Life')")
-            try _ = database.execute("INSERT INTO foo VALUES (1337, 'Elite')")
-            try _ = database.execute("INSERT INTO foo VALUES (9, NULL)")
+            try _ = database.execute("CREATE TABLE foo (bar INT(4), baz VARCHAR(16), biz FLOAT)")
+            try _ = database.execute("INSERT INTO foo VALUES (42, 'Life', 0.44)")
+            try _ = database.execute("INSERT INTO foo VALUES (1337, 'Elite', 209.234)")
+            try _ = database.execute("INSERT INTO foo VALUES (9, NULL, 34.567)")
 
             if let resultBar = try database.execute("SELECT * FROM foo WHERE bar = 42").first {
-                XCTAssertEqual(resultBar.data["bar"], "42")
-                XCTAssertEqual(resultBar.data["baz"], "Life")
+                XCTAssertEqual(resultBar.data["bar"], .integer(42))
+                XCTAssertEqual(resultBar.data["baz"], .text("Life"))
+                XCTAssertEqual(resultBar.data["biz"], .double(0.44))
             } else {
                 XCTFail("Could not get bar result")
             }
 
 
             if let resultBaz = try database.execute("SELECT * FROM foo where baz = 'Elite'").first {
-                XCTAssertEqual(resultBaz.data["bar"], "1337")
-                XCTAssertEqual(resultBaz.data["baz"], "Elite")
+                XCTAssertEqual(resultBaz.data["bar"], .integer(1337))
+                XCTAssertEqual(resultBaz.data["baz"], .text("Elite"))
             } else {
                 XCTFail("Could not get baz result")
             }
 
             if let resultBaz = try database.execute("SELECT * FROM foo where bar = 9").first {
-                XCTAssertEqual(resultBaz.data["bar"], "9")
-                XCTAssertEqual(resultBaz.data["baz"], nil)
+                XCTAssertEqual(resultBaz.data["bar"], .integer(9))
+                XCTAssertEqual(resultBaz.data["baz"], .null)
             } else {
                 XCTFail("Could not get null result")
             }
@@ -62,11 +63,11 @@ class SQLite3Tests: XCTestCase {
             
             let selectAllResults = try database.execute("SELECT * FROM `foo`").first
             XCTAssertNotNil(selectAllResults)
-            XCTAssertEqual(selectAllResults!.data["bar"], unicode)
+            XCTAssertEqual(selectAllResults!.data["bar"], .text(unicode))
             
             let selectWhereResults = try database.execute("SELECT * FROM `foo` WHERE bar = '\(unicode)'").first
             XCTAssertNotNil(selectWhereResults)
-            XCTAssertEqual(selectWhereResults!.data["bar"], unicode)
+            XCTAssertEqual(selectWhereResults!.data["bar"], .text(unicode))
             
         } catch {
             XCTFail(error.localizedDescription)

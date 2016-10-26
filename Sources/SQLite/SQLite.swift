@@ -115,7 +115,7 @@ public class SQLite {
                     let integer = sqlite3_column_int(statement.pointer, i)
                     row.data[column] = .integer(Int(integer))
                     
-                case SQLITE_FLOAT:
+                case SQLITE_FLOAT: // as in floating number, actually returns a double.
                     let double = Double(sqlite3_column_double(statement.pointer, i))
                     row.data[column] = .double(double)
                 case SQLITE_NULL:
@@ -167,18 +167,15 @@ extension SQLite {
     */
     public struct Result {
         
-        public enum DataType {
-            case integer(Int)
-            case text(String)
-            case double(Double)
-            case null
-        }
-        
         public struct Row {
             public var data: [String: DataType]
 
             init() {
                 data = [:]
+            }
+            
+            public subscript(column: String) -> DataType {
+                return data[column]!
             }
             
         }
@@ -268,3 +265,34 @@ extension SQLite {
     }
 }
 
+extension SQLite {
+    /**
+     enumerates all possible SQLite datatypes :
+     - integer
+     - text
+     - double
+     - null
+     */
+    public enum DataType: Equatable {
+        case integer(Int)
+        case text(String)
+        case double(Double)
+        case null
+        static public func ==(lhs: SQLite.DataType, rhs: SQLite.DataType) -> Bool {
+            switch (lhs, rhs) {
+            case (.double(let double1), .double(let double2)):
+                return double1 == double2
+            case (.text(let string1), .text(let string2)):
+                return string1 == string2
+            case (.integer(let int1), .integer(let int2)):
+                return int1 == int2
+            case (.null, .null):
+                return true
+            default:
+                return false
+            }
+        }
+    }
+    
+    
+}
