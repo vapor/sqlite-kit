@@ -4,6 +4,8 @@
     import CSQLiteMac
 #endif
 
+import Node
+
 extension SQLite {
     /**
      Represents a row of data from
@@ -12,7 +14,7 @@ extension SQLite {
     public struct Result {
         
         public struct Row {
-            public var data: [String: DataType]
+            public var data: [String: Node]
             
             init() {
                 data = [:]
@@ -44,15 +46,15 @@ extension SQLite {
                         
                     }
                     
-                    data[column] = .text(value)
+                    data[column] = .string(value)
                     
                 case SQLITE_INTEGER:
-                    let integer = sqlite3_column_int(pointer, i)
-                    data[column] = .integer(Int(integer))
+                    let integer = Int(sqlite3_column_int(pointer, i))
+                    data[column] = .number(.int(integer))
                     
-                case SQLITE_FLOAT: // as in floating number, actually returns a double.
+                case SQLITE_FLOAT: // as in floating point, actually returns a double.
                     let double = Double(sqlite3_column_double(pointer, i))
-                    data[column] = .double(double)
+                    data[column] = .number(.double(double))
                 case SQLITE_NULL:
                     data[column] = .null
                     
