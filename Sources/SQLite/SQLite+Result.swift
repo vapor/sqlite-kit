@@ -1,9 +1,4 @@
-#if os(Linux)
-    import CSQLiteLinux
-#else
-    import CSQLiteMac
-#endif
-
+import CSQLite
 import Node
 
 extension SQLite {
