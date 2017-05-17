@@ -1,16 +1,20 @@
-# SQLite 3 for Swift
-
-## Install SQLite3-Dev
-
-### OS X
-
-```shell
-brew install sqlite3 libsqlite3-dev
-```
-
-### Linux
-
-```shell
-sudo apt-get update
-sudo apt-get install sqlite3 libsqlite3-dev
-```
+<p align="center">
+    <h1>SQLite 3 for Swift</h1>
+    <br>
+    <br>
+    <a href="https://docs.vapor.codes/2.0/core/package/">
+        <img src="http://img.shields.io/badge/read_the-docs-92A8D1.svg" alt="Documentation">
+    </a>
+    <a href="http://vapor.team">
+        <img src="http://vapor.team/badge.svg" alt="Slack Team">
+    </a>
+    <a href="LICENSE">
+        <img src="http://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
+    </a>
+    <a href="https://circleci.com/gh/vapor/core">
+        <img src="https://circleci.com/gh/vapor/core.svg?style=shield" alt="Continuous Integration">
+    </a>
+    <a href="https://swift.org">
+        <img src="http://img.shields.io/badge/swift-3.1-brightgreen.svg" alt="Swift 3.1">
+    </a>
+</p>
