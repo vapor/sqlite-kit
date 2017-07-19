@@ -44,7 +44,7 @@ extension SQLite {
                     data[column] = .string(value)
                     
                 case SQLITE_INTEGER:
-                    let integer = Int(sqlite3_column_int(pointer, i))
+                    let integer = Int(sqlite3_column_int64(pointer, i))
                     data[column] = .number(.int(integer))
                     
                 case SQLITE_FLOAT: // as in floating point, actually returns a double.
