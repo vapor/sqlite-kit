@@ -37,7 +37,7 @@ extension SQLite {
         }
         
         public func bind(_ value: Int) throws {
-            if sqlite3_bind_int(pointer, nextBindPosition, Int32(value)) != SQLITE_OK {
+            if sqlite3_bind_int64(pointer, nextBindPosition, Int64(value)) != SQLITE_OK {
                 throw SQLiteError.bind(database.errorMessage)
             }
         }
