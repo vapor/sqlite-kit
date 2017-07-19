@@ -3,9 +3,6 @@ import XCTest
 import Node
 
 class SQLite3Tests: XCTestCase {
-    static let allTests = [("testTables", testTables),
-                           ("testUnicode", testUnicode)]
-
     var database:SQLite!
 
     override func setUp() {
@@ -77,17 +74,24 @@ class SQLite3Tests: XCTestCase {
     }
     
     func testBigInts() throws {
-        let bar: UInt64 = 1 << 20
-        let baz: UInt64 = 1 << 40
+        let max = Int.max
         
-        _ = try database.execute("DROP TABLE IF EXISTS foo")
-        _ = try database.execute("CREATE TABLE foo (bar BIGINT, baz BIGINT)")
-        _ = try database.execute("INSERT INTO foo VALUES (\(bar), (\(baz)))")
+        _ = try! database.execute("DROP TABLE IF EXISTS foo")
+        _ = try! database.execute("CREATE TABLE foo (max INT)")
+        _ = try! database.execute("INSERT INTO foo VALUES (?)") { statement in
+            try! statement.bind(max)
+
+        }
         
-        if let result = try database.execute("SELECT * FROM foo").first {
-            XCTAssertEqual(result.data["bar"], bar.makeNode(in: nil))
-            XCTAssertEqual(result.data["baz"], baz.makeNode(in: nil))
+        if let result = try! database.execute("SELECT * FROM foo").first {
+            XCTAssertEqual(result.data["max"], max.makeNode(in: nil))
         }
     }
 
+
+    static let allTests = [
+        ("testTables", testTables),
+        ("testUnicode", testUnicode),
+        ("testBigInts", testBigInts),
+    ]
 }
