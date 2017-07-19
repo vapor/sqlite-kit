@@ -75,5 +75,19 @@ class SQLite3Tests: XCTestCase {
         }
 
     }
+    
+    func testBigInts() throws {
+        let bar: UInt64 = 1 << 20
+        let baz: UInt64 = 1 << 40
+        
+        _ = try database.execute("DROP TABLE IF EXISTS foo")
+        _ = try database.execute("CREATE TABLE foo (bar BIGINT, baz BIGINT)")
+        _ = try database.execute("INSERT INTO foo VALUES (\(bar), (\(baz)))")
+        
+        if let result = try database.execute("SELECT * FROM foo").first {
+            XCTAssertEqual(result.data["bar"], bar.makeNode(in: nil))
+            XCTAssertEqual(result.data["baz"], baz.makeNode(in: nil))
+        }
+    }
 
 }
