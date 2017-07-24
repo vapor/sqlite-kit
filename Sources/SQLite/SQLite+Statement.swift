@@ -1,4 +1,5 @@
 import CSQLite
+import typealias Core.Bytes
 
 extension SQLite {
     /**
@@ -45,6 +46,13 @@ extension SQLite {
         public func bind(_ value: String) throws {
             let strlen = Int32(value.utf8.count)
             if sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT) != SQLITE_OK {
+                throw SQLiteError.bind(database.errorMessage)
+            }
+        }
+        
+        public func bind(_ value: Bytes) throws {
+            let count = Int32(value.count)
+            if sqlite3_bind_blob(pointer, nextBindPosition, value, count, SQLITE_TRANSIENT) != SQLITE_OK {
                 throw SQLiteError.bind(database.errorMessage)
             }
         }
