@@ -87,6 +87,23 @@ class SQLite3Tests: XCTestCase {
             XCTAssertEqual(result.data["max"], max.makeNode(in: nil))
         }
     }
+    
+    
+    func testBlob() {
+        let data = Data(bytes: [0, 1, 2])
+        
+        _ = try! database.execute("DROP TABLE IF EXISTS `foo`")
+        _ = try! database.execute("CREATE TABLE foo (bar BLOB(4))")
+        _ = try! database.execute("INSERT INTO foo VALUES (?)") { statement in
+            try! statement.bind(data.makeBytes())
+        }
+        
+        if let result = try! database.execute("SELECT * FROM foo").first {
+            XCTAssertEqual(result.data["bar"], Node.bytes(data.makeBytes()))
+        } else {
+            XCTFail()
+        }
+    }
 
 
     static let allTests = [
