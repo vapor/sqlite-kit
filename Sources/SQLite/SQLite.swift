@@ -63,7 +63,7 @@ public class SQLite {
     */
     public func execute(_ queryString: String, prepareClosure: PrepareClosure = { _ in }) throws -> [Result.Row] {
         guard let database = self.database else {
-            throw SQLiteError(with: SQLITE_NOTADB, msg: "No database")!
+            throw SQLiteError(with: SQLITE_ERROR, msg: "No database")!
         }
 
         let statementContainer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
@@ -78,7 +78,7 @@ public class SQLite {
         }
 
         guard let statementPointer = statementContainer.pointee else {
-            throw SQLiteError.error("Statement pointer error")
+            throw SQLiteError(with: SQLITE_ERROR, msg: "Statement pointer error")
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
