@@ -31,20 +31,23 @@ public class SQLite {
     */
     public init(path: String) throws {
         let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
-        if sqlite3_open_v2(path, &database, options, nil) != SQLITE_OK {
-            throw SQLiteError.connection(database?.errorMessage ?? "")
+
+        let status = sqlite3_open_v2(path, &database, options, nil)
+
+        if let error = SQLiteError(with: status, msg: database?.errorMessage ?? "") {
+           throw error
         }
     }
 
     /**
-        Closes a connetion to the database.
+        Closes a connection to the database.
     */
     public func close() {
         sqlite3_close(database)
     }
 
     /**
-        Closes the database when deinitialized.
+        Closes the database when de-initialized.
     */
     deinit {
         self.close()
@@ -60,7 +63,7 @@ public class SQLite {
     */
     public func execute(_ queryString: String, prepareClosure: PrepareClosure = { _ in }) throws -> [Result.Row] {
         guard let database = self.database else {
-            throw SQLiteError.execute("No database")
+            throw SQLiteError(with: SQLITE_NOTADB, msg: "No database")!
         }
 
         let statementContainer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
@@ -68,12 +71,14 @@ public class SQLite {
             statementContainer.deallocate(capacity: 1)
         }
 
-        if sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil) != SQLITE_OK {
-            throw SQLiteError.prepare(database.errorMessage)
+        let status = sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil);
+
+        if let error = SQLiteError(with: status, msg: database.errorMessage){
+            throw error
         }
 
         guard let statementPointer = statementContainer.pointee else {
-            throw SQLiteError.execute("Statement pointer error")
+            throw SQLiteError.error("Statement pointer error")
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
@@ -91,9 +96,11 @@ public class SQLite {
 
             result.rows.append(row)
         }
-        
-        if sqlite3_finalize(statement.pointer) != SQLITE_OK {
-            throw SQLiteError.execute(database.errorMessage)
+
+        let finalizeStatus = sqlite3_finalize(statement.pointer)
+
+        if let error = SQLiteError(with: finalizeStatus, msg: database.errorMessage) {
+            throw error
         }
         
         return result.rows
@@ -112,14 +119,6 @@ public class SQLite {
         return Int(id)
     }
 
-    //MARK: Error
-    public enum SQLiteError: Error {
-        case connection(String)
-        case close(String)
-        case prepare(String)
-        case bind(String)
-        case execute(String)
-    }
 }
 
 extension SQLite.Database {
