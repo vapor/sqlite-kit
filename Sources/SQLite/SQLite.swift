@@ -78,7 +78,7 @@ public class SQLite {
         }
 
         guard let statementPointer = statementContainer.pointee else {
-            throw SQLiteError(with: SQLITE_ERROR, msg: "Statement pointer error")
+            throw SQLiteError(with: SQLITE_ERROR, msg: "Statement pointer error")!
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
