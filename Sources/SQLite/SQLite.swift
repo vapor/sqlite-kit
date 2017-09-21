@@ -34,7 +34,7 @@ public class SQLite {
 
         let status = sqlite3_open_v2(path, &database, options, nil)
 
-        if let error = SQLiteError(with: status, msg: database?.errorMessage ?? "") {
+        if let error = StatusError(with: status, msg: database?.errorMessage ?? "") {
            throw error
         }
     }
@@ -57,13 +57,13 @@ public class SQLite {
         Executes a statement query string
         and calls the prepare closure to bind
         any prepared values.
-     
+
         The resulting rows are returned if
         no errors occur.
     */
     public func execute(_ queryString: String, prepareClosure: PrepareClosure = { _ in }) throws -> [Result.Row] {
         guard let database = self.database else {
-            throw SQLiteError(with: SQLITE_ERROR, msg: "No database")!
+            throw StatusError(with: SQLITE_ERROR, msg: "No database")!
         }
 
         let statementContainer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
@@ -73,12 +73,12 @@ public class SQLite {
 
         let status = sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil);
 
-        if let error = SQLiteError(with: status, msg: database.errorMessage){
+        if let error = StatusError(with: status, msg: database.errorMessage){
             throw error
         }
 
         guard let statementPointer = statementContainer.pointee else {
-            throw SQLiteError(with: SQLITE_ERROR, msg: "Statement pointer error")!
+            throw StatusError(with: SQLITE_ERROR, msg: "Statement pointer error")!
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
@@ -86,7 +86,7 @@ public class SQLite {
 
         var result = Result()
         while sqlite3_step(statement.pointer) == SQLITE_ROW {
-            
+
             var row = Result.Row()
             let count = sqlite3_column_count(statement.pointer)
 
@@ -99,10 +99,10 @@ public class SQLite {
 
         let finalizeStatus = sqlite3_finalize(statement.pointer)
 
-        if let error = SQLiteError(with: finalizeStatus, msg: database.errorMessage) {
+        if let error = StatusError(with: finalizeStatus, msg: database.errorMessage) {
             throw error
         }
-        
+
         return result.rows
     }
 
@@ -117,6 +117,17 @@ public class SQLite {
 
         let id = sqlite3_last_insert_rowid(database)
         return Int(id)
+    }
+
+    //MARK: Error
+
+    @available(*, deprecated, message: "SQLiteError will be removed on release 3.0.0, use StatusError instead.")
+    public enum SQLiteError: Error {
+        case connection(String)
+        case close(String)
+        case prepare(String)
+        case bind(String)
+        case execute(String)
     }
 
 }
@@ -135,4 +146,3 @@ extension SQLite.Database {
     }
 
 }
-

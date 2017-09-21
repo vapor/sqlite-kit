@@ -1,14 +1,14 @@
 import CSQLite
 
-public enum SQLiteError: Error {
+public enum StatusError: Error {
 
-    public typealias SQLiteStatusCode = Int32
+    public typealias StatusCode = Int32
 
     /**
         The definitions of these error codes
         is in sqlite3.h.
     */
-    init?(with status: SQLiteStatusCode, msg: String) {
+    init?(with status: StatusCode, msg: String) {
         switch status {
         case SQLITE_OK:
             return nil
@@ -107,10 +107,4 @@ public enum SQLiteError: Error {
     case warning(String)
     case row(String)
     case done(String)
-
-    case connection(String)
-    case close(String)
-    case prepare(String)
-    case bind(String)
-    case execute(String)
 }
