@@ -76,6 +76,15 @@ public enum StatusError: Error {
             self = .error(msg)
         }
     }
+    /**
+        Helper function that checks if
+        the status passed is an error.
+    */
+    public static func check(with status: StatusCode, msg: String) throws {
+        if let error = StatusError(with: status, msg: msg) {
+            throw error
+        }
+    }
 
     case error(String)
     case intern(String)

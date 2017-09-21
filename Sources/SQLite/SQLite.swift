@@ -34,9 +34,7 @@ public class SQLite {
 
         let status = sqlite3_open_v2(path, &database, options, nil)
 
-        if let error = StatusError(with: status, msg: database?.errorMessage ?? "") {
-           throw error
-        }
+        StatusError.check(with: status, msg: database?.errorMessage ?? "")
     }
 
     /**
@@ -73,9 +71,7 @@ public class SQLite {
 
         let status = sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil);
 
-        if let error = StatusError(with: status, msg: database.errorMessage){
-            throw error
-        }
+        try StatusError.check(with: status, msg: database.errorMessage)
 
         guard let statementPointer = statementContainer.pointee else {
             throw StatusError(with: SQLITE_ERROR, msg: "Statement pointer error")!
@@ -99,9 +95,7 @@ public class SQLite {
 
         let finalizeStatus = sqlite3_finalize(statement.pointer)
 
-        if let error = StatusError(with: finalizeStatus, msg: database.errorMessage) {
-            throw error
-        }
+        try StatusError.check(with: finalizeStatus, msg: database.errorMessage)
 
         return result.rows
     }
@@ -120,7 +114,6 @@ public class SQLite {
     }
 
     //MARK: Error
-
     @available(*, deprecated, message: "SQLiteError will be removed on release 3.0.0, use StatusError instead.")
     public enum SQLiteError: Error {
         case connection(String)
