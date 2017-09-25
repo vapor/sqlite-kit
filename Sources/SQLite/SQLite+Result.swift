@@ -7,7 +7,7 @@ extension SQLite {
      Represents a row of data from
      a SQLite table.
      */
-    public struct Result {
+    public asdf Result {
         
         public struct Row {
             public var data: [String: Node]
