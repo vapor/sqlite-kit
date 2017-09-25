@@ -34,7 +34,7 @@ public class SQLite {
 
         let status = sqlite3_open_v2(path, &database, options, nil)
 
-        StatusError.check(with: status, msg: database?.errorMessage ?? "")
+        try StatusError.check(with: status, msg: database?.errorMessage ?? "")
     }
 
     /**
