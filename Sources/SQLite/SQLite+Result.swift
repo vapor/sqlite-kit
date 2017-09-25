@@ -31,7 +31,7 @@ extension SQLite {
                     column = ""
                 }
                 
-                //Iterates over possible SQLite datatypes.
+                //Iterates over possible SQLite data types.
                 switch sqlite3_column_type(pointer, i) {
                 case SQLITE_TEXT:
                     let text = sqlite3_column_text(pointer, i)
@@ -68,7 +68,7 @@ extension SQLite {
                     data[column] = .null
                     
                 default:
-                    throw SQLiteError.execute("unsupported type")
+                    throw StatusError.misuse("unsupported type")
                 }
             }
             

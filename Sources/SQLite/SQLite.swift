@@ -31,20 +31,21 @@ public class SQLite {
     */
     public init(path: String) throws {
         let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
-        if sqlite3_open_v2(path, &database, options, nil) != SQLITE_OK {
-            throw SQLiteError.connection(database?.errorMessage ?? "")
-        }
+
+        let status = sqlite3_open_v2(path, &database, options, nil)
+
+        StatusError.check(with: status, msg: database?.errorMessage ?? "")
     }
 
     /**
-        Closes a connetion to the database.
+        Closes a connection to the database.
     */
     public func close() {
         sqlite3_close(database)
     }
 
     /**
-        Closes the database when deinitialized.
+        Closes the database when de-initialized.
     */
     deinit {
         self.close()
@@ -54,13 +55,13 @@ public class SQLite {
         Executes a statement query string
         and calls the prepare closure to bind
         any prepared values.
-     
+
         The resulting rows are returned if
         no errors occur.
     */
     public func execute(_ queryString: String, prepareClosure: PrepareClosure = { _ in }) throws -> [Result.Row] {
         guard let database = self.database else {
-            throw SQLiteError.execute("No database")
+            throw StatusError(with: SQLITE_ERROR, msg: "No database")!
         }
 
         let statementContainer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
@@ -68,12 +69,12 @@ public class SQLite {
             statementContainer.deallocate(capacity: 1)
         }
 
-        if sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil) != SQLITE_OK {
-            throw SQLiteError.prepare(database.errorMessage)
-        }
+        let status = sqlite3_prepare_v2(database, queryString, -1, statementContainer, nil);
+
+        try StatusError.check(with: status, msg: database.errorMessage)
 
         guard let statementPointer = statementContainer.pointee else {
-            throw SQLiteError.execute("Statement pointer errror")
+            throw StatusError(with: SQLITE_ERROR, msg: "Statement pointer error")!
         }
 
         let statement = Statement(pointer: statementPointer, database: database)
@@ -81,7 +82,7 @@ public class SQLite {
 
         var result = Result()
         while sqlite3_step(statement.pointer) == SQLITE_ROW {
-            
+
             var row = Result.Row()
             let count = sqlite3_column_count(statement.pointer)
 
@@ -91,11 +92,11 @@ public class SQLite {
 
             result.rows.append(row)
         }
-        
-        if sqlite3_finalize(statement.pointer) != SQLITE_OK {
-            throw SQLiteError.execute(database.errorMessage)
-        }
-        
+
+        let finalizeStatus = sqlite3_finalize(statement.pointer)
+
+        try StatusError.check(with: finalizeStatus, msg: database.errorMessage)
+
         return result.rows
     }
 
@@ -113,6 +114,7 @@ public class SQLite {
     }
 
     //MARK: Error
+    @available(*, deprecated, message: "SQLiteError will be removed on release 3.0.0, use StatusError instead.")
     public enum SQLiteError: Error {
         case connection(String)
         case close(String)
@@ -120,6 +122,7 @@ public class SQLite {
         case bind(String)
         case execute(String)
     }
+
 }
 
 extension SQLite.Database {
@@ -136,4 +139,3 @@ extension SQLite.Database {
     }
 
 }
-

@@ -32,40 +32,43 @@ extension SQLite {
         }
         
         public func bind(_ value: Double) throws {
-            if sqlite3_bind_double(pointer, nextBindPosition, value) != SQLITE_OK {
-                throw SQLiteError.bind(database.errorMessage)
-            }
+            let status = sqlite3_bind_double(pointer, nextBindPosition, value)
+
+            try StatusError.check(with: status, msg: database.errorMessage)
         }
         
         public func bind(_ value: Int) throws {
-            if sqlite3_bind_int64(pointer, nextBindPosition, Int64(value)) != SQLITE_OK {
-                throw SQLiteError.bind(database.errorMessage)
-            }
+            let status = sqlite3_bind_int64(pointer, nextBindPosition, Int64(value))
+
+            try StatusError.check(with: status, msg: database.errorMessage)
+
         }
         
         public func bind(_ value: String) throws {
             let strlen = Int32(value.utf8.count)
-            if sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT) != SQLITE_OK {
-                throw SQLiteError.bind(database.errorMessage)
-            }
+
+            let status = sqlite3_bind_text(pointer, nextBindPosition, value, strlen, SQLITE_TRANSIENT)
+
+            try StatusError.check(with: status, msg: database.errorMessage)
         }
         
         public func bind(_ value: Bytes) throws {
             let count = Int32(value.count)
-            if sqlite3_bind_blob(pointer, nextBindPosition, value, count, SQLITE_TRANSIENT) != SQLITE_OK {
-                throw SQLiteError.bind(database.errorMessage)
-            }
+
+            let status = sqlite3_bind_blob(pointer, nextBindPosition, value, count, SQLITE_TRANSIENT)
+
+            try StatusError.check(with: status, msg: database.errorMessage)
         }
         
         public func bind(_ value: Bool) throws {
             try bind(value ? 1 : 0)
         }
-        
-        
+
         public func null()  throws {
-            if sqlite3_bind_null(pointer, nextBindPosition) != SQLITE_OK {
-                throw SQLiteError.bind(database.errorMessage)
-            }
+            let status = sqlite3_bind_null(pointer, nextBindPosition)
+
+            try StatusError.check(with: status, msg: database.errorMessage)
         }
     }
+
 }
