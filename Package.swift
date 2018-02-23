@@ -1,12 +1,18 @@
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "SQLite",
-    targets: [
-        Target(name: "SQLite", dependencies: ["CSQLite"])
+    products: [
+        .library(name: "SQLite", targets: ["SQLite"]),
     ],
     dependencies: [
-        .Package(url: "https://github.com/vapor/core.git", majorVersion: 2),
-        .Package(url: "https://github.com/vapor/node.git", majorVersion: 2),
+        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
+        .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc"),
+    ],
+    targets: [
+        .target(name: "CSQLite"),
+        .target(name: "SQLite", dependencies: ["Bits", "CodableKit", "CSQLite", "Debugging"]),
+        .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
     ]
 )
