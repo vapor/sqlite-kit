@@ -1,5 +1,4 @@
 import Async
-import Service
 import Dispatch
 import XCTest
 @testable import SQLite
