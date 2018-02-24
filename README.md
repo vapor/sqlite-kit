@@ -1,9 +1,9 @@
 <p align="center">
-    <h1>SQLite 3 for Swift</h1>
+    <img src="https://user-images.githubusercontent.com/1342803/36616582-4deeba86-18b2-11e8-8ed6-dfaba8bd6cba.png" height="64" alt="SQLite">
     <br>
     <br>
-    <a href="https://docs.vapor.codes/2.0/core/package/">
-        <img src="http://img.shields.io/badge/read_the-docs-92A8D1.svg" alt="Documentation">
+    <a href="http://docs.vapor.codes/3.0/">
+        <img src="http://img.shields.io/badge/read_the-docs-2196f3.svg" alt="Documentation">
     </a>
     <a href="http://vapor.team">
         <img src="http://vapor.team/badge.svg" alt="Slack Team">
@@ -11,10 +11,10 @@
     <a href="LICENSE">
         <img src="http://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
     </a>
-    <a href="https://circleci.com/gh/vapor/core">
-        <img src="https://circleci.com/gh/vapor/core.svg?style=shield" alt="Continuous Integration">
+    <a href="https://circleci.com/gh/vapor/fluent">
+        <img src="https://circleci.com/gh/vapor/fluent.svg?style=shield" alt="Continuous Integration">
     </a>
     <a href="https://swift.org">
-        <img src="http://img.shields.io/badge/swift-3.1-brightgreen.svg" alt="Swift 3.1">
+        <img src="http://img.shields.io/badge/swift-4.1-brightgreen.svg" alt="Swift 4.1">
     </a>
 </p>
