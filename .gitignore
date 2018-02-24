@@ -2,7 +2,6 @@
 Sources/main.swift
 .build
 Packages
-Database
 *.xcodeproj
 Package.pins
 Package.resolved
