@@ -3,7 +3,7 @@ import CSQLite
 import Dispatch
 
 /// SQlite connection. Use this to create statements that can be executed.
-public final class SQLiteConnection {
+public final class SQLiteConnection: BasicWorker {
     public typealias Raw = OpaquePointer
     public var raw: Raw
 

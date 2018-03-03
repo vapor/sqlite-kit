@@ -45,15 +45,37 @@ public final class SQLiteQuery {
 
     // MARK: Execute
 
-    /// Executes the query, completing the future with the results.
-    public func execute() -> Future<SQLiteResults?> {
-        let promise = Promise(SQLiteResults?.self)
+    /// Runs the query, calling the supplied handler for each fetched row.
+    /// The returned future will be completed when the query has finished.
+    public func run(into handler: (SQLiteRow, SQLiteQuery) -> () = { _, _ in }) -> Future<Void> {
+        let promise = connection.eventLoop.newPromise(Void.self)
+
         do {
-            try promise.complete(self.blockingExecute())
+            if let results = try blockingExecute() {
+                while let row = try results.blockingFetchRow() {
+                    handler(row, self)
+                }
+                promise.succeed()
+            } else {
+                promise.succeed()
+            }
+
         } catch {
-            promise.fail(error)
+            promise.fail(error: error)
         }
-        return promise.future
+
+        return promise.futureResult
+    }
+
+    /// Runs the query, collecting all rows into an array.
+    public func all() -> Future<[SQLiteRow]> {
+        var rows: [SQLiteRow] = []
+
+        return run { row, query in
+            rows.append(row)
+        }.map(to: [SQLiteRow].self) {
+            return rows
+        }
     }
 
     /// Executes the query, blocking until complete.
