@@ -47,13 +47,13 @@ public final class SQLiteQuery {
 
     /// Runs the query, calling the supplied handler for each fetched row.
     /// The returned future will be completed when the query has finished.
-    public func run(into handler: (SQLiteRow, SQLiteQuery) -> () = { _, _ in }) -> Future<Void> {
+    public func run(into handler: (SQLiteRow, SQLiteQuery) throws -> () = { _, _ in }) -> Future<Void> {
         let promise = connection.eventLoop.newPromise(Void.self)
 
         do {
             if let results = try blockingExecute() {
                 while let row = try results.blockingFetchRow() {
-                    handler(row, self)
+                    try handler(row, self)
                 }
                 promise.succeed()
             } else {
