@@ -31,7 +31,7 @@ jobs:
           command: swift build -c release
 
 
-  linux-sqlite:
+  linux-fluent:
     docker:
       - image: norionomura/swift:swift-4.1-branch
     steps:
@@ -46,8 +46,8 @@ jobs:
           command: git clone -b nio https://github.com/vapor/fluent-sqlite.git
           working_directory: ~/
       - run:
-          name: Switch Fluent SQLite to this Fluent revision
-          command: swift package edit Fluent --revision $CIRCLE_SHA1
+          name: Switch Fluent SQLite to this SQLite revision
+          command: swift package edit SQLite --revision $CIRCLE_SHA1
           working_directory: ~/fluent-sqlite
       - run:
           name: Run Fluent SQLite unit tests
@@ -60,7 +60,7 @@ workflows:
   tests:
     jobs:
       - linux
-      - linux-sqlite
+      - linux-fluent
       # - macos
 
   nightly:
