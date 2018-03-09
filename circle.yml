@@ -8,19 +8,70 @@ jobs:
       - checkout
       - run: swift build
       - run: swift test
+
   linux:
     docker:
       - image: norionomura/swift:swift-4.1-branch
     steps:
-      - run: apt-get update
-      - run: apt-get install -yq libssl-dev pkg-config
       - checkout
-      - run: swift build
-      - run: swift test
-      - run: swift build -c release
+      - run:
+          name: Update APT
+          command: apt-get update
+      - run:
+          name: Install Swift NIO dependencies
+          command: apt-get install -yq pkg-config libssl-dev
+      - run: 
+          name: Compile code
+          command: swift build
+      - run: 
+          name: Run unit tests
+          command: swift test
+      - run: 
+          name: Compile code with optimizations
+          command: swift build -c release
+
+
+  linux-fluent:
+    docker:
+      - image: norionomura/swift:swift-4.1-branch
+    steps:
+      - run:
+          name: Update APT
+          command: apt-get update
+      - run:
+          name: Install Swift NIO dependencies
+          command: apt-get install -yq pkg-config libssl-dev
+      - run:
+          name: Clone Fluent SQLite
+          command: git clone -b nio https://github.com/vapor/fluent-sqlite.git
+          working_directory: ~/
+      - run:
+          name: Switch Fluent SQLite to this SQLite revision
+          command: swift package edit SQLite --revision $CIRCLE_SHA1
+          working_directory: ~/fluent-sqlite
+      - run:
+          name: Run Fluent SQLite unit tests
+          command: swift test
+          working_directory: ~/fluent-sqlite
+
+
 workflows:
   version: 2
   tests:
     jobs:
       - linux
+      - linux-fluent
       # - macos
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - linux
+      # - macos
+      
