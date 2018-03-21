@@ -1,3 +1,4 @@
+import Async
 import Foundation
 
 /// All possibles cases for SQLite data.
@@ -84,8 +85,20 @@ public protocol SQLiteDataConvertible {
     func convertToSQLiteData() throws -> SQLiteData
 }
 
+extension SQLiteData: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> SQLiteData {
+        return data
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return self
+    }
+}
 
 extension Data: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Data {
         switch data {
         case .blob(let data): return data
@@ -93,7 +106,147 @@ extension Data: SQLiteDataConvertible {
         }
     }
 
+    /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .blob(self)
     }
+}
+
+extension UUID: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> UUID {
+        switch data {
+        case .text(let string):
+            guard let uuid = UUID(uuidString: string) else {
+                throw SQLiteError(problem: .warning, reason: "Could not convert string to UUID: \(string)", source: .capture())
+            }
+            return uuid
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to UUID: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return .text(uuidString)
+    }
+}
+
+extension Date: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Date {
+        switch data {
+        case .float(let double): return Date(timeIntervalSince1970: double)
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to Date: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return .float(timeIntervalSince1970)
+    }
+}
+
+extension String: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> String {
+        switch data {
+        case .text(let string): return string
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return .text(self)
+    }
+}
+
+extension FixedWidthInteger {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self {
+        switch data {
+        case .integer(let int):
+            guard int <= Self.max else {
+                throw SQLiteError(problem: .warning, reason: "Int too large for \(Self.self): \(int)", source: .capture())
+            }
+            guard int >= Self.min else {
+                throw SQLiteError(problem: .warning, reason: "Int too small for \(Self.self): \(int)", source: .capture())
+            }
+            return numericCast(int)
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return .integer(numericCast(self))
+    }
+}
+
+extension Int8: SQLiteDataConvertible { }
+extension Int16: SQLiteDataConvertible { }
+extension Int32: SQLiteDataConvertible { }
+extension Int64: SQLiteDataConvertible { }
+extension Int: SQLiteDataConvertible { }
+extension UInt8: SQLiteDataConvertible { }
+extension UInt16: SQLiteDataConvertible { }
+extension UInt32: SQLiteDataConvertible { }
+extension UInt64: SQLiteDataConvertible { }
+extension UInt: SQLiteDataConvertible { }
+
+extension BinaryFloatingPoint {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self {
+        switch data {
+        case .integer(let int): return .init(int)
+        case .float(let double): return .init(double)
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        switch self {
+        case let double as Double: return .float(double)
+        case let float as Float: return .float(.init(float))
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to SQLiteData: \(Self.self)", source: .capture())
+        }
+
+    }
+}
+
+extension Double: SQLiteDataConvertible { }
+extension Float: SQLiteDataConvertible { }
+
+extension OptionalType {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self {
+        let wrapped = try requireDataCustomConvertible(WrappedType.self).convertFromSQLiteData(data)
+        return Self.makeOptionalType(wrapped as? WrappedType)
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        if let wrapped = self.wrapped {
+            return try requireDataCustomConvertible(wrapped).convertToSQLiteData()
+        } else {
+            return .null
+        }
+    }
+}
+
+extension Optional: SQLiteDataConvertible { }
+
+func requireDataCustomConvertible<T>(_ type: T) -> SQLiteDataConvertible {
+    guard let custom = type as? SQLiteDataConvertible else {
+        fatalError("`\(T.self)` does not conform to `SQLiteDataConvertible`")
+    }
+    return custom
+}
+
+func requireDataCustomConvertible<T>(_ type: T.Type) -> SQLiteDataConvertible.Type {
+    guard let custom = T.self as? SQLiteDataConvertible.Type else {
+        fatalError("`\(T.self)` does not conform to `SQLiteDataConvertible`")
+    }
+    return custom
 }

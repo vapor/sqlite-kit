@@ -32,7 +32,7 @@ public final class SQLiteDatabase {
     public func makeConnection(
         on worker: Worker
     ) -> Future<SQLiteConnection> {
-        let promise = Promise(SQLiteConnection.self)
+        let promise = worker.eventLoop.newPromise(SQLiteConnection.self)
         do {
             // make connection
             let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX
@@ -46,10 +46,10 @@ public final class SQLiteDatabase {
             }
 
             let conn = SQLiteConnection(raw: r, database: self, on: worker)
-            promise.complete(conn)
+            promise.succeed(result: conn)
         } catch {
-            promise.fail(error)
+            promise.fail(error: error)
         }
-        return promise.future
+        return promise.futureResult
     }
 }

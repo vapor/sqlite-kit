@@ -3,7 +3,7 @@ import CSQLite
 
 /// Results from a SQLite query. Call `.fetchRow` to continue
 /// fetching rows from this result set until there are none left.
-public final class SQLiteResults {
+final class SQLiteResults {
     /// The raw query pointer
     private let raw: SQLiteQuery.Raw
 
@@ -17,7 +17,7 @@ public final class SQLiteResults {
     private var state: SQLiteResultsState
 
     /// Use `SQLiteQuery.execute` to create a `SQLiteResultStream`
-    internal init(raw: SQLiteQuery.Raw, columns: [SQLiteColumn], on connection: SQLiteConnection) {
+    init(raw: SQLiteQuery.Raw, columns: [SQLiteColumn], on connection: SQLiteConnection) {
         self.raw = raw
         self.columns = columns
         self.connection = connection
@@ -28,19 +28,7 @@ public final class SQLiteResults {
 
     /// Fetches rows in blocking fashion. This should be called from a
     /// background thread.
-    public func fetchRow() -> Future<SQLiteRow?> {
-        let promise = Promise(SQLiteRow?.self)
-        do {
-            try promise.complete(self.blockingFetchRow())
-        } catch {
-            promise.fail(error)
-        }
-        return promise.future
-    }
-
-    /// Fetches rows in blocking fashion. This should be called from a
-    /// background thread.
-    public func blockingFetchRow() throws -> SQLiteRow? {
+    func blockingFetchRow() throws -> SQLiteRow? {
         guard case .rowAvailable = state else {
             return nil
         }
