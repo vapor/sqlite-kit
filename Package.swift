@@ -12,7 +12,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "CSQLite"),
-        .target(name: "SQLite", dependencies: ["Async", "Bits", "CodableKit", "CSQLite", "Debugging"]),
+        .target(name: "SQLite", dependencies: ["Async", "Bits", "CodableKit", "Core", "CSQLite", "Debugging"]),
         .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
     ]
 )
