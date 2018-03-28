@@ -68,7 +68,7 @@ extension SQLiteData: CustomStringConvertible {
     public var description: String {
         switch self {
         case .blob(let data):
-            return data.description
+            return String(data: data, encoding: .utf8) ?? data.hexDebug
         case .float(let float):
             return float.description
         case .integer(let int):
@@ -161,6 +161,26 @@ extension String: SQLiteDataConvertible {
         return .text(self)
     }
 }
+
+extension URL: SQLiteDataConvertible {
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> URL {
+        switch data {
+        case .text(let string):
+            guard let url = URL(string: string) else {
+                throw SQLiteError(problem: .warning, reason: "Could not convert to URL: \(data)", source: .capture())
+            }
+            return url
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to URL: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        return .text(description)
+    }
+}
+
 
 extension FixedWidthInteger {
     /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
