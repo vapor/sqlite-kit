@@ -1,4 +1,4 @@
-import CodableKit
+import Core
 
 public final class SQLiteRowDecoder: Decoder {
     public var codingPath: [CodingKey]

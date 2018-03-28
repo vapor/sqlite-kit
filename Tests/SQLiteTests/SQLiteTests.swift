@@ -1,7 +1,5 @@
-import CodableKit
 import Async
-import Dispatch
-import Foundation
+import Core
 @testable import SQLite
 import XCTest
 
