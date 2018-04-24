@@ -31,7 +31,7 @@ jobs:
     steps:
       - run:
           name: Clone Fluent SQLite
-          command: git clone -b master https://github.com/vapor/fluent-sqlite.git
+          command: git clone -b dbkit-gm https://github.com/vapor/fluent-sqlite.git
           working_directory: ~/
       - run:
           name: Switch Fluent SQLite to this SQLite revision
