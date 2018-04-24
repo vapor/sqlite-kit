@@ -81,11 +81,10 @@ public final class SQLiteQuery {
     /// Executes the query, blocking until complete.
     private func blockingExecute() throws -> SQLiteResults? {
         var columns: [SQLiteColumn] = []
-
         var raw: Raw?
 
         // log before anything happens, in case there's an error
-        connection.database.logger?.log(query: self)
+        connection.logger?.record(query: string, values: binds.map { $0.description })
 
         let ret = sqlite3_prepare_v2(connection.raw, string, -1, &raw, nil)
         guard ret == SQLITE_OK else {
