@@ -1,36 +1,39 @@
-import Async
 import CSQLite
-import Dispatch
 
 /// SQlite connection. Use this to create statements that can be executed.
-public final class SQLiteConnection: BasicWorker {
-    public typealias Raw = OpaquePointer
-    public var raw: Raw
+public final class SQLiteConnection: BasicWorker, DatabaseConnection {
+    /// Raw SQLite connection type.
+    internal typealias Raw = OpaquePointer
 
-    /// Reference to the database that created this connection.
-    public let database: SQLiteDatabase
+    /// See `DatabaseConnection`
+    public var isClosed: Bool
 
-    /// This connection's eventloop.
+    /// See `BasicWorker`.
     public let eventLoop: EventLoop
 
+    /// See `Extendable`.
+    public var extend: Extend
+
+    /// Optional logger, if set queries should be logged to it.
+    public var logger: DatabaseLogger?
+
+    /// Raw pointer to this SQLite connection.
+    internal var raw: Raw
+
     /// Returns the last error message, if one exists.
-    var errorMessage: String? {
+    internal var errorMessage: String? {
         guard let raw = sqlite3_errmsg(raw) else {
             return nil
         }
-
         return String(cString: raw)
     }
 
     /// Create a new SQLite conncetion.
-    internal init(
-        raw: Raw,
-        database: SQLiteDatabase,
-        on worker: Worker
-    ) {
+    internal init(raw: Raw, on worker: Worker) {
         self.raw = raw
-        self.database = database
         self.eventLoop = worker.eventLoop
+        self.extend = [:]
+        self.isClosed = false
     }
 
     /// Returns an identifier for the last inserted row.
@@ -41,6 +44,7 @@ public final class SQLiteConnection: BasicWorker {
 
     /// Closes the database connection.
     public func close() {
+        isClosed = true
         sqlite3_close(raw)
     }
 

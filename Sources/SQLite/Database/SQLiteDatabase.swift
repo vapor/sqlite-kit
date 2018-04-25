@@ -1,15 +1,9 @@
-import Async
 import CSQLite
-import Dispatch
-import Foundation
 
 /// SQlite database. Used to make connections.
-public final class SQLiteDatabase {
+public final class SQLiteDatabase: Database, LogSupporting {
     /// The path to the SQLite file.
     public let storage: SQLiteStorage
-
-    /// If set, query logs will be sent to the supplied logger.
-    public var logger: SQLiteLogger?
 
     /// Create a new SQLite database.
     public init(storage: SQLiteStorage) throws {
@@ -23,15 +17,8 @@ public final class SQLiteDatabase {
         }
     }
 
-    /// Opens a connection to the SQLite database at a given path.
-    /// If the database does not already exist, it will be created.
-    ///
-    /// The supplied DispatchQueue will be used to dispatch output stream calls.
-    /// Make sure to supply the event loop to this parameter so you get called back
-    /// on the appropriate thread.
-    public func makeConnection(
-        on worker: Worker
-    ) -> Future<SQLiteConnection> {
+    /// See `Database`.
+    public func newConnection(on worker: Worker) -> Future<SQLiteConnection> {
         let promise = worker.eventLoop.newPromise(SQLiteConnection.self)
         do {
             // make connection
@@ -45,11 +32,23 @@ public final class SQLiteDatabase {
                 throw SQLiteError(problem: .error, reason: "Unexpected nil database.", source: .capture())
             }
 
-            let conn = SQLiteConnection(raw: r, database: self, on: worker)
+            let conn = SQLiteConnection(raw: r, on: worker)
             promise.succeed(result: conn)
         } catch {
             promise.fail(error: error)
         }
         return promise.futureResult
+    }
+
+    /// See `LogSupporting`.
+    public static func enableLogging(_ logger: DatabaseLogger, on conn: SQLiteConnection) {
+        conn.logger = logger
+    }
+}
+
+extension DatabaseIdentifier {
+    /// Default `DatabaseIdentifier` for SQLite databases.
+    public static var sqlite: DatabaseIdentifier<SQLiteDatabase> {
+        return "sqlite"
     }
 }

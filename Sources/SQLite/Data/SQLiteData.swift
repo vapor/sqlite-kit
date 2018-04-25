@@ -194,7 +194,7 @@ extension FixedWidthInteger {
                 throw SQLiteError(problem: .warning, reason: "Int too small for \(Self.self): \(int)", source: .capture())
             }
             return numericCast(int)
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to \(Self.self): \(data)", source: .capture())
         }
     }
 
