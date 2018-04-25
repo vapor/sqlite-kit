@@ -20,6 +20,12 @@ jobs:
       - run: 
           name: Run unit tests
           command: swift test
+
+  linux-release:
+    docker:
+      - image: codevapor/swift:4.1
+    steps:
+      - checkout
       - run: 
           name: Compile code with optimizations
           command: swift build -c release
@@ -31,7 +37,7 @@ jobs:
     steps:
       - run:
           name: Clone Fluent SQLite
-          command: git clone -b dbkit-gm https://github.com/vapor/fluent-sqlite.git
+          command: git clone -b master https://github.com/vapor/fluent-sqlite.git
           working_directory: ~/
       - run:
           name: Switch Fluent SQLite to this SQLite revision
@@ -49,6 +55,7 @@ workflows:
     jobs:
       - linux
       - linux-fluent
+      - linux-release
       # - macos
 
   nightly:
