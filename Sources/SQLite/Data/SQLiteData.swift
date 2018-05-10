@@ -258,6 +258,25 @@ extension OptionalType {
 
 extension Optional: SQLiteDataConvertible { }
 
+extension Bool: SQLiteDataConvertible {
+
+    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
+    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Bool {
+        switch data {
+        case .integer(let intValue):
+            let boolValue = intValue == 0 ? false : true
+            return boolValue
+        default: throw SQLiteError(problem: .warning, reason: "Could not convert to Bool: \(data)", source: .capture())
+        }
+    }
+
+    /// See `convertToSQLiteData()`
+    public func convertToSQLiteData() throws -> SQLiteData {
+        let intValue = self ? 1 : 0
+        return SQLiteData.integer(intValue)
+    }
+}
+
 func requireDataCustomConvertible<T>(_ type: T) -> SQLiteDataConvertible {
     guard let custom = type as? SQLiteDataConvertible else {
         fatalError("`\(T.self)` does not conform to `SQLiteDataConvertible`")
