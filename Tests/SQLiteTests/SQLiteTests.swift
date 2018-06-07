@@ -42,15 +42,15 @@ class SQLiteTests: XCTestCase {
             .column(for: \Planet.id, .integer, .primaryKey(), .notNull)
             .column(for: \Planet.galaxyID, .integer, .notNull, .foreignKey(to: \Galaxy.id))
             .run().wait()
-        
+
         try conn.alter(table: Planet.self)
             .addColumn(for: \Planet.name, .text, .notNull, .default(.literal("Unamed Planet")))
             .run().wait()
-        
+
         try conn.insert(into: Galaxy.self)
             .value(Galaxy(name: "Milky Way"))
             .run().wait()
-        
+
         let galaxyID = conn.lastAutoincrementID!
         
         try conn.insert(into: Planet.self)
@@ -77,14 +77,14 @@ class SQLiteTests: XCTestCase {
             .where(or: \Planet.name == "Mars", \Planet.name == "Venus", \Planet.name == "Earth")
             .run(decoding: Planet.self).wait()
         print(selectA)
-        
+
         try conn.delete(from: Planet.self).where(\Planet.name == "Pluto")
             .run().wait()
-        
+
         let selectB = try conn.select().all().from(Planet.self)
             .run(decoding: Planet.self).wait()
         print(selectB)
-        
+
         let selectC = try conn.select().all()
             .from(Planet.self)
             .join(Galaxy.self, on: \Planet.galaxyID == \Galaxy.id)
