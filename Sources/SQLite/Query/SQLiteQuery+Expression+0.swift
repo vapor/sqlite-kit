@@ -10,15 +10,6 @@ extension SQLiteQuery {
             public var parameters: Parameters?
         }
         
-        public struct TypeName {
-            public enum Parameters {
-                case one(Int)
-                case two(Int, Int)
-            }
-            public var name: String
-            public var parameters: Parameters?
-        }
-        
         public enum NullOperator {
             /// `ISNULL`
             case isNull
@@ -74,7 +65,7 @@ extension SQLiteQuery {
         
         case literal(Literal)
         case data(SQLiteData)
-        case column(Column)
+        case column(QualifiedColumnName)
         case unary(UnaryOperator, Expression)
         case binary(Expression, BinaryOperator, Expression)
         case function(Function)

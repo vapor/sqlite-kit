@@ -32,16 +32,16 @@ extension SQLiteQuery {
         
         public var with: WithClause?
         public var conflictResolution: ConflictResolution?
-        public var table: TableName
-        public var columns: [String]
+        public var table: AliasableTableName
+        public var columns: [ColumnName]
         public var values: Values
         public var upsert: UpsertClause?
         
         public init(
             with: WithClause? = nil,
             conflictResolution: ConflictResolution? = nil,
-            table: TableName,
-            columns: [String] = [],
+            table: AliasableTableName,
+            columns: [ColumnName] = [],
             values: Values = .defaults,
             upsert: UpsertClause? = nil
         ) {
@@ -70,7 +70,7 @@ extension SQLiteSerializer {
         sql.append("INTO")
         sql.append(serialize(insert.table))
         if !insert.columns.isEmpty {
-            sql.append(serialize(columns: insert.columns))
+            sql.append(serialize(insert.columns))
         }
         sql.append(serialize(insert.values, &binds))
         if let upsert = insert.upsert {

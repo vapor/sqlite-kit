@@ -23,7 +23,7 @@ extension SQLiteQuery {
             where E: Encodable
         {
             for (col, val) in try SQLiteQueryEncoder().encode(value) {
-                update.values.columns.append(.init(columns: [col], value: val))
+                update.values.columns.append(.init(columns: [.init(col)], value: val))
             }
             return self
         }
@@ -38,6 +38,6 @@ extension SQLiteConnection {
     public func update<Table>(_ table: Table.Type) -> SQLiteQuery.UpdateBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(table: .init(name: Table.sqliteTableName)), on: self)
+        return .init(table: .init(table: .init(stringLiteral: Table.sqliteTableName)), on: self)
     }
 }

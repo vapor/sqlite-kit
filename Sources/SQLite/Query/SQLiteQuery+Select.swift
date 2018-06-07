@@ -15,7 +15,7 @@ extension SQLiteQuery {
         public struct WithClause {
             public struct CommonTableExpression {
                 public var table: String
-                public var columns: [String]
+                public var columns: [ColumnName]
                 public var select: Select
             }
             
@@ -105,7 +105,7 @@ extension SQLiteSerializer {
     func serialize(_ cte: SQLiteQuery.Select.WithClause.CommonTableExpression, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
         sql.append(escapeString(cte.table))
-        sql.append(serialize(columns: cte.columns))
+        sql.append(serialize(cte.columns))
         sql.append("AS")
         sql.append("(" + serialize(cte.select, &binds) + ")")
         return sql.joined(separator: " ")

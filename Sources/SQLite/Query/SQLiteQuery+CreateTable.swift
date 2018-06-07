@@ -1,6 +1,46 @@
 extension SQLiteQuery {
+    public struct ForeignKey {
+        public var foreignTable: TableName
+        public var columns: String
+    }
+    public struct ColumnConstraint {
+        public enum Constraint {
+            public struct PrimaryKey {
+                public var direction: Direction?
+                public var conflictResolution: ConflictResolution?
+                public var autoincrement: Bool
+            }
+            
+            public struct Nullability {
+                public var allowNull: Bool
+                public var conflictResolution: ConflictResolution?
+            }
+            
+            public struct Unique {
+                public var conflictResolution: ConflictResolution?
+            }
+            
+            public enum Default {
+                case literal(Expression.Literal)
+                case expression(Expression)
+            }
+            
+            case primaryKey(PrimaryKey)
+            case nullability(Nullability)
+            case unique(Unique)
+            case check(Expression)
+            case `default`(Default)
+            case collate(String)
+            
+        }
+        public var name: String?
+        public var constraint: Constraint
+    }
+    
     public struct ColumnDefinition {
-        
+        public var name: String
+        public var typeName: TypeName?
+        public var constraints: [ColumnConstraint]
     }
     
     public struct TableConstraint {
@@ -31,7 +71,6 @@ extension SQLiteQuery {
         
         public var temporary: Bool
         public var ifNotExists: Bool
-        // FIXME: table name should not support alias
         public var table: TableName
         public var source: Source
         

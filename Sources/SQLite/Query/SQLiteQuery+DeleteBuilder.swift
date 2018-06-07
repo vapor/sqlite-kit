@@ -22,6 +22,6 @@ extension SQLiteConnection {
     public func delete<Table>(from table: Table.Type) -> SQLiteQuery.DeleteBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(table: .init(name: Table.sqliteTableName)), on: self)
+        return .init(table: .init(table: .init(stringLiteral: Table.sqliteTableName)), on: self)
     }
 }

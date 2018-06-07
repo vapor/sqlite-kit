@@ -17,7 +17,7 @@ extension SQLiteQuery {
             
             public enum Constraint {
                 case condition(Expression)
-                case using([Column])
+                case using([ColumnName])
             }
             
             public var natrual: Bool

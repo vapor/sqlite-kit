@@ -5,7 +5,7 @@ extension SQLiteQuery {
             case notIndexed
         }
         
-        case table(TableName, TableIndex?)
+        case table(QualifiedTableName)
         case tableFunction(schemaName: String?, name: String, parameters: [Expression], alias: String?)
         case joinClause(JoinClause)
         case tables([TableOrSubquery])
@@ -15,25 +15,15 @@ extension SQLiteQuery {
 
 extension SQLiteQuery.TableOrSubquery: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
-        self = .table(.init(name: value), nil)
+        self = .table(.init(stringLiteral: value))
     }
 }
 
 extension SQLiteSerializer {
     func serialize(_ table: SQLiteQuery.TableOrSubquery, _ binds: inout [SQLiteData]) -> String {
-        var sql: [String] = []
         switch table {
-        case .table(let name, let index):
-            sql.append(serialize(name))
-            if let index = index {
-                sql.append(serialize(index))
-            }
+        case .table(let table): return serialize(table)
         default: return "\(table)"
         }
-        return sql.joined(separator: " ")
-    }
-    
-    func serialize(_ index: SQLiteQuery.TableOrSubquery.TableIndex) -> String {
-        return "\(index)"
     }
 }

@@ -7,10 +7,6 @@ extension SQLiteQuery {
 struct SQLiteSerializer {
     init() { }
     
-    func serialize(columns: [String]) -> String {
-        return "(" + columns.map(escapeString).joined(separator: ", ") + ")"
-    }
-    
     func escapeString(_ string: String) -> String {
         return "`" + string + "`"
     }

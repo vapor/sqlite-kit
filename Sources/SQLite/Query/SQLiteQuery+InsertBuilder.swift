@@ -3,7 +3,7 @@ extension SQLiteQuery {
         public var insert: Insert
         public let connection: SQLiteConnection
         
-        init(table: TableName, on connection: SQLiteConnection) {
+        init(table: AliasableTableName, on connection: SQLiteConnection) {
             self.insert = .init(table: table)
             self.connection = connection
         }
@@ -41,7 +41,7 @@ extension SQLiteQuery {
             where E: Encodable
         {
             let values = try values.map { try SQLiteQueryEncoder().encode($0) }
-            insert.columns = .init(values[0].keys)
+            insert.columns = values[0].keys.map { ColumnName.init($0) }
             insert.values = .values(values.map { .init($0.values) })
             return self
         }
@@ -56,6 +56,6 @@ extension SQLiteConnection {
     public func insert<Table>(into table: Table.Type) -> SQLiteQuery.InsertBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(name: Table.sqliteTableName), on: self)
+        return .init(table: .init(stringLiteral: Table.sqliteTableName), on: self)
     }
 }

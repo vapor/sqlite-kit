@@ -30,7 +30,7 @@ extension SQLiteQuery {
         }
         
         public func from<Table>(_ table: Table.Type) -> Self where Table: SQLiteTable {
-            select.tables.append(.table(.init(name: Table.sqliteTableName), nil))
+            select.tables.append(.table(.init(stringLiteral: Table.sqliteTableName)))
             return self
         }
         
@@ -68,7 +68,10 @@ private func _binary<Table, Value>(
     guard let property = try Table.reflectProperty(forKey: lhs) else {
         fatalError()
     }
-    let column: SQLiteQuery.Expression = .column(.init(table: Table.sqliteTableName, name: property.path[0]))
+    let column: SQLiteQuery.Expression = .column(.init(
+        table: Table.sqliteTableName,
+        name: .init(property.path[0])
+    ))
     return try .binary(column, op, .bind(rhs))
 }
 
