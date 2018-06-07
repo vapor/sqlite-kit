@@ -1,4 +1,8 @@
+#if os(Linux)
 import CSQLite
+#else
+import SQLite3
+#endif
 
 internal struct SQLiteStatement {
     internal let connection: SQLiteConnection

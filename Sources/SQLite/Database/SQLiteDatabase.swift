@@ -1,4 +1,8 @@
+#if os(Linux)
 import CSQLite
+#else
+import SQLite3
+#endif
 
 /// SQlite database. Used to make connections.
 public final class SQLiteDatabase: Database, LogSupporting {

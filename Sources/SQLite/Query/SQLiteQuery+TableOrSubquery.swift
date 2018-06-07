@@ -23,6 +23,7 @@ extension SQLiteSerializer {
     func serialize(_ table: SQLiteQuery.TableOrSubquery, _ binds: inout [SQLiteData]) -> String {
         switch table {
         case .table(let table): return serialize(table)
+        case .joinClause(let join): return serialize(join, &binds)
         default: return "\(table)"
         }
     }

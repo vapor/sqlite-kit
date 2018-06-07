@@ -1,4 +1,8 @@
+#if os(Linux)
 import CSQLite
+#else
+import SQLite3
+#endif
 import Debugging
 
 /// Errors that can be thrown while using SQLite

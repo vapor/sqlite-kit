@@ -12,6 +12,22 @@ extension SQLiteQuery {
             return .init(.default(expression))
         }
         
+        public static func foreignKey<Table, Value>(
+            to keyPath: KeyPath<Table, Value>
+        ) -> ColumnConstraint
+            where Table: SQLiteTable
+        {
+            let fk = ForeignKeyReference.init(
+                foreignTable: .init(name: Table.sqliteTableName),
+                foreignColumns: [keyPath.qualifiedColumnName.name],
+                onDelete: nil,
+                onUpdate: nil,
+                match: nil,
+                deferrence: nil
+            )
+            return .init(.foreignKey(fk))
+        }
+        
         public struct PrimaryKey {
             public var direction: Direction?
             public var conflictResolution: ConflictResolution?

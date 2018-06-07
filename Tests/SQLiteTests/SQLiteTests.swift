@@ -4,6 +4,16 @@ import XCTest
 struct Planet: SQLiteTable {
     var id: Int?
     var name: String
+    var galaxyID: Int
+    init(id: Int? = nil, name: String, galaxyID: Int) {
+        self.id = id
+        self.name = name
+        self.galaxyID = galaxyID
+    }
+}
+struct Galaxy: SQLiteTable {
+    var id: Int?
+    var name: String
     init(id: Int? = nil, name: String) {
         self.id = id
         self.name = name
@@ -14,24 +24,47 @@ class SQLiteTests: XCTestCase {
     func testSQLQuery() throws {     
         let conn = try SQLiteConnection.makeTest()
         
+        _ = try conn.query("PRAGMA foreign_keys = ON;")
+            .wait()
+        
         try conn.drop(table: Planet.self)
             .ifExists()
             .run().wait()
+        try conn.drop(table: Galaxy.self)
+            .ifExists()
+            .run().wait()
         
+        try conn.create(table: Galaxy.self)
+            .column(for: \Galaxy.id, .integer, .primaryKey(), .notNull)
+            .column(for: \Galaxy.name)
+            .run().wait()
         try conn.create(table: Planet.self)
             .column(for: \Planet.id, .integer, .primaryKey(), .notNull)
+            .column(for: \Planet.galaxyID, .integer, .notNull, .foreignKey(to: \Galaxy.id))
             .run().wait()
         
         try conn.alter(table: Planet.self)
             .addColumn(for: \Planet.name, .text, .notNull, .default(.literal("Unamed Planet")))
             .run().wait()
         
+        try conn.insert(into: Galaxy.self)
+            .value(Galaxy(name: "Milky Way"))
+            .run().wait()
+        
+        let galaxyID = conn.lastAutoincrementID!
+        
         try conn.insert(into: Planet.self)
-            .value(Planet(name: "Earth"))
+            .value(Planet(name: "Earth", galaxyID: galaxyID))
             .run().wait()
         
         try conn.insert(into: Planet.self)
-            .values([Planet(name: "Mercury"), Planet(name: "Venus"), Planet(name: "Mars"), Planet(name: "Jpuiter"), Planet(name: "Pluto")])
+            .values([
+                Planet(name: "Mercury", galaxyID: galaxyID),
+                Planet(name: "Venus", galaxyID: galaxyID),
+                Planet(name: "Mars", galaxyID: galaxyID),
+                Planet(name: "Jpuiter", galaxyID: galaxyID),
+                Planet(name: "Pluto", galaxyID: galaxyID)
+            ])
             .run().wait()
         
         try conn.update(Planet.self)
@@ -51,6 +84,13 @@ class SQLiteTests: XCTestCase {
         let selectB = try conn.select().all().from(Planet.self)
             .run(decoding: Planet.self).wait()
         print(selectB)
+        
+        let selectC = try conn.select().all()
+            .from(Planet.self)
+            .join(Galaxy.self, on: \Planet.galaxyID == \Galaxy.id)
+            .run { try ($0.decode(Planet.self), $0.decode(Galaxy.self)) }
+            .wait()
+        print(selectC)
     }
     
     func testTables() throws {

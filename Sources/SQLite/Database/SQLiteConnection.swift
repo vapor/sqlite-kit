@@ -1,4 +1,8 @@
+#if os(Linux)
 import CSQLite
+#else
+import SQLite3
+#endif
 
 public final class SQLiteConnection: BasicWorker, DatabaseConnection {
     public typealias Database = SQLiteDatabase
