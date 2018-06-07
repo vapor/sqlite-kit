@@ -49,34 +49,29 @@ extension SQLiteQuery {
 public func ==<Table, Value>(_ lhs: KeyPath<Table, Value>, _ rhs: Value) throws -> SQLiteQuery.Expression
     where Table: SQLiteTable, Value: Encodable
 {
-    return try _binary(.equal, lhs, rhs)
+    return try .binary(.column(lhs.qualifiedColumnName), .equal, .bind(rhs))
 }
 
 public func !=<Table, Value>(_ lhs: KeyPath<Table, Value>, _ rhs: Value) throws -> SQLiteQuery.Expression
     where Table: SQLiteTable, Value: Encodable
 {
-    return try _binary(.notEqual, lhs, rhs)
-}
-
-private func _binary<Table, Value>(
-    _ op: SQLiteQuery.Expression.BinaryOperator,
-    _ lhs: KeyPath<Table, Value>,
-    _ rhs: Value
-) throws -> SQLiteQuery.Expression
-    where Table: SQLiteTable, Value: Encodable
-{
-    guard let property = try Table.reflectProperty(forKey: lhs) else {
-        fatalError()
-    }
-    let column: SQLiteQuery.Expression = .column(.init(
-        table: Table.sqliteTableName,
-        name: .init(property.path[0])
-    ))
-    return try .binary(column, op, .bind(rhs))
+    return try .binary(.column(lhs.qualifiedColumnName), .notEqual, .bind(rhs))
 }
 
 public protocol SQLiteTable: Codable, Reflectable {
     static var sqliteTableName: String { get }
+}
+
+extension KeyPath where Root: SQLiteTable {
+    public var qualifiedColumnName: SQLiteQuery.QualifiedColumnName {
+        guard let property = try! Root.reflectProperty(forKey: self) else {
+            fatalError("Could not reflect property of type \(Value.self) on \(Root.self): \(self)")
+        }
+        return .init(
+            table: Root.sqliteTableName,
+            name: .init(property.path[0])
+        )
+    }
 }
 
 extension SQLiteTable {

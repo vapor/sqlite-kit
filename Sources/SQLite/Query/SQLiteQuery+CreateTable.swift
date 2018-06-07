@@ -1,52 +1,4 @@
 extension SQLiteQuery {
-    public struct ForeignKey {
-        public var foreignTable: TableName
-        public var columns: String
-    }
-    public struct ColumnConstraint {
-        public enum Constraint {
-            public struct PrimaryKey {
-                public var direction: Direction?
-                public var conflictResolution: ConflictResolution?
-                public var autoincrement: Bool
-            }
-            
-            public struct Nullability {
-                public var allowNull: Bool
-                public var conflictResolution: ConflictResolution?
-            }
-            
-            public struct Unique {
-                public var conflictResolution: ConflictResolution?
-            }
-            
-            public enum Default {
-                case literal(Expression.Literal)
-                case expression(Expression)
-            }
-            
-            case primaryKey(PrimaryKey)
-            case nullability(Nullability)
-            case unique(Unique)
-            case check(Expression)
-            case `default`(Default)
-            case collate(String)
-            
-        }
-        public var name: String?
-        public var constraint: Constraint
-    }
-    
-    public struct ColumnDefinition {
-        public var name: String
-        public var typeName: TypeName?
-        public var constraints: [ColumnConstraint]
-    }
-    
-    public struct TableConstraint {
-        
-    }
-    
     public struct CreateTable {
         public struct Schema {
             public var columns: [ColumnDefinition]
@@ -89,7 +41,7 @@ extension SQLiteQuery {
 }
 
 extension SQLiteSerializer {
-    func serialize(_ create: SQLiteQuery.CreateTable) -> String {
+    func serialize(_ create: SQLiteQuery.CreateTable, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
         sql.append("CREATE")
         if create.temporary {
@@ -100,7 +52,27 @@ extension SQLiteSerializer {
             sql.append("IF NOT EXISTS")
         }
         sql.append(serialize(create.table))
-        
+        sql.append(serialize(create.source, &binds))
+        return sql.joined(separator: " ")
+    }
+    
+    func serialize(_ source: SQLiteQuery.CreateTable.Source, _ binds: inout [SQLiteData]) -> String {
+        switch source {
+        case .schema(let schema): return serialize(schema, &binds)
+        case .select(let select): return "AS " + serialize(select, &binds)
+        }
+    }
+    func serialize(_ schema: SQLiteQuery.CreateTable.Schema, _ binds: inout [SQLiteData]) -> String {
+        var sql: [String] = []
+        sql.append(
+            "(" +
+            schema.columns.map { serialize($0, &binds) }.joined(separator: ", ") +
+            schema.tableConstraints.map { serialize($0, &binds) }.joined(separator: ", ")
+            + ")"
+        )
+        if schema.withoutRowID {
+            sql.append("WITHOUT ROWID")
+        }
         return sql.joined(separator: " ")
     }
 }

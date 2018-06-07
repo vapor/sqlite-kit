@@ -22,5 +22,6 @@ let package = Package(
             "Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging", "SQL"
         ]),
         .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
+        .target(name: "SQLiteBenchmark", dependencies: ["SQLite"]),
     ]
 )

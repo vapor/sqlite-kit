@@ -13,8 +13,18 @@ struct Planet: SQLiteTable {
 class SQLiteTests: XCTestCase {
     func testSQLQuery() throws {     
         let conn = try SQLiteConnection.makeTest()
-        _ = try conn.query("DROP TABLE IF EXISTS `Planet`").wait()
-        _ = try conn.query("CREATE TABLE `Planet` (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)").wait()
+        
+        try conn.drop(table: Planet.self)
+            .ifExists()
+            .run().wait()
+        
+        try conn.create(table: Planet.self)
+            .column(for: \Planet.id, .integer, .primaryKey(), .notNull)
+            .run().wait()
+        
+        try conn.alter(table: Planet.self)
+            .addColumn(for: \Planet.name, .text, .notNull, .default(.literal("Unamed Planet")))
+            .run().wait()
         
         try conn.insert(into: Planet.self)
             .value(Planet(name: "Earth"))

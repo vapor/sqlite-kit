@@ -36,10 +36,16 @@ extension SQLiteQuery.Expression.Literal: ExpressibleByBooleanLiteral {
 }
 
 extension SQLiteSerializer {
-    func serialize(_ expr: SQLiteQuery.Expression.Literal) -> String {
-        switch expr {
+    func serialize(_ literal: SQLiteQuery.Expression.Literal) -> String {
+        switch literal {
         case .numeric(let string): return string
-        default: return "\(expr)"
+        case .string(let string): return "'" + string + "'"
+        case .blob(let blob): return "0x" + blob.hexEncodedString()
+        case .null: return "NULL"
+        case .bool(let bool): return bool.description.uppercased()
+        case .currentTime: return "CURRENT_TIME"
+        case .currentDate: return "CURRENT_DATE"
+        case .currentTimestamp: return "CURRENT_TIMESTAMP"
         }
     }
 }

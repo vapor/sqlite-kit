@@ -11,6 +11,8 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
 
     /// Optional logger, if set queries should be logged to it.
     public var logger: DatabaseLogger?
+    
+    private let blockingIO: BlockingIOThreadPool
 
     internal let c: OpaquePointer
 
@@ -23,11 +25,12 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
     }
 
     /// Create a new SQLite conncetion.
-    internal init(c: OpaquePointer, on worker: Worker) {
+    internal init(c: OpaquePointer, blockingIO: BlockingIOThreadPool, on worker: Worker) {
         self.c = c
         self.eventLoop = worker.eventLoop
         self.extend = [:]
         self.isClosed = false
+        self.blockingIO = blockingIO
     }
 
     /// Returns an identifier for the last inserted row.
@@ -72,20 +75,30 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
     }
     
     public func query(_ string: String, _ parameters: [SQLiteData] = [], onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
-        do {
-            // log before anything happens, in case there's an error
-            logger?.record(query: string, values: parameters.map { $0.description })
-            let statement = try SQLiteStatement(query: string, on: self)
-            try statement.bind(parameters)
-            if let columns = try statement.getColumns() {
-                while let row = try statement.nextRow(for: columns) {
-                    try onRow(row)
+        let promise = eventLoop.newPromise(Void.self)
+        // log before anything happens, in case there's an error
+        logger?.record(query: string, values: parameters.map { $0.description })
+        blockingIO.submit { state in
+            do {
+                let statement = try SQLiteStatement(query: string, on: self)
+                try statement.bind(parameters)
+                if let columns = try statement.getColumns() {
+                    while let row = try statement.nextRow(for: columns) {
+                        self.eventLoop.execute {
+                            do {
+                                try onRow(row)
+                            } catch {
+                                promise.fail(error: error)
+                            }
+                        }
+                    }
                 }
+                return promise.succeed(result: ())
+            } catch {
+                return promise.fail(error: error)
             }
-            return future(())
-        } catch {
-            return future(error: error)
         }
+        return promise.futureResult
     }
 
     /// Closes the database when deinitialized.

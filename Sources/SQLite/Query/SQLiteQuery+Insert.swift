@@ -7,20 +7,6 @@ extension SQLiteQuery {
         }
         
         public struct UpsertClause {
-            public struct IndexedColumns {
-                public struct Column {
-                    public enum Value {
-                    case column(String)
-                    case expression(Expression)
-                    }
-                    public var value: Value
-                    public var collate: String?
-                    public var direction: Direction?
-                }
-                public var columns: [Column]
-                public var predicate: Expression?
-            }
-            
             public enum Action {
                 case nothing
                 case update(SetValues)
@@ -108,32 +94,6 @@ extension SQLiteSerializer {
         case .update(let setValues):
             sql.append("UPDATE")
             sql.append(serialize(setValues, &binds))
-        }
-        return sql.joined(separator: " ")
-    }
-    
-    func serialize(_ indexed: SQLiteQuery.Insert.UpsertClause.IndexedColumns, _ binds: inout [SQLiteData]) -> String {
-        var sql: [String] = []
-        sql.append("(" + indexed.columns.map { serialize($0, &binds) }.joined(separator: ", ") + ")")
-        if let predicate = indexed.predicate {
-            sql.append("WHERE")
-            sql.append(serialize(predicate, &binds))
-        }
-        return sql.joined(separator: " ")
-    }
-    
-    func serialize(_ column: SQLiteQuery.Insert.UpsertClause.IndexedColumns.Column, _ binds: inout [SQLiteData]) -> String {
-        var sql: [String] = []
-        switch column.value {
-        case .column(let string): sql.append(escapeString(string))
-        case .expression(let expr): sql.append(serialize(expr, &binds))
-        }
-        if let collate = column.collate {
-            sql.append("COLLATE")
-            sql.append(collate)
-        }
-        if let direction = column.direction {
-            sql.append(serialize(direction))
         }
         return sql.joined(separator: " ")
     }
