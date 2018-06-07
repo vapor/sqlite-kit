@@ -1,13 +1,5 @@
 extension SQLiteQuery {
     public struct Insert {
-        public enum ConflictResolution {
-            case replace
-            case rollback
-            case abort
-            case fail
-            case ignore
-        }
-        
         public enum Values {
             case values([[Expression]])
             case select(Select)
@@ -30,12 +22,8 @@ extension SQLiteQuery {
             }
             
             public enum Action {
-                public struct Update {
-                    public var columns: [String]
-                    public var value: Expression
-                }
                 case nothing
-                case update([Update], predicate: Expression?)
+                case update(SetValues)
             }
             
             public var indexedColumns: IndexedColumns?
@@ -117,24 +105,10 @@ extension SQLiteSerializer {
         var sql: [String] = []
         switch action {
         case .nothing: sql.append("NOTHING")
-        case .update(let columns, let predicate):
-            sql.append("UPDATE SET")
-            sql.append(columns.map { serialize($0, &binds) }.joined(separator: ", "))
-            if let predicate = predicate {
-                sql.append("WHERE")
-                sql.append(serialize(predicate, &binds))
-            }
+        case .update(let setValues):
+            sql.append("UPDATE")
+            sql.append(serialize(setValues, &binds))
         }
-        return sql.joined(separator: " ")
-    }
-    func serialize(_ update: SQLiteQuery.Insert.UpsertClause.Action.Update, _ binds: inout [SQLiteData]) -> String {
-        var sql: [String] = []
-        switch update.columns.count {
-        case 1: sql.append(escapeString(update.columns[0]))
-        default: sql.append(serialize(columns: update.columns))
-        }
-        sql.append("=")
-        sql.append(serialize(update.value, &binds))
         return sql.joined(separator: " ")
     }
     
@@ -162,15 +136,5 @@ extension SQLiteSerializer {
             sql.append(serialize(direction))
         }
         return sql.joined(separator: " ")
-    }
-    
-    func serialize(_ conflictResolution: SQLiteQuery.Insert.ConflictResolution) -> String {
-        switch conflictResolution {
-        case .abort: return "ABORT"
-        case .fail: return "FAIL"
-        case .ignore: return "IGNORE"
-        case .replace: return "REPLACE"
-        case .rollback: return "ROLLBACK"
-        }
     }
 }

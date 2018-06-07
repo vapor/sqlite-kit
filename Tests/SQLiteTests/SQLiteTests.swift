@@ -19,18 +19,28 @@ class SQLiteTests: XCTestCase {
         try conn.insert(into: Planet.self)
             .value(Planet(name: "Earth"))
             .run().wait()
+        
         try conn.insert(into: Planet.self)
-            .values([Planet(name: "Jupiter"), Planet(name: "Mars")])
+            .values([Planet(name: "Mercury"), Planet(name: "Venus"), Planet(name: "Mars"), Planet(name: "Jpuiter"), Planet(name: "Pluto")])
             .run().wait()
         
-        let res = try conn.select().columns(.all(nil))
+        try conn.update(Planet.self)
+            .where(\Planet.name == "Jpuiter")
+            .set(["name": "Jupiter"])
+            .run().wait()
+        
+        let selectA = try conn.select().all()
             .from(Planet.self)
-            .where {
-                try $0.where(or: \Planet.name == "Mars", \Planet.name == "Jupiter", \Planet.name == "Earth")
-            }
-            .where(\Planet.id != 42)
-            .all(Planet.self).wait()
-        print(res)
+            .where(or: \Planet.name == "Mars", \Planet.name == "Venus", \Planet.name == "Earth")
+            .run(decoding: Planet.self).wait()
+        print(selectA)
+        
+        try conn.delete(from: Planet.self).where(\Planet.name == "Pluto")
+            .run().wait()
+        
+        let selectB = try conn.select().all().from(Planet.self)
+            .run(decoding: Planet.self).wait()
+        print(selectB)
     }
     
     func testTables() throws {

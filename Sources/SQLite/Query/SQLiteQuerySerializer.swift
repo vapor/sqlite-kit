@@ -16,19 +16,37 @@ struct SQLiteSerializer {
     }
 }
 
-public protocol SQLiteQueryBuilder {
+public protocol SQLitePredicateBuilder: class {
     var connection: SQLiteConnection { get }
-    var query: SQLiteQuery { get }
+    var predicate: SQLiteQuery.Expression? { get set }
 }
 
-extension SQLiteQueryBuilder {
-    public func all<D>(_ type: D.Type) -> Future<[D]>
-        where D: Decodable
-    {
-        return all().map { try $0.map { try SQLiteRowDecoder().decode(D.self, from: $0) } }
+extension SQLitePredicateBuilder {
+    public func `where`(_ expressions: SQLiteQuery.Expression...) -> Self {
+        for expression in expressions {
+            self.predicate &= expression
+        }
+        return self
     }
     
-    public func all() -> Future<[[SQLiteColumn: SQLiteData]]> {
-        return connection.query(query)
+    @discardableResult
+    public func `where`(or expressions: SQLiteQuery.Expression...) -> Self {
+        for expression in expressions {
+            self.predicate |= expression
+        }
+        return self
+    }
+    
+    public func `where`(group: (SQLitePredicateBuilder) throws -> ()) rethrows -> Self {
+        let builder = SQLiteQuery.SelectBuilder(on: connection)
+        try group(builder)
+        switch (self.predicate, builder.select.predicate) {
+        case (.some(let a), .some(let b)):
+            self.predicate = a && .expressions([b])
+        case (.none, .some(let b)):
+            self.predicate = .expressions([b])
+        case (.some, .none), (.none, .none): break
+        }
+        return self
     }
 }

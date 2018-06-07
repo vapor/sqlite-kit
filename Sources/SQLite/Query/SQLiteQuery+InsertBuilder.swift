@@ -9,7 +9,7 @@ extension SQLiteQuery {
         }
         
         @discardableResult
-        public func or(_ conflictResolution: SQLiteQuery.Insert.ConflictResolution) -> Self {
+        public func or(_ conflictResolution: SQLiteQuery.ConflictResolution) -> Self {
             insert.conflictResolution = conflictResolution
             return self
         }

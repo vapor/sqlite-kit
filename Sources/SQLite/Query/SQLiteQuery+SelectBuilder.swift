@@ -1,9 +1,9 @@
 extension SQLiteQuery {
-    public final class SelectBuilder: SQLiteQueryBuilder {
+    public final class SelectBuilder: SQLitePredicateBuilder {
         public var select: Select
-        
-        public var query: SQLiteQuery {
-            return .select(select)
+        public var predicate: SQLiteQuery.Expression? {
+            get { return select.predicate }
+            set { select.predicate = newValue }
         }
         
         public let connection: SQLiteConnection
@@ -13,6 +13,12 @@ extension SQLiteQuery {
             self.connection = connection
         }
         
+        @discardableResult
+        public func all() -> Self {
+            return columns(.all(nil))
+        }
+        
+        @discardableResult
         public func columns(_ columns: Select.ResultColumn...) -> Self {
             select.columns += columns
             return self
@@ -28,32 +34,14 @@ extension SQLiteQuery {
             return self
         }
         
-        public func `where`(_ expressions: Expression...) -> Self {
-            for expression in expressions {
-                select.predicate &= expression
-            }
-            return self
+        public func run<D>(decoding type: D.Type) -> Future<[D]>
+            where D: Decodable
+        {
+            return run().map { try $0.map { try SQLiteRowDecoder().decode(D.self, from: $0) } }
         }
         
-        @discardableResult
-        public func `where`(or expressions: Expression...) -> Self {
-            for expression in expressions {
-                select.predicate |= expression
-            }
-            return self
-        }
-        
-        public func `where`(group: (SelectBuilder) throws -> ()) rethrows -> Self {
-            let builder = SelectBuilder(on: connection)
-            try group(builder)
-            switch (select.predicate, builder.select.predicate) {
-            case (.some(let a), .some(let b)):
-                select.predicate = a && .expressions([b])
-            case (.none, .some(let b)):
-                select.predicate = .expressions([b])
-            case (.some, .none), (.none, .none): break
-            }
-            return self
+        public func run() -> Future<[[SQLiteColumn: SQLiteData]]> {
+            return connection.query(.select(select))
         }
     }
 }
