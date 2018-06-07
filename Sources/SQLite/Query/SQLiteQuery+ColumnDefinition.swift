@@ -3,6 +3,12 @@ extension SQLiteQuery {
         public var name: ColumnName
         public var typeName: TypeName?
         public var constraints: [ColumnConstraint]
+        
+        public init(name: ColumnName, typeName: TypeName? = nil, constraints: [ColumnConstraint] = []) {
+            self.name = name
+            self.typeName = typeName
+            self.constraints = constraints
+        }
     }
 }
 

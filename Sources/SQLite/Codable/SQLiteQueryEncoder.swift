@@ -1,7 +1,7 @@
-struct SQLiteQueryEncoder {
-    init() { }
+public struct SQLiteQueryEncoder {
+    public init() { }
     
-    func encode<E>(_ value: E) throws -> [String: SQLiteQuery.Expression]
+    public func encode<E>(_ value: E) throws -> [String: SQLiteQuery.Expression]
         where E: Encodable
     {
         let encoder = _Encoder()

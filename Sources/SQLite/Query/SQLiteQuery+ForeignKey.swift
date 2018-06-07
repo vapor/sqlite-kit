@@ -23,11 +23,32 @@ extension SQLiteQuery {
         public var onUpdate: Action?
         public var match: String?
         public var deferrence: Deferrence?
+        
+        public init(
+            foreignTable: TableName,
+            foreignColumns: [ColumnName],
+            onDelete: Action? = nil,
+            onUpdate: Action? = nil,
+            match: String? = nil,
+            deferrence: Deferrence? = nil
+        ) {
+            self.foreignTable = foreignTable
+            self.foreignColumns = foreignColumns
+            self.onDelete = onDelete
+            self.onUpdate = onUpdate
+            self.match = match
+            self.deferrence = deferrence
+        }
     }
     
     public struct ForeignKey {
         public var columns: [ColumnName]
         public var reference: ForeignKeyReference
+        
+        public init(columns: [ColumnName], reference: ForeignKeyReference) {
+            self.columns = columns
+            self.reference = reference
+        }
     }
 }
 

@@ -13,6 +13,12 @@ extension SQLiteQuery {
         public var value: Value
         public var collate: String?
         public var direction: Direction?
+        
+        public init(value: Value, collate: String? = nil, direction: Direction? = nil) {
+            self.value = value
+            self.collate = collate
+            self.direction = direction
+        }
     }
 }
 

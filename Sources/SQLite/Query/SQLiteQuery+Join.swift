@@ -27,6 +27,11 @@ extension SQLiteQuery {
         }
         public var table: TableOrSubquery
         public var joins: [Join]
+        
+        public init(table: TableOrSubquery, joins: [Join] = []) {
+            self.table = table
+            self.joins = joins
+        }
     }
 }
 

@@ -54,13 +54,13 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
         let sql = query.serialize(&binds)
         return self.query(sql, binds)
     }
-//
-//    public func query(_ query: SQLQuery, onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
-//        var binds = Binds()
-//        let sql = SQLiteSerializer().serialize(query: query, binds: &binds)
-//        return self.query(sql, binds.values, onRow: onRow)
-//    }
-//    
+    
+    public func query(_ query: SQLiteQuery, onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
+        var binds: [SQLiteData] = []
+        let sql = query.serialize(&binds)
+        return self.query(sql, binds, onRow: onRow)
+    }
+
     public func query<D>(_ string: String, _ parameters: [SQLiteData] = [], decoding: D.Type) -> Future<[D]>
         where D: Decodable
     {
