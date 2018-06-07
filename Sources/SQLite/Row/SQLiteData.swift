@@ -10,16 +10,11 @@ extension SQLiteData: CustomStringConvertible {
     /// Description of data
     public var description: String {
         switch self {
-        case .blob(let data):
-            return String(data: data, encoding: .utf8) ?? data.hexDebug
-        case .float(let float):
-            return float.description
-        case .integer(let int):
-            return int.description
-        case .null:
-            return "<null>"
-        case .text(let text):
-            return text
+        case .blob(let data): return "0x" + data.hexEncodedString()
+        case .float(let float): return float.description
+        case .integer(let int): return int.description
+        case .null: return "null"
+        case .text(let text): return "\"" + text + "\""
         }
     }
 }

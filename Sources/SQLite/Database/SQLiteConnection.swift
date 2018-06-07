@@ -42,11 +42,12 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
         sqlite3_close(c)
     }
     
-//    public func query(_ query: SQLQuery) -> Future<[[SQLiteColumn: SQLiteData]]> {
-//        var rows: [[SQLiteColumn: SQLiteData]] = []
-//        return self.query(query) { rows.append($0) }.map { rows }
-//    }
-//    
+    public func query(_ query: SQLiteQuery) -> Future<[[SQLiteColumn: SQLiteData]]> {
+        var binds: [SQLiteData] = []
+        let sql = query.serialize(&binds)
+        return self.query(sql, binds)
+    }
+//
 //    public func query(_ query: SQLQuery, onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
 //        var binds = Binds()
 //        let sql = SQLiteSerializer().serialize(query: query, binds: &binds)

@@ -17,9 +17,22 @@ extension SQLiteQuery {
         public var columns: [ResultColumn]
         public var tables: [TableOrSubquery]
         public var predicate: Expression?
+        
+        public init(
+            with: With? = nil,
+            distinct: Distinct? = nil,
+            columns: [ResultColumn] = [],
+            tables: [TableOrSubquery] = [],
+            predicate: Expression? = nil
+        ) {
+            self.with = with
+            self.distinct = distinct
+            self.columns = columns
+            self.tables = tables
+            self.predicate = predicate
+        }
     }
 }
-
 
 extension SQLiteSerializer {
     func serialize(_ select: SQLiteQuery.Select, _ binds: inout [SQLiteData]) -> String {

@@ -1,11 +1,26 @@
-import Async
-import Core
-@testable import SQLite
+import SQLite
 import XCTest
 
+struct Planet: SQLiteTable {
+    var id: Int?
+    var name: String
+}
+
 class SQLiteTests: XCTestCase {
-    func testSQLQuery() throws {
+    func testSQLQuery() throws {     
+        let conn = try SQLiteConnection.makeTest()
+        _ = try conn.query("DROP TABLE IF EXISTS `Planet`").wait()
+        _ = try conn.query("CREATE TABLE `Planet` (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)").wait()
+        _ = try conn.query("INSERT INTO `Planet` (name) VALUES ('Earth'), ('Jupiter'), ('Mars')").wait()
         
+        let res = try conn.select().columns(.all(nil))
+            .from(Planet.self)
+            .where {
+                try $0.where(or: \Planet.name == "Mars", \Planet.name == "Jupiter", \Planet.name == "Earth")
+            }
+            .where(\Planet.id != 42)
+            .all(Planet.self).wait()
+        print(res)
     }
     
     func testTables() throws {

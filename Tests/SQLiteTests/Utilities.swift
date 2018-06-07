@@ -5,8 +5,10 @@ import XCTest
 
 extension SQLiteConnection {
     static func makeTest() throws -> SQLiteConnection {
-        let group = MultiThreadedEventLoopGroup(numThreads: 1)
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         let sqlite = try SQLiteDatabase(storage: .memory)
-        return try sqlite.newConnection(on: group).wait()
+        let conn = try sqlite.newConnection(on: group).wait()
+        conn.logger = DatabaseLogger(database: .sqlite, handler: PrintLogHandler.init())
+        return conn
     }
 }

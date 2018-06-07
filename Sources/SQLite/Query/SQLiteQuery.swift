@@ -3,12 +3,6 @@ public enum SQLiteQuery {
 }
 
 extension SQLiteQuery {
-    public struct Column {
-        public var schemaName: String?
-        public var tableName: String?
-        public var name: String
-    }
-    
     public struct JoinClause {
         public struct Join {
             public enum Operator {

@@ -13,6 +13,12 @@ extension SQLiteQuery {
     }
 }
 
+extension SQLiteQuery.TableOrSubquery: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self = .table(schema: nil, name: value, alias: nil, nil)
+    }
+}
+
 extension SQLiteSerializer {
     func serialize(_ table: SQLiteQuery.TableOrSubquery, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []

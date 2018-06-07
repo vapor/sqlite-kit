@@ -1,10 +1,13 @@
 struct SQLiteValueEncoder {
     init() { }
     
-    func encode<E>(_ value: E) throws -> SQLiteData
+    func encode<E>(_ value: E) throws -> SQLiteQuery.Expression
         where E: Encodable
     {
-        // VALUE
-        fatalError()
+        if let value = value as? SQLiteDataConvertible {
+            return try .data(value.convertToSQLiteData())
+        } else {
+            return .literal(.string("FOO"))
+        }
     }
 }
