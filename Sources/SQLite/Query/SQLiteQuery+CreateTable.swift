@@ -64,12 +64,9 @@ extension SQLiteSerializer {
     }
     func serialize(_ schema: SQLiteQuery.CreateTable.Schema, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
-        sql.append(
-            "(" +
-            schema.columns.map { serialize($0, &binds) }.joined(separator: ", ") +
-            schema.tableConstraints.map { serialize($0, &binds) }.joined(separator: ", ")
-            + ")"
-        )
+        sql.append("(" + (
+            schema.columns.map { serialize($0, &binds) } + schema.tableConstraints.map { serialize($0, &binds) }
+        ).joined(separator: ", ") + ")")
         if schema.withoutRowID {
             sql.append("WITHOUT ROWID")
         }

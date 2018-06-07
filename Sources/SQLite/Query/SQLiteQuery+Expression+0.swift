@@ -129,7 +129,30 @@ extension SQLiteSerializer {
         case .compare(let compare): return serialize(compare, &binds)
         case .expressions(let exprs):
             return "(" + exprs.map { serialize($0, &binds) }.joined(separator: ", ") + ")"
+        case .function(let function):
+            return serialize(function, &binds)
         default: return "\(expr)"
+        }
+    }
+    
+    func serialize(_ function: SQLiteQuery.Expression.Function, _ binds: inout [SQLiteData]) -> String {
+        if let parameters = function.parameters {
+            return function.name + "(" + serialize(parameters, &binds) + ")"
+        } else {
+            return function.name
+        }
+    }
+    
+    func serialize(_ parameters: SQLiteQuery.Expression.Function.Parameters, _ binds: inout [SQLiteData]) -> String {
+        switch parameters {
+        case .all: return "*"
+        case .expressions(let distinct, let exprs):
+            var sql: [String] = []
+            if distinct {
+                sql.append("DISTINCT")
+            }
+            sql.append(exprs.map { serialize($0, &binds) }.joined(separator: ", "))
+            return sql.joined(separator: " ")
         }
     }
 }
