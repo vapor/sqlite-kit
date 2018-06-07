@@ -16,6 +16,7 @@ extension SQLiteQuery {
         public var distinct: Distinct?
         public var columns: [ResultColumn]
         public var tables: [TableOrSubquery]
+        public var predicate: Expression?
     }
 }
 
@@ -34,6 +35,10 @@ extension SQLiteSerializer {
         if !select.tables.isEmpty {
             sql.append("FROM")
             sql.append(select.tables.map { serialize($0, &binds) }.joined(separator: ", "))
+        }
+        if let predicate = select.predicate {
+            sql.append("WHERE")
+            sql.append(serialize(predicate, &binds))
         }
         return sql.joined(separator: " ")
     }
