@@ -19,25 +19,15 @@ public final class SQLiteDatabase: Database, LogSupporting {
 
     /// See `Database`.
     public func newConnection(on worker: Worker) -> Future<SQLiteConnection> {
-        let promise = worker.eventLoop.newPromise(SQLiteConnection.self)
-        do {
-            // make connection
-            let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX
-            var raw: SQLiteConnection.Raw?
-            guard sqlite3_open_v2(storage.path, &raw, options, nil) == SQLITE_OK else {
-                throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
-            }
-
-            guard let r = raw else {
-                throw SQLiteError(problem: .error, reason: "Unexpected nil database.", source: .capture())
-            }
-
-            let conn = SQLiteConnection(raw: r, on: worker)
-            promise.succeed(result: conn)
-        } catch {
-            promise.fail(error: error)
+        // make connection
+        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX
+        var handle: OpaquePointer?
+        guard sqlite3_open_v2(storage.path, &handle, options, nil) == SQLITE_OK, let c = handle else {
+            let error = SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
+            return worker.future(error: error)
         }
-        return promise.futureResult
+        let conn = SQLiteConnection(c: c, on: worker)
+        return worker.future(conn)
     }
 
     /// See `LogSupporting`.
