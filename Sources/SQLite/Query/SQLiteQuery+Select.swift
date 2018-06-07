@@ -12,14 +12,26 @@ extension SQLiteQuery {
             case expression(Expression, alias: String?)
         }
         
-        public var with: With?
+        public struct WithClause {
+            public struct CommonTableExpression {
+                public var table: String
+                public var columns: [String]
+                public var select: Select
+            }
+            
+            public var recursive: Bool
+            public var expressions: [CommonTableExpression]
+        }
+        
+        
+        public var with: WithClause?
         public var distinct: Distinct?
         public var columns: [ResultColumn]
         public var tables: [TableOrSubquery]
         public var predicate: Expression?
         
         public init(
-            with: With? = nil,
+            with: WithClause? = nil,
             distinct: Distinct? = nil,
             columns: [ResultColumn] = [],
             tables: [TableOrSubquery] = [],
@@ -78,5 +90,24 @@ extension SQLiteSerializer {
                 return serialize(expr, &binds)
             }
         }
+    }
+    
+    func serialize(_ with: SQLiteQuery.Select.WithClause, _ binds: inout [SQLiteData]) -> String {
+        var sql: [String] = []
+        sql.append("WITH")
+        if with.recursive {
+            sql.append("RECURSIVE")
+        }
+        sql.append(with.expressions.map { serialize($0, &binds) }.joined(separator: ", "))
+        return sql.joined(separator: " ")
+    }
+    
+    func serialize(_ cte: SQLiteQuery.Select.WithClause.CommonTableExpression, _ binds: inout [SQLiteData]) -> String {
+        var sql: [String] = []
+        sql.append(escapeString(cte.table))
+        sql.append(serialize(columns: cte.columns))
+        sql.append("AS")
+        sql.append("(" + serialize(cte.select, &binds) + ")")
+        return sql.joined(separator: " ")
     }
 }

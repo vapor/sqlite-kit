@@ -1,19 +1,17 @@
 extension SQLiteQuery {
-    public struct With {
+    public struct WithClause {
         public struct CommonTableExpression {
             public var table: String
-            public var columns: [String]
             public var select: Select
         }
         
         public var recursive: Bool
         public var expressions: [CommonTableExpression]
     }
-    
 }
 
 extension SQLiteSerializer {
-    func serialize(_ with: SQLiteQuery.With, _ binds: inout [SQLiteData]) -> String {
+    func serialize(_ with: SQLiteQuery.WithClause, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
         sql.append("WITH")
         if with.recursive {
@@ -23,7 +21,11 @@ extension SQLiteSerializer {
         return sql.joined(separator: " ")
     }
     
-    func serialize(_ with: SQLiteQuery.With.CommonTableExpression, _ binds: inout [SQLiteData]) -> String {
-        return "FOO"
+    func serialize(_ cte: SQLiteQuery.WithClause.CommonTableExpression, _ binds: inout [SQLiteData]) -> String {
+        var sql: [String] = []
+        sql.append(escapeString(cte.table))
+        sql.append("AS")
+        sql.append("(" + serialize(cte.select, &binds) + ")")
+        return sql.joined(separator: " ")
     }
 }

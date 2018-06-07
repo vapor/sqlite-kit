@@ -102,7 +102,7 @@ extension SQLiteQuery {
 
 extension SQLiteQuery.Expression {
     public static func bind<E>(_ value: E) throws -> SQLiteQuery.Expression where E: Encodable {
-        return try SQLiteValueEncoder().encode(value)
+        return try SQLiteQueryExpressionEncoder().encode(value)
     }
 }
 

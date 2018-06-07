@@ -4,6 +4,10 @@ import XCTest
 struct Planet: SQLiteTable {
     var id: Int?
     var name: String
+    init(id: Int? = nil, name: String) {
+        self.id = id
+        self.name = name
+    }
 }
 
 class SQLiteTests: XCTestCase {
@@ -11,7 +15,13 @@ class SQLiteTests: XCTestCase {
         let conn = try SQLiteConnection.makeTest()
         _ = try conn.query("DROP TABLE IF EXISTS `Planet`").wait()
         _ = try conn.query("CREATE TABLE `Planet` (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)").wait()
-        _ = try conn.query("INSERT INTO `Planet` (name) VALUES ('Earth'), ('Jupiter'), ('Mars')").wait()
+        
+        try conn.insert(into: Planet.self)
+            .value(Planet(name: "Earth"))
+            .run().wait()
+        try conn.insert(into: Planet.self)
+            .values([Planet(name: "Jupiter"), Planet(name: "Mars")])
+            .run().wait()
         
         let res = try conn.select().columns(.all(nil))
             .from(Planet.self)

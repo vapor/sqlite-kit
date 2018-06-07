@@ -1,15 +1,13 @@
 extension SQLiteQuery {
-    public final class SelectBuilder {
-        var select: Select {
-            didSet {
-                print("SELECT:")
-                print(select)
-                print()
-                print()
-                print()
-            }
+    public final class SelectBuilder: SQLiteQueryBuilder {
+        public var select: Select
+        
+        public var query: SQLiteQuery {
+            return .select(select)
         }
-        var connection: SQLiteConnection
+        
+        public let connection: SQLiteConnection
+        
         init(on connection: SQLiteConnection) {
             self.select = .init()
             self.connection = connection
@@ -26,7 +24,7 @@ extension SQLiteQuery {
         }
         
         public func from<Table>(_ table: Table.Type) -> Self where Table: SQLiteTable {
-            select.tables.append(.table(schema: nil, name: Table.sqliteTableName, alias: nil, nil))
+            select.tables.append(.table(.init(name: Table.sqliteTableName), nil))
             return self
         }
         
@@ -56,16 +54,6 @@ extension SQLiteQuery {
             case (.some, .none), (.none, .none): break
             }
             return self
-        }
-        
-        public func all<D>(_ type: D.Type) -> Future<[D]>
-            where D: Decodable
-        {
-            return all().map { try $0.map { try SQLiteRowDecoder().decode(D.self, from: $0) } }
-        }
-        
-        public func all() -> Future<[[SQLiteColumn: SQLiteData]]> {
-            return connection.query(.select(select))
         }
     }
 }
