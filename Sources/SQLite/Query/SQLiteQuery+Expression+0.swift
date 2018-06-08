@@ -44,8 +44,8 @@ extension SQLiteQuery {
         public enum SubsetExpression {
             case subSelect(Select)
             case expressions([Expression])
-            case table(schemaName: String?, name: String)
-            case tableFunction(schemaName: String?, name: String, parameters: [Expression])
+            case table(QualifiedTableName)
+            case tableFunction(schemaName: String?, Function)
         }
         
         public enum ExistsOperator {
@@ -88,7 +88,7 @@ extension SQLiteQuery {
         // <expr> BETWEEN <expr> AND <expr>
         case betweenOperator(Expression, BetweenOperator, Expression, Expression)
         // `<expr> IN (<in-expr>)`
-        case subsetOperator(Expression, SubsetOperator, SubsetExpression)
+        case subset(Expression, SubsetOperator, SubsetExpression)
         case subSelect(ExistsOperator?, Select)
         /// CASE <expr> (WHEN <expr> THEN <expr>) ELSE <expr> END
         case caseExpression(Expression?, [CaseCondition], Expression?)
@@ -124,14 +124,41 @@ extension SQLiteSerializer {
         case .unary(let op, let expr):
             return serialize(op) + " " + serialize(expr, &binds)
         case .binary(let lhs, let op, let rhs):
-            return serialize(lhs, &binds) + " " + serialize(op) + " " + serialize(rhs, &binds)
+            switch (op, rhs) {
+            case (.equal, .literal(let l)) where l == .null: return serialize(lhs, &binds) + " IS NULL"
+            case (.notEqual, .literal(let l)) where l == .null: return serialize(lhs, &binds) + " IS NOT NULL"
+            default: return serialize(lhs, &binds) + " " + serialize(op) + " " + serialize(rhs, &binds)
+            }
         case .column(let col): return serialize(col)
         case .compare(let compare): return serialize(compare, &binds)
         case .expressions(let exprs):
             return "(" + exprs.map { serialize($0, &binds) }.joined(separator: ", ") + ")"
         case .function(let function):
             return serialize(function, &binds)
+        case .subset(let expr, let op, let subset):
+            return serialize(expr, &binds) + " " + serialize(op) + " " + serialize(subset, &binds)
         default: return "\(expr)"
+        }
+    }
+    
+    func serialize(_ op: SQLiteQuery.Expression.SubsetOperator) -> String {
+        switch op {
+        case .in: return "IN"
+        case .notIn: return "NOT IN"
+        }
+    }
+    
+    func serialize(_ subset: SQLiteQuery.Expression.SubsetExpression, _ binds: inout [SQLiteData]) -> String {
+        switch subset {
+        case .expressions(let exprs): return exprs.map { serialize($0, &binds) }.joined(separator: ", ")
+        case .subSelect(let select): return serialize(select, &binds)
+        case .table(let table): return serialize(table)
+        case .tableFunction(let schema, let function):
+            if let schema = schema {
+                return escapeString(schema) + "." + serialize(function, &binds)
+            } else {
+                return serialize(function, &binds)
+            }
         }
     }
     

@@ -1,5 +1,5 @@
 extension SQLiteQuery.Expression {
-    public enum Literal {
+    public enum Literal: Equatable {
         case numeric(String)
         case string(String)
         case blob(Data)
