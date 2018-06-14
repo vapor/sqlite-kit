@@ -1,86 +1,3 @@
-import Async
-import Core
-import Foundation
-
-/// All possibles cases for SQLite data.
-public enum SQLiteData {
-    case integer(Int)
-    case float(Double)
-    case text(String)
-    case blob(Foundation.Data)
-    case null
-}
-
-extension SQLiteData {
-    /// Returns an Int if the data is case .integer
-    public var integer: Int? {
-        switch self {
-        case .integer(let int):
-            return int
-        default:
-            return nil
-        }
-    }
-
-    /// Returns a String if the data is case .text
-    public var text: String? {
-        switch self {
-        case .text(let string):
-            return string
-        default:
-            return nil
-        }
-    }
-
-    /// Returns a float if the data is case .double
-    public var float: Double? {
-        switch self {
-        case .float(let double):
-            return double
-        default:
-            return nil
-        }
-    }
-
-    /// Returns Foundation.Data if the data is case .blob
-    public var blob: Foundation.Data? {
-        switch self {
-        case .blob(let data):
-            return data
-        default:
-            return nil
-        }
-    }
-
-    /// Returns true if the data == .null
-    public var isNull: Bool {
-        switch self {
-        case .null:
-            return true
-        default:
-            return false
-        }
-    }
-}
-
-extension SQLiteData: CustomStringConvertible {
-    /// Description of data
-    public var description: String {
-        switch self {
-        case .blob(let data):
-            return String(data: data, encoding: .utf8) ?? data.hexDebug
-        case .float(let float):
-            return float.description
-        case .integer(let int):
-            return int.description
-        case .null:
-            return "<null>"
-        case .text(let text):
-            return text
-        }
-    }
-}
-
 public protocol SQLiteDataConvertible {
     static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self
     func convertToSQLiteData() throws -> SQLiteData
@@ -91,7 +8,7 @@ extension SQLiteData: SQLiteDataConvertible {
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> SQLiteData {
         return data
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return self
@@ -106,7 +23,7 @@ extension Data: SQLiteDataConvertible {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to Data: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .blob(self)
@@ -122,13 +39,24 @@ extension UUID: SQLiteDataConvertible {
                 throw SQLiteError(problem: .warning, reason: "Could not convert string to UUID: \(string)", source: .capture())
             }
             return uuid
+        case .blob(let data):
+            guard data.count == 16 else {
+                 throw SQLiteError(problem: .warning, reason: "Could not convert to UUID: \(data)", source: .capture())
+            }
+            return UUID(uuid: (
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+                data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]
+            ))
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to UUID: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
-        return .text(uuidString)
+        return .blob(Data([
+            uuid.0, uuid.1, uuid.2, uuid.3, uuid.4, uuid.5, uuid.6, uuid.7,
+            uuid.8, uuid.9, uuid.10, uuid.11, uuid.12, uuid.13, uuid.14, uuid.15
+        ]))
     }
 }
 
@@ -140,7 +68,7 @@ extension Date: SQLiteDataConvertible {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to Date: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .float(timeIntervalSince1970)
@@ -155,7 +83,7 @@ extension String: SQLiteDataConvertible {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .text(self)
@@ -174,7 +102,7 @@ extension URL: SQLiteDataConvertible {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to URL: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .text(description)
@@ -197,7 +125,7 @@ extension FixedWidthInteger {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to \(Self.self): \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         return .integer(numericCast(self))
@@ -224,7 +152,7 @@ extension BinaryFloatingPoint {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         switch self {
@@ -232,34 +160,14 @@ extension BinaryFloatingPoint {
         case let float as Float: return .float(.init(float))
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to SQLiteData: \(Self.self)", source: .capture())
         }
-
+        
     }
 }
 
 extension Double: SQLiteDataConvertible { }
 extension Float: SQLiteDataConvertible { }
-
-extension OptionalType {
-    /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
-    public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self {
-        let wrapped = try requireDataCustomConvertible(WrappedType.self).convertFromSQLiteData(data)
-        return Self.makeOptionalType(wrapped as? WrappedType)
-    }
-
-    /// See `convertToSQLiteData()`
-    public func convertToSQLiteData() throws -> SQLiteData {
-        if let wrapped = self.wrapped {
-            return try requireDataCustomConvertible(wrapped).convertToSQLiteData()
-        } else {
-            return .null
-        }
-    }
-}
-
-extension Optional: SQLiteDataConvertible { }
-
 extension Bool: SQLiteDataConvertible {
-
+    
     /// See `SQLiteDataConvertible.convertFromSQLiteData(_:)`
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Bool {
         switch data {
@@ -269,24 +177,10 @@ extension Bool: SQLiteDataConvertible {
         default: throw SQLiteError(problem: .warning, reason: "Could not convert to Bool: \(data)", source: .capture())
         }
     }
-
+    
     /// See `convertToSQLiteData()`
     public func convertToSQLiteData() throws -> SQLiteData {
         let intValue = self ? 1 : 0
         return SQLiteData.integer(intValue)
     }
-}
-
-func requireDataCustomConvertible<T>(_ type: T) -> SQLiteDataConvertible {
-    guard let custom = type as? SQLiteDataConvertible else {
-        fatalError("`\(T.self)` does not conform to `SQLiteDataConvertible`")
-    }
-    return custom
-}
-
-func requireDataCustomConvertible<T>(_ type: T.Type) -> SQLiteDataConvertible.Type {
-    guard let custom = T.self as? SQLiteDataConvertible.Type else {
-        fatalError("`\(T.self)` does not conform to `SQLiteDataConvertible`")
-    }
-    return custom
 }

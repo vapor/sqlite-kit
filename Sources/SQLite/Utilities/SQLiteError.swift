@@ -1,11 +1,15 @@
+#if os(Linux)
 import CSQLite
+#else
+import SQLite3
+#endif
 import Debugging
 
 /// Errors that can be thrown while using SQLite
-struct SQLiteError: Debuggable {
+public struct SQLiteError: Debuggable {
     let problem: Problem
     public let reason: String
-    var sourceLocation: SourceLocation?
+    public var sourceLocation: SourceLocation?
     public var stackTrace: [String]
     public var identifier: String {
         return problem.rawValue

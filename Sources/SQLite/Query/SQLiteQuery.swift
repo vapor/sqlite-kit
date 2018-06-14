@@ -1,162 +1,23 @@
-import Async
-import Bits
-import CSQLite
-import Dispatch
-import Foundation
+public enum SQLiteQuery {
+    case alterTable(AlterTable)
+    case createTable(CreateTable)
+    case delete(Delete)
+    case dropTable(DropTable)
+    case insert(Insert)
+    case select(Select)
+    case update(Update)
+}
 
-let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-
-/// An executable statement. Use this to bind parameters to a query, and finally
-/// execute the statement asynchronously.
-///
-///     try database.statement("INSERT INTO `foo` VALUES(?, ?)")
-///         .bind(42)
-///         .bind("Hello, world!")
-///         .execute()
-///         .then { ... }
-///         .catch { ... }
-///
-public final class SQLiteQuery {
-    // internal C api pointer for this query
-    typealias Raw = OpaquePointer
-
-    /// the database this statement will
-    /// be executed on.
-    public let connection: SQLiteConnection
-
-    /// the raw query string
-    public let string: String
-
-    /// data bound to this query
-    public var binds: [SQLiteData]
-
-    /// Create a new SQLite statement with a supplied query string and database.
-    internal init(string: String, connection: SQLiteConnection) {
-        self.connection = connection
-        self.string = string
-        self.binds = []
-    }
-
-    /// Resets the query.
-    public func reset(_ statementPointer: OpaquePointer) {
-        sqlite3_reset(statementPointer)
-        sqlite3_clear_bindings(statementPointer)
-    }
-
-    // MARK: Execute
-
-    /// Runs the query, calling the supplied handler for each fetched row.
-    /// The returned future will be completed when the query has finished.
-    public func run(into handler: (SQLiteRow, SQLiteQuery) throws -> () = { _, _ in }) -> Future<Void> {
-        let promise = connection.eventLoop.newPromise(Void.self)
-
-        do {
-            if let results = try blockingExecute() {
-                while let row = try results.blockingFetchRow() {
-                    try handler(row, self)
-                }
-                promise.succeed()
-            } else {
-                promise.succeed()
-            }
-
-        } catch {
-            promise.fail(error: error)
-        }
-
-        return promise.futureResult
-    }
-
-    /// Runs the query, collecting all rows into an array.
-    public func all() -> Future<[SQLiteRow]> {
-        var rows: [SQLiteRow] = []
-
-        return run { row, query in
-            rows.append(row)
-        }.map(to: [SQLiteRow].self) {
-            return rows
-        }
-    }
-
-    /// Executes the query, blocking until complete.
-    private func blockingExecute() throws -> SQLiteResults? {
-        var columns: [SQLiteColumn] = []
-        var raw: Raw?
-
-        // log before anything happens, in case there's an error
-        connection.logger?.record(query: string, values: binds.map { $0.description })
-
-        let ret = sqlite3_prepare_v2(connection.raw, string, -1, &raw, nil)
-        guard ret == SQLITE_OK else {
-            throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-        }
-
-        guard let r = raw else {
-            throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-        }
-
-        var nextBindPosition: Int32 = 1
-
-        for bind in binds {
-            switch bind {
-            case .blob(let value):
-                let count = Int32(value.count)
-                let pointer: UnsafePointer<Byte> = value.withUnsafeBytes { $0 }
-                let ret = sqlite3_bind_blob(r, nextBindPosition, UnsafeRawPointer(pointer), count, SQLITE_TRANSIENT)
-                guard ret == SQLITE_OK else {
-                    throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-                }
-            case .float(let value):
-                let ret = sqlite3_bind_double(r, nextBindPosition, value)
-                guard ret == SQLITE_OK else {
-                    throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-                }
-            case .integer(let value):
-                let ret = sqlite3_bind_int64(r, nextBindPosition, Int64(value))
-                guard ret == SQLITE_OK else {
-                    throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-                }
-            case .null:
-                let ret = sqlite3_bind_null(r, nextBindPosition)
-                if ret != SQLITE_OK {
-                    throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-                }
-            case .text(let value):
-                let strlen = Int32(value.utf8.count)
-                let ret = sqlite3_bind_text(r, nextBindPosition, value, strlen, SQLITE_TRANSIENT)
-                guard ret == SQLITE_OK else {
-                    throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-                }
-            }
-
-            nextBindPosition += 1
-        }
-
-        let count = sqlite3_column_count(r)
-        columns.reserveCapacity(Int(count))
-
-        // iterate over column count and intialize columns once
-        // we will then re-use the columns for each row
-        for i in 0..<count {
-            let column = try SQLiteColumn(query: r, offset: i)
-            columns.append(column)
-        }
-
-        let step = sqlite3_step(r)
-        switch step {
-        case SQLITE_DONE:
-            // no results
-            let ret = sqlite3_finalize(r)
-            guard ret == SQLITE_OK else {
-                throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
-            }
-
-            return nil
-        case SQLITE_ROW:
-            /// there are results, lets fetch them
-            return SQLiteResults(raw: r, columns: columns, on: connection)
-        default:
-            throw SQLiteError(statusCode: step, connection: connection, source: .capture())
+extension SQLiteSerializer {
+    func serialize(_ query: SQLiteQuery, _ binds: inout [SQLiteData]) -> String {
+        switch query {
+        case .alterTable(let alterTable): return serialize(alterTable, &binds)
+        case .createTable(let createTable): return serialize(createTable, &binds)
+        case .delete(let delete): return serialize(delete, &binds)
+        case .dropTable(let dropTable): return serialize(dropTable)
+        case .select(let select): return serialize(select, &binds)
+        case .insert(let insert): return serialize(insert, &binds)
+        case .update(let update): return serialize(update, &binds)
         }
     }
 }
