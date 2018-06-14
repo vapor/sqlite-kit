@@ -1,7 +1,7 @@
-struct SQLiteRowDecoder {
-    init() { }
+public struct SQLiteRowDecoder {
+    public init() { }
     
-    func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: String? = nil) throws -> D
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: String? = nil) throws -> D
         where D: Decodable
     {
         return try D(from: _Decoder(row: row, table: table))

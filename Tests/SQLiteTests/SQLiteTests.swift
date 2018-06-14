@@ -184,11 +184,25 @@ class SQLiteTests: XCTestCase {
         }
     }
     
+    // https://github.com/vapor/sqlite/issues/33
+    func testDecodeSameColumnName() throws {
+        let row: [SQLiteColumn: SQLiteData] = [
+            SQLiteColumn(table: "foo", name: "id"): .text("foo"),
+            SQLiteColumn(table: "bar", name: "id"): .text("bar"),
+        ]
+        struct User: Decodable {
+            var id: String
+        }
+        try XCTAssertEqual(SQLiteRowDecoder().decode(User.self, from: row, table: "foo").id, "foo")
+        try XCTAssertEqual(SQLiteRowDecoder().decode(User.self, from: row, table: "bar").id, "bar")
+    }
+    
     static let allTests = [
         ("testTables", testTables),
         ("testUnicode", testUnicode),
         ("testBigInts", testBigInts),
         ("testBlob", testBlob),
-        ("testError", testError)
+        ("testError", testError),
+        ("testDecodeSameColumnName", testDecodeSameColumnName)
     ]
 }
