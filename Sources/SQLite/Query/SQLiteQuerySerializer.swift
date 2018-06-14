@@ -8,7 +8,7 @@ struct SQLiteSerializer {
     init() { }
     
     func escapeString(_ string: String) -> String {
-        return "`" + string + "`"
+        return "\"" + string + "\""
     }
 }
 
