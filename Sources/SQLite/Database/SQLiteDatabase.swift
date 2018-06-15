@@ -14,14 +14,23 @@ import SQLite3
 ///     try conn.query("SELECT sqlite_version();").wait()
 ///
 public final class SQLiteDatabase: Database, LogSupporting {
-    /// The path to the SQLite file.
+    /// SQLite storage method. See `SQLiteStorage`.
     public let storage: SQLiteStorage
     
+    /// Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
     internal let blockingIO: BlockingIOThreadPool
     
+    /// Internal SQLite database handle.
     internal let handle: OpaquePointer
 
     /// Create a new SQLite database.
+    ///
+    ///     let sqliteDB = SQLiteDatabase(storage: .memory)
+    ///
+    /// - parameters:
+    ///     - storage: SQLite storage method. See `SQLiteStorage`.
+    ///     - threadPool: Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
+    /// - throws: Errors creating the SQLite database.
     public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
         self.storage = storage
         self.blockingIO = threadPool ?? BlockingIOThreadPool(numberOfThreads: 2)
@@ -46,6 +55,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
         conn.logger = logger
     }
     
+    /// Closes the open SQLite handle on deinit.
     deinit {
         sqlite3_close(handle)
         self.blockingIO.shutdownGracefully { error in
@@ -53,12 +63,5 @@ public final class SQLiteDatabase: Database, LogSupporting {
                 print("[SQLite] [ERROR] Could not shutdown BlockingIOThreadPool: \(error)")
             }
         }
-    }
-}
-
-extension DatabaseIdentifier {
-    /// Default `DatabaseIdentifier` for SQLite databases.
-    public static var sqlite: DatabaseIdentifier<SQLiteDatabase> {
-        return "sqlite"
     }
 }
