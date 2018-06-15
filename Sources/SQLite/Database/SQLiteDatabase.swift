@@ -4,7 +4,15 @@ import CSQLite
 import SQLite3
 #endif
 
-/// SQlite database. Used to make connections.
+/// An open SQLite database using in-memory or file-based storage.
+///
+///     let sqliteDB = SQLiteDatabase(storage: .memory)
+///
+/// Use this database to create new connections for executing queries.
+///
+///     let conn = try sqliteDB.newConnection(on: ...).wait()
+///     try conn.query("SELECT sqlite_version();").wait()
+///
 public final class SQLiteDatabase: Database, LogSupporting {
     /// The path to the SQLite file.
     public let storage: SQLiteStorage

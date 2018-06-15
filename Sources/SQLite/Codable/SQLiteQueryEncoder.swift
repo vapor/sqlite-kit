@@ -1,6 +1,34 @@
+/// Encodes keyed `Encodable` values to a `SQLiteQuery` expression dictionary.
+///
+///     struct User: Codable {
+///         var name: String
+///     }
+///
+///     let user = User(name: "Vapor")
+///     let data = try SQLiteQueryEncoder().encode(user)
+///     print(data) // ["name": .data(.text("Vapor"))]
+///
+/// This encoder uses `SQLiteQueryExpressionEncoder` internally. Any types conforming to `SQLiteQueryExpressionRepresentable`
+/// or `SQLiteDataConvertible` will be specially encoded.
+///
+/// This encoder does _not_ support unkeyed or single value codable objects.
 public struct SQLiteQueryEncoder {
+    /// Creates a new `SQLiteQueryEncoder`.
     public init() { }
     
+    /// Encodes keyed `Encodable` values to a `SQLiteQuery` expression dictionary.
+    ///
+    ///     struct User: Codable {
+    ///         var name: String
+    ///     }
+    ///
+    ///     let user = User(name: "Vapor")
+    ///     let data = try SQLiteQueryEncoder().encode(user)
+    ///     print(data) // ["name": .data(.text("Vapor"))]
+    ///
+    /// - parameters:
+    ///     - value: `Encodable` value to encode.
+    /// - returns: `SQLiteQuery` compatible data.
     public func encode<E>(_ value: E) throws -> [String: SQLiteQuery.Expression]
         where E: Encodable
     {

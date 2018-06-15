@@ -4,27 +4,40 @@ import CSQLite
 import SQLite3
 #endif
 
+/// A connection to a SQLite database, created by `SQLiteDatabase`.
+///
+///     let conn = try sqliteDB.newConnection(on: ...).wait()
+///
+/// Use this connection to execute queries on the database.
+///
+///     try conn.query("SELECT sqlite_version();").wait()
+///
+/// You can also build queries, using the available query builders.
+///
+///     let res = try conn.select()
+///         .column(function: "sqlite_version", as: "version")
+///         .run().wait()
+///
 public final class SQLiteConnection: BasicWorker, DatabaseConnection {
+    /// See `DatabaseConnection`.
     public typealias Database = SQLiteDatabase
     
+    /// See `DatabaseConnection`.
     public var isClosed: Bool
 
+    /// See `BasicWorker`.
     public let eventLoop: EventLoop
 
+    /// See `DatabaseConnection`.
     public var extend: Extend
 
     /// Optional logger, if set queries should be logged to it.
     public var logger: DatabaseLogger?
 
+    /// Reference to parent `SQLiteDatabase` that created this connection.
+    /// This reference will ensure the DB stays alive since this connection uses
+    /// it's C pointer handle.
     internal let database: SQLiteDatabase
-
-    /// Returns the last error message, if one exists.
-    internal var errorMessage: String? {
-        guard let raw = sqlite3_errmsg(database.handle) else {
-            return nil
-        }
-        return String(cString: raw)
-    }
 
     /// Create a new SQLite conncetion.
     internal init(database: SQLiteDatabase, on worker: Worker) {
@@ -35,53 +48,50 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
     }
 
     /// Returns an identifier for the last inserted row.
-    public var lastAutoincrementID: Int? {
-        let id = sqlite3_last_insert_rowid(database.handle)
-        return Int(id)
-    }
-
-    /// Closes the database connection.
-    public func close() {
-        isClosed = true
+    public var lastAutoincrementID: Int64? {
+        return sqlite3_last_insert_rowid(database.handle)
     }
     
+    /// Returns the last error message, if one exists.
+    internal var errorMessage: String? {
+        guard let raw = sqlite3_errmsg(database.handle) else {
+            return nil
+        }
+        return String(cString: raw)
+    }
+    
+    /// Executes the supplied `SQLiteQuery` on the connection, aggregating the results into an array.
+    ///
+    ///     let rows = try conn.query("SELECT * FROM users").wait()
+    ///
+    /// - parameters:
+    ///     - query: `SQLiteQuery` to execute.
+    /// - returns: A `Future` containing array of rows.
     public func query(_ query: SQLiteQuery) -> Future<[[SQLiteColumn: SQLiteData]]> {
-        var binds: [SQLiteData] = []
-        let sql = query.serialize(&binds)
-        return self.query(sql, binds)
+        var rows: [[SQLiteColumn: SQLiteData]] = []
+        return self.query(query) { rows.append($0) }.map { rows }
     }
     
+    /// Executes the supplied `SQLiteQuery` on the connection, calling the supplied closure for each row returned.
+    ///
+    ///     try conn.query("SELECT * FROM users") { row in
+    ///         print(row)
+    ///     }.wait()
+    ///
+    /// - parameters:
+    ///     - query: `SQLiteQuery` to execute.
+    ///     - onRow: Callback for handling each row.
+    /// - returns: A `Future` that signals completion of the query.
     public func query(_ query: SQLiteQuery, onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
         var binds: [SQLiteData] = []
         let sql = query.serialize(&binds)
-        return self.query(sql, binds, onRow: onRow)
-    }
-
-    public func query<D>(_ string: String, _ parameters: [SQLiteData] = [], decoding: D.Type) -> Future<[D]>
-        where D: Decodable
-    {
-        return query(string, parameters).map { try $0.map { try SQLiteRowDecoder().decode(D.self, from: $0) } }
-    }
-    
-    public func query(_ string: String, _ parameters: [SQLiteData] = []) -> Future<[[SQLiteColumn: SQLiteData]]> {
-        var rows: [[SQLiteColumn: SQLiteData]] = []
-        return query(string, parameters) { rows.append($0) }.map { rows }
-    }
-    
-    public func query<D>(_ string: String, _ parameters: [SQLiteData] = [], decoding: D.Type, onRow: @escaping (D) throws -> ()) -> Future<Void>
-        where D: Decodable
-    {
-        return query(string, parameters) { try onRow(SQLiteRowDecoder().decode(D.self, from: $0)) }
-    }
-    
-    public func query(_ string: String, _ parameters: [SQLiteData] = [], onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
         let promise = eventLoop.newPromise(Void.self)
         // log before anything happens, in case there's an error
-        logger?.record(query: string, values: parameters.map { $0.description })
+        logger?.record(query: sql, values: binds.map { $0.description })
         database.blockingIO.submit { state in
             do {
-                let statement = try SQLiteStatement(query: string, on: self)
-                try statement.bind(parameters)
+                let statement = try SQLiteStatement(query: sql, on: self)
+                try statement.bind(binds)
                 if let columns = try statement.getColumns() {
                     while let row = try statement.nextRow(for: columns) {
                         self.eventLoop.execute {
@@ -99,5 +109,10 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
             }
         }
         return promise.futureResult
+    }
+    
+    /// See `DatabaseConnection`.
+    public func close() {
+        isClosed = true
     }
 }

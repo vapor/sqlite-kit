@@ -21,6 +21,22 @@ struct Galaxy: SQLiteTable {
 }
 
 class SQLiteTests: XCTestCase {
+    func testVersion() throws {
+        let conn = try SQLiteConnection.makeTest()
+        
+        let res = try conn.query("SELECT sqlite_version();").wait()
+        print(res)
+    }
+    
+    func testVersionBuild() throws {
+        let conn = try SQLiteConnection.makeTest()
+        
+        let res = try conn.select()
+            .column(function: "sqlite_version", as: "version")
+            .run().wait()
+        print(res)
+    }
+    
     func testSQLQuery() throws {     
         let conn = try SQLiteConnection.makeTest()
         

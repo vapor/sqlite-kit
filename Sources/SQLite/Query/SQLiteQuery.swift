@@ -6,6 +6,13 @@ public enum SQLiteQuery {
     case insert(Insert)
     case select(Select)
     case update(Update)
+    case raw(String, [SQLiteData])
+}
+
+extension SQLiteQuery: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self = .raw(value, [])
+    }
 }
 
 extension SQLiteSerializer {
@@ -18,6 +25,9 @@ extension SQLiteSerializer {
         case .select(let select): return serialize(select, &binds)
         case .insert(let insert): return serialize(insert, &binds)
         case .update(let update): return serialize(update, &binds)
+        case .raw(let string, let values):
+            binds = values
+            return string
         }
     }
 }

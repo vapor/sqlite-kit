@@ -1,6 +1,7 @@
 extension SQLiteQuery {
     public final class SelectBuilder: SQLitePredicateBuilder {
         public var select: Select
+        
         public var predicate: SQLiteQuery.Expression? {
             get { return select.predicate }
             set { select.predicate = newValue }
@@ -13,14 +14,24 @@ extension SQLiteQuery {
             self.connection = connection
         }
         
-        @discardableResult
-        public func all() -> Self {
-            return columns(.all(nil))
+        public func column(function: String, as alias: String? = nil) -> Self {
+            return column(function: function, .expressions(distinct: false, []), as: alias)
         }
         
-        @discardableResult
-        public func columns(_ columns: Select.ResultColumn...) -> Self {
-            select.columns += columns
+        public func column(function: String, _ parameters: Expression.Function.Parameters?, as alias: String? = nil) -> Self {
+            return column(expression: .function(.init(name: function, parameters: parameters)), as: alias)
+        }
+        
+        public func column(expression: Expression, as alias: String? = nil) -> Self {
+            return column(.expression(expression, alias: alias))
+        }
+        
+        public func all(table: String? = nil) -> Self {
+            return column(.all(table))
+        }
+        
+        public func column(_ column: Select.ResultColumn) -> Self {
+            select.columns.append(column)
             return self
         }
         

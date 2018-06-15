@@ -1,11 +1,25 @@
-public protocol SQLiteQueryExpressionRepresentable {
-    var sqliteQueryExpression: SQLiteQuery.Expression { get }
-}
-
-struct SQLiteQueryExpressionEncoder {
-    init() { }
+/// Encodes `Encodable` values to `SQLiteQuery.Expression`.
+///
+///     let expr = try SQLiteQueryExpressionEncoder().encode("Hello")
+///     print(expr) // .data(.text("Hello"))
+///
+/// Conform your types to `SQLiteQueryExpressionRepresentable` or `SQLiteDataConvertible` to
+/// customize how they are encoded.
+///
+/// Use `SQLiteQueryEncoder` to encode top-level nested structures, such as models.
+public struct SQLiteQueryExpressionEncoder {
+    /// Creates a new `SQLiteQueryExpressionEncoder`.
+    public init() { }
     
-    func encode<E>(_ value: E) throws -> SQLiteQuery.Expression
+    /// Encodes `Encodable` values to `SQLiteQuery.Expression`.
+    ///
+    ///     let expr = try SQLiteQueryExpressionEncoder().encode("Hello")
+    ///     print(expr) // .data(.text("Hello"))
+    ///
+    /// - parameters:
+    ///     - value: `Encodable` value to encode.
+    /// - returns: `SQLiteQuery.Expression` representing the encoded data.
+    public func encode<E>(_ value: E) throws -> SQLiteQuery.Expression
         where E: Encodable
     {
         if let sqlite = value as? SQLiteQueryExpressionRepresentable {
