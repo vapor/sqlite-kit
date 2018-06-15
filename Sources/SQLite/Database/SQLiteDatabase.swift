@@ -12,14 +12,15 @@ public final class SQLiteDatabase: Database, LogSupporting {
     private let blockingIO: BlockingIOThreadPool
 
     /// Create a new SQLite database.
-    public init(storage: SQLiteStorage) throws {
+    public init(storage: SQLiteStorage = .temporary, isEphemeral: Bool? = nil) throws {
+        let shouldDelete: Bool
         self.storage = storage
         switch storage {
-        case .memory:
-            if FileManager.default.fileExists(atPath: storage.path) {
-                try FileManager.default.removeItem(atPath: storage.path)
-            }
-        case .file: break
+        case .temporary: shouldDelete = isEphemeral ?? true
+        case .file: shouldDelete = isEphemeral ?? false
+        }
+        if shouldDelete && FileManager.default.fileExists(atPath: storage.path) {
+            try FileManager.default.removeItem(atPath: storage.path)
         }
         self.blockingIO = BlockingIOThreadPool(numberOfThreads: 1) // FIXME: configurable
         self.blockingIO.start()
