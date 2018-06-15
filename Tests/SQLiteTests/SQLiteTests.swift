@@ -197,6 +197,33 @@ class SQLiteTests: XCTestCase {
         try XCTAssertEqual(SQLiteRowDecoder().decode(User.self, from: row, table: "bar").id, "bar")
     }
     
+    func testMultiThreading() throws {
+        let db = try SQLiteDatabase(storage: .memory)
+        let elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
+        let a = elg.next()
+        let b = elg.next()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async {
+            let conn = try! db.newConnection(on: a).wait()
+            for _ in 0..<100 {
+                let res = try! conn.query("SELECT (1 + 1) as a;").wait()
+                print(res)
+            }
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global().async {
+            let conn = try! db.newConnection(on: b).wait()
+            for _ in 0..<100 {
+                let res = try! conn.query("SELECT (1 + 1) as b;").wait()
+                print(res)
+            }
+            group.leave()
+        }
+        group.wait()
+    }
+    
     static let allTests = [
         ("testTables", testTables),
         ("testUnicode", testUnicode),

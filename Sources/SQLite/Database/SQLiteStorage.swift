@@ -5,7 +5,7 @@ public enum SQLiteStorage {
 
     var path: String {
         switch self {
-        case .memory: return "/tmp/_swift-tmp.sqlite"
+        case .memory: return ":memory:"
         case .file(let path): return path
         }
     }
