@@ -1,9 +1,9 @@
 extension SQLiteQuery {
     public struct TableName {
-        public var schema: String?
-        public var name: String
+        public var schema: Name?
+        public var name: Name
         
-        public init(schema: String? = nil, name: String) {
+        public init(schema: Name? = nil, name: Name) {
             self.schema = schema
             self.name = name
         }
@@ -38,7 +38,7 @@ extension SQLiteQuery {
 
 extension SQLiteQuery.TableName: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
-        self.init(name: value)
+        self.init(name: .init(value))
     }
 }
 
@@ -56,13 +56,11 @@ extension SQLiteQuery.QualifiedTableName: ExpressibleByStringLiteral {
 
 extension SQLiteSerializer {
     func serialize(_ table: SQLiteQuery.TableName) -> String {
-        var sql: [String] = []
         if let schema = table.schema {
-            sql.append(escapeString(schema) + "." + escapeString(table.name))
+            return serialize(schema) + "." + serialize(table.name)
         } else {
-            sql.append(escapeString(table.name))
+            return serialize(table.name)
         }
-        return sql.joined(separator: " ")
     }
     
     func serialize(_ table: SQLiteQuery.AliasableTableName) -> String {

@@ -70,7 +70,7 @@ extension SQLiteQuery {
         
         case literal(Literal)
         case data(SQLiteData)
-        case column(QualifiedColumnName)
+        case column(ColumnName)
         case unary(UnaryOperator, Expression)
         case binary(Expression, BinaryOperator, Expression)
         case function(Function)

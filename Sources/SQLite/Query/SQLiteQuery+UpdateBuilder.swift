@@ -38,6 +38,6 @@ extension SQLiteConnection {
     public func update<Table>(_ table: Table.Type) -> SQLiteQuery.UpdateBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(table: .init(stringLiteral: Table.sqliteTableName)), on: self)
+        return .init(table: .init(table: .init(table: Table.sqliteTableName)), on: self)
     }
 }

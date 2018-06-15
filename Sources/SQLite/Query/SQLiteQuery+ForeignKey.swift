@@ -18,7 +18,7 @@ extension SQLiteQuery {
         }
         
         public var foreignTable: TableName
-        public var foreignColumns: [ColumnName]
+        public var foreignColumns: [Name]
         public var onDelete: Action?
         public var onUpdate: Action?
         public var match: String?
@@ -26,7 +26,7 @@ extension SQLiteQuery {
         
         public init(
             foreignTable: TableName,
-            foreignColumns: [ColumnName],
+            foreignColumns: [Name],
             onDelete: Action? = nil,
             onUpdate: Action? = nil,
             match: String? = nil,
@@ -42,10 +42,10 @@ extension SQLiteQuery {
     }
     
     public struct ForeignKey {
-        public var columns: [ColumnName]
+        public var columns: [Name]
         public var reference: ForeignKeyReference
         
-        public init(columns: [ColumnName], reference: ForeignKeyReference) {
+        public init(columns: [Name], reference: ForeignKeyReference) {
             self.columns = columns
             self.reference = reference
         }

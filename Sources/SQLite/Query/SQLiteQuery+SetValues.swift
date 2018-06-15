@@ -1,10 +1,10 @@
 extension SQLiteQuery {
     public struct SetValues {
         public struct ColumnGroup {
-            public var columns: [ColumnName]
+            public var columns: [Name]
             public var value: Expression
             
-            public init(columns: [ColumnName], value: Expression) {
+            public init(columns: [Name], value: Expression) {
                 self.columns = columns
                 self.value = value
             }

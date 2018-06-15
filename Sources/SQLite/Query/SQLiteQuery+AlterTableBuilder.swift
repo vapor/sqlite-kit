@@ -13,7 +13,7 @@ extension SQLiteQuery {
         ///     - table: Name of existing table to alter.
         ///     - connection: `SQLiteConnection` to perform the query on.
         init(table: Table.Type, on connection: SQLiteConnection) {
-            self.alter = .init(table: .init(stringLiteral: Table.sqliteTableName), value: .rename(Table.sqliteTableName))
+            self.alter = .init(table: Table.sqliteTableName, value: .rename(Table.sqliteTableName.name))
             self.connection = connection
         }
         
@@ -24,8 +24,8 @@ extension SQLiteQuery {
         /// - parameters:
         ///     - to: New table name.
         /// - returns: Self for chaining.
-        public func rename(to tableName: TableName) -> Self {
-            alter.value = .rename(tableName.name)
+        public func rename(to tableName: Name) -> Self {
+            alter.value = .rename(tableName)
             return self
         }
         
@@ -43,7 +43,7 @@ extension SQLiteQuery {
             type typeName: TypeName? = nil,
             _ constraints: SQLiteQuery.ColumnConstraint...
         ) -> Self {
-            return addColumn(.init(name: keyPath.qualifiedColumnName.name, typeName: typeName, constraints: constraints))
+            return addColumn(.init(name: keyPath.sqliteColumnName.name, typeName: typeName, constraints: constraints))
         }
         
         /// Adds a new column to the table. Only one column can be added per `ALTER` statement.

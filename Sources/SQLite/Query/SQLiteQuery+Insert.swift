@@ -19,7 +19,7 @@ extension SQLiteQuery {
         public var with: WithClause?
         public var conflictResolution: ConflictResolution?
         public var table: AliasableTableName
-        public var columns: [ColumnName]
+        public var columns: [Name]
         public var values: Values
         public var upsert: UpsertClause?
         
@@ -27,7 +27,7 @@ extension SQLiteQuery {
             with: WithClause? = nil,
             conflictResolution: ConflictResolution? = nil,
             table: AliasableTableName,
-            columns: [ColumnName] = [],
+            columns: [Name] = [],
             values: Values = .defaults,
             upsert: UpsertClause? = nil
         ) {

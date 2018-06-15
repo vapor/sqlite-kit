@@ -56,7 +56,7 @@ class SQLiteTests: XCTestCase {
             .run().wait()
         try conn.create(table: Planet.self)
             .column(for: \Planet.id, .integer, .primaryKey(), .notNull)
-            .column(for: \Planet.galaxyID, .integer, .notNull, .foreignKey(to: \Galaxy.id))
+            .column(for: \Planet.galaxyID, .integer, .notNull, .references(\Galaxy.id))
             .run().wait()
 
         try conn.alter(table: Planet.self)

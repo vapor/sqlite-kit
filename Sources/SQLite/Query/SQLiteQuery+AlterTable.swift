@@ -6,7 +6,7 @@ extension SQLiteQuery {
         /// Supported `ALTER TABLE` methods.
         public enum Value {
             /// Renames the table.
-            case rename(String)
+            case rename(Name)
             
             /// Adds a new column to the table.
             case addColumn(ColumnDefinition)
@@ -46,7 +46,7 @@ extension SQLiteSerializer {
         switch value {
         case .rename(let name):
             sql.append("RENAME TO")
-            sql.append(escapeString(name))
+            sql.append(serialize(name))
         case .addColumn(let columnDefinition):
             sql.append("ADD")
             sql.append(serialize(columnDefinition, &binds))

@@ -22,7 +22,7 @@ extension SQLiteQuery {
             case .select: schema = .init(columns: [])
             }
             schema.columns.append(.init(
-                name: keyPath.qualifiedColumnName.name,
+                name: keyPath.sqliteColumnName.name,
                 typeName: typeName,
                 constraints: constraints
             ))
@@ -40,6 +40,6 @@ extension SQLiteConnection {
     public func create<Table>(table: Table.Type) -> SQLiteQuery.CreateTableBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(stringLiteral: Table.sqliteTableName), on: self)
+        return .init(table: Table.sqliteTableName, on: self)
     }
 }

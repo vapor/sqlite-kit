@@ -24,6 +24,6 @@ extension SQLiteConnection {
     public func drop<Table>(table: Table.Type) -> SQLiteQuery.DropTableBuilder
         where Table: SQLiteTable
     {
-        return .init(table: .init(stringLiteral: Table.sqliteTableName), on: self)
+        return .init(table: Table.sqliteTableName, on: self)
     }
 }

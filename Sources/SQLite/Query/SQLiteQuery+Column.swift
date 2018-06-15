@@ -1,53 +1,37 @@
 extension SQLiteQuery {
-    public struct QualifiedColumnName {
-        public var schema: String?
-        public var table: String?
-        public var name: ColumnName
+    /// Represents a SQLite column name with optional table name.
+    public struct ColumnName {
+        /// Optional table name.
+        public var table: TableName?
         
-        public init(schema: String? = nil, table: String? = nil, name: ColumnName) {
-            self.schema = schema
+        /// Column name.
+        public var name: Name
+        
+        /// Creates a new `ColumnName`.
+        public init(table: TableName? = nil, name: Name) {
             self.table = table
             self.name = name
         }
     }
-    
-    public struct ColumnName {
-        public var string: String
-        public init(_ string: String) {
-            self.string = string
-        }
-    }
 }
 
-extension SQLiteQuery.QualifiedColumnName: ExpressibleByStringLiteral {
+// MARK: String Literal
+
+extension SQLiteQuery.ColumnName: ExpressibleByStringLiteral {
+    /// See `ExpressibleByStringLiteral`.
     public init(stringLiteral value: String) {
         self.init(name: .init(stringLiteral: value))
     }
 }
 
-extension SQLiteQuery.ColumnName: ExpressibleByStringLiteral {
-    public init(stringLiteral value: String) {
-        self.init(value)
-    }
-}
+// MARK: Serialize
 
 extension SQLiteSerializer {
-    func serialize(_ columns: [SQLiteQuery.ColumnName]) -> String {
-        return "(" + columns.map(serialize).joined(separator: ", ") + ")"
-    }
-    
-    func serialize(_ column: SQLiteQuery.QualifiedColumnName) -> String {
-        switch (column.schema, column.table) {
-        case (.some(let schema), .some(let table)):
-            return escapeString(schema) + "." + escapeString(table) + "." + serialize(column.name)
-        case (.none, .some(let table)):
-            return escapeString(table) + "." + serialize(column.name)
-        default:
+    func serialize(_ column: SQLiteQuery.ColumnName) -> String {
+        if let table = column.table {   
+            return serialize(table) + "." + serialize(column.name)
+        } else {
             return serialize(column.name)
         }
-    }
-    
-    func serialize(_ column: SQLiteQuery.ColumnName) -> String {
-        return escapeString(column.string)
     }
 }

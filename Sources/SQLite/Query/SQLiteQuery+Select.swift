@@ -15,7 +15,7 @@ extension SQLiteQuery {
         public struct WithClause {
             public struct CommonTableExpression {
                 public var table: String
-                public var columns: [ColumnName]
+                public var columns: [Name]
                 public var select: Select
             }
             
