@@ -10,7 +10,7 @@ internal struct SQLiteStatement {
 
     internal init(query: String, on connection: SQLiteConnection) throws {
         var handle: OpaquePointer?
-        let ret = sqlite3_prepare_v2(connection.c, query, -1, &handle, nil)
+        let ret = sqlite3_prepare_v2(connection.database.handle, query, -1, &handle, nil)
         guard ret == SQLITE_OK, let c = handle else {
             throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
         }

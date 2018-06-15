@@ -9,9 +9,9 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// The path to the SQLite file.
     public let storage: SQLiteStorage
     
-    private let blockingIO: BlockingIOThreadPool
+    internal let blockingIO: BlockingIOThreadPool
     
-    private let handle: OpaquePointer
+    internal let handle: OpaquePointer
 
     /// Create a new SQLite database.
     public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
@@ -29,7 +29,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
 
     /// See `Database`.
     public func newConnection(on worker: Worker) -> Future<SQLiteConnection> {
-        let conn = SQLiteConnection(c: handle, blockingIO: blockingIO, on: worker)
+        let conn = SQLiteConnection(database: self, on: worker)
         return worker.future(conn)
     }
 
@@ -39,6 +39,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
     }
     
     deinit {
+        sqlite3_close(handle)
         self.blockingIO.shutdownGracefully { error in
             if let error = error {
                 print("[SQLite] [ERROR] Could not shutdown BlockingIOThreadPool: \(error)")

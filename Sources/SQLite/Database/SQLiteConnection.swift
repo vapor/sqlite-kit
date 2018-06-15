@@ -15,38 +15,34 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
 
     /// Optional logger, if set queries should be logged to it.
     public var logger: DatabaseLogger?
-    
-    private let blockingIO: BlockingIOThreadPool
 
-    internal let c: OpaquePointer
+    internal let database: SQLiteDatabase
 
     /// Returns the last error message, if one exists.
     internal var errorMessage: String? {
-        guard let raw = sqlite3_errmsg(c) else {
+        guard let raw = sqlite3_errmsg(database.handle) else {
             return nil
         }
         return String(cString: raw)
     }
 
     /// Create a new SQLite conncetion.
-    internal init(c: OpaquePointer, blockingIO: BlockingIOThreadPool, on worker: Worker) {
-        self.c = c
+    internal init(database: SQLiteDatabase, on worker: Worker) {
+        self.database = database
         self.eventLoop = worker.eventLoop
         self.extend = [:]
         self.isClosed = false
-        self.blockingIO = blockingIO
     }
 
     /// Returns an identifier for the last inserted row.
     public var lastAutoincrementID: Int? {
-        let id = sqlite3_last_insert_rowid(c)
+        let id = sqlite3_last_insert_rowid(database.handle)
         return Int(id)
     }
 
     /// Closes the database connection.
     public func close() {
         isClosed = true
-        sqlite3_close(c)
     }
     
     public func query(_ query: SQLiteQuery) -> Future<[[SQLiteColumn: SQLiteData]]> {
@@ -82,7 +78,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
         let promise = eventLoop.newPromise(Void.self)
         // log before anything happens, in case there's an error
         logger?.record(query: string, values: parameters.map { $0.description })
-        blockingIO.submit { state in
+        database.blockingIO.submit { state in
             do {
                 let statement = try SQLiteStatement(query: string, on: self)
                 try statement.bind(parameters)
@@ -103,10 +99,5 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
             }
         }
         return promise.futureResult
-    }
-
-    /// Closes the database when deinitialized.
-    deinit {
-        close()
     }
 }

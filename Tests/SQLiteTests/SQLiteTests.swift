@@ -206,7 +206,8 @@ class SQLiteTests: XCTestCase {
         group.enter()
         DispatchQueue.global().async {
             let conn = try! db.newConnection(on: a).wait()
-            for _ in 0..<100 {
+            for i in 0..<100 {
+                print("a \(i)")
                 let res = try! conn.query("SELECT (1 + 1) as a;").wait()
                 print(res)
             }
@@ -215,7 +216,8 @@ class SQLiteTests: XCTestCase {
         group.enter()
         DispatchQueue.global().async {
             let conn = try! db.newConnection(on: b).wait()
-            for _ in 0..<100 {
+            for i in 0..<100 {
+                print("b \(i)")
                 let res = try! conn.query("SELECT (1 + 1) as b;").wait()
                 print(res)
             }
