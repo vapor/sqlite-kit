@@ -1,35 +1,66 @@
 extension SQLiteQuery {
-    public final class AlterTableBuilder {
+    /// Builds `AlterTable` queries.
+    public final class AlterTableBuilder<Table> where Table: SQLiteTable {
+        /// Query being built.
         public var alter: AlterTable
+        
+        /// Database connection to execute the query on.
         public let connection: SQLiteConnection
         
-        init(table: TableName, on connection: SQLiteConnection) {
-            self.alter = .init(table: table, value: .rename(table.name))
+        /// Creates a new `AlterTableBuilder`.
+        ///
+        /// - parameters:
+        ///     - table: Name of existing table to alter.
+        ///     - connection: `SQLiteConnection` to perform the query on.
+        init(table: Table.Type, on connection: SQLiteConnection) {
+            self.alter = .init(table: .init(stringLiteral: Table.sqliteTableName), value: .rename(Table.sqliteTableName))
             self.connection = connection
         }
         
-        @discardableResult
-        public func rename(to name: String) -> Self {
-            alter.value = .rename(name)
+        /// Renames the table.
+        ///
+        ///     conn.alter(table: Bar.self).rename(to: "foo").run()
+        ///
+        /// - parameters:
+        ///     - to: New table name.
+        /// - returns: Self for chaining.
+        public func rename(to tableName: TableName) -> Self {
+            alter.value = .rename(tableName.name)
             return self
         }
         
-        @discardableResult
-        public func addColumn<Table, Value>(
+        /// Adds a new column to the table. Only one column can be added per `ALTER` statement.
+        ///
+        ///     conn.alter(table: Planet.self).addColumn(for: \.name, type: .text, .notNull).run()
+        ///
+        /// - parameters:
+        ///     - keyPath: Swift `KeyPath` to property that should be added.
+        ///     - type: Name of type to use for this column.
+        ///     - constraints: Zero or more column constraints to add.
+        /// - returns: Self for chaining.
+        public func addColumn<Value>(
             for keyPath: KeyPath<Table, Value>,
-            _ typeName: TypeName? = nil,
+            type typeName: TypeName? = nil,
             _ constraints: SQLiteQuery.ColumnConstraint...
-        ) -> Self
-            where Table: SQLiteTable
-        {
-            alter.value = .addColumn(.init(
-                name: keyPath.qualifiedColumnName.name,
-                typeName: typeName,
-                constraints: constraints
-            ))
+        ) -> Self {
+            return addColumn(.init(name: keyPath.qualifiedColumnName.name, typeName: typeName, constraints: constraints))
+        }
+        
+        /// Adds a new column to the table. Only one column can be added per `ALTER` statement.
+        ///
+        ///     conn.alter(table: Planet.self).addColumn(...).run()
+        ///
+        /// - parameters:
+        ///     - columnDefinition: Column definition to add.
+        /// - returns: Self for chaining.
+        public func addColumn(_ columnDefinition: ColumnDefinition) -> Self {
+            alter.value = .addColumn(columnDefinition)
             return self
         }
         
+        /// Runs the `ALTER` query.
+        ///
+        /// - returns: A `Future` that signals completion.
         public func run() -> Future<Void> {
             return connection.query(.alterTable(alter)).transform(to: ())
         }
@@ -37,9 +68,16 @@ extension SQLiteQuery {
 }
 
 extension SQLiteConnection {
-    public func alter<Table>(table: Table.Type) -> SQLiteQuery.AlterTableBuilder
+    /// Creates a new `AlterTableBuilder`.
+    ///
+    ///     conn.alter(table: Planet.self)...
+    ///
+    /// - parameters:
+    ///     - table: Table to alter.
+    /// - returns: `AlterTableBuilder`.
+    public func alter<Table>(table: Table.Type) -> SQLiteQuery.AlterTableBuilder<Table>
         where Table: SQLiteTable
     {
-        return .init(table: .init(stringLiteral: Table.sqliteTableName), on: self)
+        return .init(table: Table.self, on: self)
     }
 }
