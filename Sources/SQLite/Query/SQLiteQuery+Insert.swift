@@ -16,7 +16,6 @@ extension SQLiteQuery {
             public var action: Action
         }
         
-        public var with: WithClause?
         public var conflictResolution: ConflictResolution?
         public var table: AliasableTableName
         public var columns: [Name]
@@ -24,14 +23,12 @@ extension SQLiteQuery {
         public var upsert: UpsertClause?
         
         public init(
-            with: WithClause? = nil,
             conflictResolution: ConflictResolution? = nil,
             table: AliasableTableName,
             columns: [Name] = [],
             values: Values = .defaults,
             upsert: UpsertClause? = nil
         ) {
-            self.with = with
             self.conflictResolution = conflictResolution
             self.table = table
             self.columns = columns
@@ -45,9 +42,6 @@ extension SQLiteQuery {
 extension SQLiteSerializer {
     func serialize(_ insert: SQLiteQuery.Insert, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
-        if let with = insert.with {
-            sql.append(serialize(with, &binds))
-        }
         sql.append("INSERT")
         if let conflictResolution = insert.conflictResolution {
             sql.append("OR")

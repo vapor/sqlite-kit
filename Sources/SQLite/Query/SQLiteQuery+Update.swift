@@ -1,18 +1,16 @@
 extension SQLiteQuery {
     public struct Update {
-        public var with: WithClause? = nil
         public var conflictResolution: ConflictResolution? = nil
         public var table: QualifiedTableName
         public var values: SetValues
         public var predicate: Expression?
+        
         public init(
-            with: WithClause? = nil,
             conflictResolution: ConflictResolution? = nil,
             table: QualifiedTableName,
             values: SetValues,
             predicate: Expression? = nil
         ) {
-            self.with = with
             self.conflictResolution = conflictResolution
             self.table = table
             self.values = values
@@ -23,9 +21,6 @@ extension SQLiteQuery {
 extension SQLiteSerializer {
     func serialize(_ update: SQLiteQuery.Update, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
-        if let with = update.with {
-            sql.append(serialize(with, &binds))
-        }
         sql.append("UPDATE")
         if let conflictResolution = update.conflictResolution {
             sql.append("OR")
