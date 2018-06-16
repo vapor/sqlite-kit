@@ -65,40 +65,34 @@ extension SQLiteQuery.Expression {
         
         /// `NOT IN`
         case notIn
+        
+        /// `LIKE`
+        case like
+        
+        /// `NOT LIKE`
+        case notLike
+        
+        /// `GLOB`
+        case glob
+        
+        /// `NOT GLOB`
+        case notGlob
+        
+        /// `MATCH`
+        case match
+        
+        /// `NOT MATCH`
+        case notMatch
+        
+        /// `REGEXP`
+        case regexp
+        
+        /// `NOT REGEXP`
+        case notRegexp
     }
 }
 
-public func ==(_ lhs: SQLiteQuery.Expression, _ rhs: SQLiteQuery.Expression) -> SQLiteQuery.Expression {
-    return .binary(lhs, .equal, rhs)
-}
-
-public func !=(_ lhs: SQLiteQuery.Expression, _ rhs: SQLiteQuery.Expression) -> SQLiteQuery.Expression {
-    return .binary(lhs, .notEqual, rhs)
-}
-
-public func ||(_ lhs: SQLiteQuery.Expression, _ rhs: SQLiteQuery.Expression) -> SQLiteQuery.Expression {
-    return .binary(lhs, .or, rhs)
-}
-
-public func &&(_ lhs: SQLiteQuery.Expression, _ rhs: SQLiteQuery.Expression) -> SQLiteQuery.Expression {
-    return .binary(lhs, .and, rhs)
-}
-
-public func &=(_ lhs: inout SQLiteQuery.Expression?, _ rhs: SQLiteQuery.Expression) {
-    if let l = lhs {
-        lhs = l && rhs
-    } else {
-        lhs = rhs
-    }
-}
-
-public func |=(_ lhs: inout SQLiteQuery.Expression?, _ rhs: SQLiteQuery.Expression) {
-    if let l = lhs {
-        lhs = l || rhs
-    } else {
-        lhs = rhs
-    }
-}
+// MARK: Serialize
 
 extension SQLiteSerializer {
     func serialize(_ expr: SQLiteQuery.Expression.BinaryOperator) -> String {
@@ -125,6 +119,14 @@ extension SQLiteSerializer {
         case .notIn: return "NOT IN"
         case .is: return "IS"
         case .isNot: return "IS NOT"
+        case .like: return "LIKE"
+        case .glob: return "GLOB"
+        case .match: return "MATCH"
+        case .regexp: return "REGEXP"
+        case .notLike: return "NOT LIKE"
+        case .notGlob: return "NOT GLOB"
+        case .notMatch: return "NOT MATCH"
+        case .notRegexp: return "NOT REGEXP"
         }
     }
 }

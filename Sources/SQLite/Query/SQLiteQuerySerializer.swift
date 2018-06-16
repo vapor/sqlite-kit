@@ -25,11 +25,20 @@ extension SQLitePredicateBuilder {
         return self
     }
     
-    @discardableResult
-    public func `where`(or expressions: SQLiteQuery.Expression...) -> Self {
+    public func orWhere(_ expressions: SQLiteQuery.Expression...) -> Self {
         for expression in expressions {
             self.predicate |= expression
         }
+        return self
+    }
+    
+    public func `where`(_ lhs: SQLiteQuery.Expression, _ op: SQLiteQuery.Expression.BinaryOperator, _ rhs: SQLiteQuery.Expression) -> Self {
+        predicate &= .binary(lhs, op, rhs)
+        return self
+    }
+    
+    public func orWhere(_ lhs: SQLiteQuery.Expression, _ op: SQLiteQuery.Expression.BinaryOperator, _ rhs: SQLiteQuery.Expression) -> Self {
+        predicate |= .binary(lhs, op, rhs)
         return self
     }
     

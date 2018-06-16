@@ -8,19 +8,16 @@ extension SQLiteQuery {
             self.connection = connection
         }
         
-        @discardableResult
         public func or(_ conflictResolution: SQLiteQuery.ConflictResolution) -> Self {
             insert.conflictResolution = conflictResolution
             return self
         }
         
-        @discardableResult
         public func defaults() throws -> Self {
             insert.values = .defaults
             return self
         }
         
-        @discardableResult
         public func from(_ select: (SelectBuilder) -> ()) throws -> Self {
             let builder = connection.select()
             select(builder)
@@ -28,7 +25,6 @@ extension SQLiteQuery {
             return self
         }
         
-        @discardableResult
         public func value<E>(_ value: E) throws -> Self
             where E: Encodable
         {
@@ -36,7 +32,6 @@ extension SQLiteQuery {
             return self
         }
         
-        @discardableResult
         public func values<E>(_ values: [E]) throws -> Self
             where E: Encodable
         {

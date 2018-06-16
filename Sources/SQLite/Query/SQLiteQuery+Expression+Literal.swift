@@ -3,8 +3,8 @@ extension SQLiteQuery.Expression {
         case numeric(String)
         case string(String)
         case blob(Data)
-        case null
         case bool(Bool)
+        case null
         case currentTime
         case currentDate
         case currentTimestamp

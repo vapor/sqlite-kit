@@ -1,101 +1,68 @@
 extension SQLiteQuery {
     public indirect enum Expression {
-        public struct Function {
-            public enum Parameters {
-                case all
-                case expressions(distinct: Bool, [Expression])
-            }
-            
-            public var name: String
-            public var parameters: Parameters?
-            
-            public init(name: String, parameters: Parameters? = nil) {
-                self.name = name
-                self.parameters = parameters
-            }
+        /// Binds an `Encodable` value as an `Expression`.
+        ///
+        /// - parameters:
+        ///     - value: `Encodable` value to bind.
+        /// - returns: `Expression`.
+        public static func bind<E>(_ value: E) throws -> SQLiteQuery.Expression where E: Encodable {
+            return try SQLiteQueryExpressionEncoder().encode(value)
         }
         
-        public enum BetweenOperator {
-            case between
-            case notBetween
-        }
-        
-        public enum SubsetExpression {
-            case subSelect(Select)
-            case expressions([Expression])
-            case table(QualifiedTableName)
-            case tableFunction(schemaName: String?, Function)
-        }
-        
-        public enum ExistsOperator {
-            case exists
-            case notExists
-        }
-        
-        public struct CaseCondition {
-            public var when: Expression
-            public var then: Expression
-        }
-        
-        public enum RaiseFunction {
-            public enum Fail {
-                case rollback
-                case abort
-                case fail
-            }
-            case ignore
-            case fail(Fail, message: String)
-        }
-        
+        /// Literal strings, integers, and constants.
         case literal(Literal)
+        
+        /// Bound data.
         case data(SQLiteData)
+        
+        /// Column name.
         case column(ColumnName)
-        case unary(UnaryOperator, Expression)
+        
+        /// Binary expression.
         case binary(Expression, BinaryOperator, Expression)
+        
+        /// Function.
         case function(Function)
+        
+        /// Group of expressions.
         case expressions([Expression])
+        
         /// `CAST (<expr> AS <typname>)`
         case cast(Expression, typeName: TypeName)
+        
         /// `<expr> COLLATE <name>`
         case collate(Expression, String)
-        /// <expr> NOT LIKE <expr> ESCAPE <expr>
-        case compare(Compare)
-        // <expr> BETWEEN <expr> AND <expr>
-        case betweenOperator(Expression, BetweenOperator, Expression, Expression)
-        case subSelect(ExistsOperator?, Select)
-        /// CASE <expr> (WHEN <expr> THEN <expr>) ELSE <expr> END
-        case caseExpression(Expression?, [CaseCondition], Expression?)
-        case raiseFunction(RaiseFunction)
+        
+        /// `(SELECT ...)`
+        case subSelect(Select)
     }
 }
 
-extension SQLiteQuery.Expression {
-    public static func bind<E>(_ value: E) throws -> SQLiteQuery.Expression where E: Encodable {
-        return try SQLiteQueryExpressionEncoder().encode(value)
-    }
-}
+// MARK: Swift Literals
 
 extension SQLiteQuery.Expression: ExpressibleByStringLiteral {
+    /// See `ExpressibleByStringLiteral`.
     public init(stringLiteral value: String) {
         self = .column(.init(stringLiteral: value))
     }
 }
 
 extension SQLiteQuery.Expression: ExpressibleByArrayLiteral {
+    /// See `ExpressibleByArrayLiteral`.
     public init(arrayLiteral elements: SQLiteQuery.Expression...) {
         self = .expressions(elements)
     }
 }
 
+// MARK: Serialize
+
 extension SQLiteSerializer {
-    func serialize(_ expr: SQLiteQuery.Expression, _ binds: inout [SQLiteData]) -> String {
+    internal func serialize(_ expr: SQLiteQuery.Expression, _ binds: inout [SQLiteData]) -> String {
         switch expr {
         case .data(let value):
             binds.append(value)
             return "?"
         case .literal(let literal): return serialize(literal)
-        case .unary(let op, let expr):
-            return serialize(op) + " " + serialize(expr, &binds)
         case .binary(let lhs, let op, let rhs):
             switch (op, rhs) {
             case (.equal, .literal(let l)) where l == .null: return serialize(lhs, &binds) + " IS NULL"
@@ -103,29 +70,18 @@ extension SQLiteSerializer {
             default: return serialize(lhs, &binds) + " " + serialize(op) + " " + serialize(rhs, &binds)
             }
         case .column(let col): return serialize(col)
-        case .compare(let compare): return serialize(compare, &binds)
         case .expressions(let exprs):
             return "(" + exprs.map { serialize($0, &binds) }.joined(separator: ", ") + ")"
         case .function(let function):
             return serialize(function, &binds)
-        default: return "\(expr)"
+        case .subSelect(let select): return "(" + serialize(select, &binds) + ")"
+        case .collate(let expr, let collate):
+            return serialize(expr, &binds) + " COLLATE " + collate
+        case .cast(let expr, let typeName):
+            return "CAST (" + serialize(expr, &binds) + " AS " + serialize(typeName) + ")"
         }
     }
     
-//    func serialize(_ subset: SQLiteQuery.Expression.SubsetExpression, _ binds: inout [SQLiteData]) -> String {
-//        switch subset {
-//        case .expressions(let exprs): return exprs.map { serialize($0, &binds) }.joined(separator: ", ")
-//        case .subSelect(let select): return serialize(select, &binds)
-//        case .table(let table): return serialize(table)
-//        case .tableFunction(let schema, let function):
-//            if let schema = schema {
-//                return escapeString(schema) + "." + serialize(function, &binds)
-//            } else {
-//                return serialize(function, &binds)
-//            }
-//        }
-//    }
-//
     func serialize(_ function: SQLiteQuery.Expression.Function, _ binds: inout [SQLiteData]) -> String {
         if let parameters = function.parameters {
             return function.name + "(" + serialize(parameters, &binds) + ")"

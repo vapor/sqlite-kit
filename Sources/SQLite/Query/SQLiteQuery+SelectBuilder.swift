@@ -96,26 +96,6 @@ extension Dictionary where Key == SQLiteColumn, Value == SQLiteData {
     }
 }
 
-public func ==<Table, Value>(_ lhs: KeyPath<Table, Value>, _ rhs: Value) throws -> SQLiteQuery.Expression
-    where Table: SQLiteTable, Value: Encodable
-{
-    return try .binary(.column(lhs.sqliteColumnName), .equal, .bind(rhs))
-}
-
-public func ==<TableA, ValueA, TableB, ValueB>(
-    _ lhs: KeyPath<TableA, ValueA>, _ rhs: KeyPath<TableB, ValueB>
-) -> SQLiteQuery.Expression
-    where TableA: SQLiteTable, ValueA: Encodable, TableB: SQLiteTable, ValueB: Encodable
-{
-    return .binary(.column(lhs.sqliteColumnName), .equal, .column(rhs.sqliteColumnName))
-}
-
-public func !=<Table, Value>(_ lhs: KeyPath<Table, Value>, _ rhs: Value) throws -> SQLiteQuery.Expression
-    where Table: SQLiteTable, Value: Encodable
-{
-    return try .binary(.column(lhs.sqliteColumnName), .notEqual, .bind(rhs))
-}
-
 public protocol SQLiteTable: Codable, Reflectable {
     static var sqliteTableName: SQLiteQuery.TableName { get }
 }

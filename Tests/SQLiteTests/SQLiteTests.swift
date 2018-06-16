@@ -94,7 +94,7 @@ class SQLiteTests: XCTestCase {
         
         let selectA = try conn.select().all()
             .from(Planet.self)
-            .where(or: \Planet.name == "Mars", \Planet.name == "Venus", \Planet.name == "Earth")
+            .orWhere(\Planet.name == "Mars", \Planet.name == "Venus", \Planet.name == "Earth")
             .run(decoding: Planet.self).wait()
         print(selectA)
 
@@ -111,6 +111,12 @@ class SQLiteTests: XCTestCase {
             .run { try ($0.decode(Planet.self), $0.decode(Galaxy.self)) }
             .wait()
         print(selectC)
+        
+        let res = try conn.select().all().from(Planet.self)
+            .where("name", .like, .bind("%rth"))
+            .orWhere(.literal(1), .equal, .literal(2))
+            .run().wait()
+        print(res)
         
         try conn.create(table: Galaxy2.self).temporary().ifNotExists()
             .as { $0.select().all().from(Galaxy.self) }
