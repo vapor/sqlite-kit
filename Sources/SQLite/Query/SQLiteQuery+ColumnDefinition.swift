@@ -1,10 +1,22 @@
 extension SQLiteQuery {
+    /// Column definition.
     public struct ColumnDefinition {
+        /// Column name.
         public var name: Name
-        public var typeName: TypeName?
+        
+        /// Column type name.
+        public var typeName: TypeName
+        
+        /// Zero or more column constraints.
         public var constraints: [ColumnConstraint]
         
-        public init(name: Name, typeName: TypeName? = nil, constraints: [ColumnConstraint] = []) {
+        /// Creates a new `ColumnDefinition`.
+        ///
+        /// - parameters:
+        ///     - name: Column name.
+        ///     - typeName: Column type name.
+        ///     - constraints: Zero or more column constraints.
+        public init(name: Name, typeName: TypeName, constraints: [ColumnConstraint] = []) {
             self.name = name
             self.typeName = typeName
             self.constraints = constraints
@@ -12,13 +24,13 @@ extension SQLiteQuery {
     }
 }
 
+// MARK: Serialize
+
 extension SQLiteSerializer {
     func serialize(_ columnDefinition: SQLiteQuery.ColumnDefinition, _ binds: inout [SQLiteData]) -> String {
         var sql: [String] = []
         sql.append(serialize(columnDefinition.name))
-        if let typeName = columnDefinition.typeName {
-            sql.append(serialize(typeName))
-        }
+        sql.append(serialize(columnDefinition.typeName))
         sql += columnDefinition.constraints.map { serialize($0, &binds) }
         return sql.joined(separator: " ")
     }

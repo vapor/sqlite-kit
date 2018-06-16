@@ -4,43 +4,92 @@ extension SQLiteQuery {
         /// Creates a new `PRIMARY KEY` column constraint.
         ///
         /// - parameters:
+        ///     - direction: Primary key direction.
+        ///     - onConflict: `ON CONFLICT` resolution.
         ///     - autoIncrement: If `true`, the primary key will auto increment.
         ///                      `true` by default.
+        ///     - named: Optional constraint name.
         /// - returns: New column constraint.
-        public static func primaryKey(autoIncrement: Bool = true) -> ColumnConstraint {
-            return .init(.primaryKey(.init(autoIncrement: autoIncrement)))
+        public static func primaryKey(
+            direction: Direction? = nil,
+            onConflict: ConflictResolution? = nil,
+            autoIncrement: Bool = true,
+            named name: String? = nil
+        ) -> ColumnConstraint {
+            return .init(
+                name: name,
+                value: .primaryKey(.init(
+                    direction: direction,
+                    conflictResolution: onConflict,
+                    autoIncrement: autoIncrement
+                ))
+            )
         }
         
         /// Creates a new `NOT NULL` column constraint.
-        public static var notNull: ColumnConstraint {
-            return .init(.nullability(.init(allowNull: false)))
+        ///
+        /// - parameters:
+        ///     - onConflict: `ON CONFLICT` resolution.
+        ///     - named: Optional constraint name.
+        /// - returns: New column constraint.
+        public static func notNull(onConflict: ConflictResolution? = nil, named name: String? = nil) -> ColumnConstraint {
+            return .init(
+                name: name,
+                value: .nullability(.init(allowNull: false, conflictResolution: onConflict))
+            )
+        }
+        
+        /// Creates a new `UNIQUE` column constraint.
+        ///
+        /// - parameters:
+        ///     - onConflict: `ON CONFLICT` resolution.
+        ///     - named: Optional constraint name.
+        /// - returns: New column constraint.
+        public static func unique(onConflict: ConflictResolution? = nil, named name: String? = nil) -> ColumnConstraint {
+            return .init(
+                name: name,
+                value: .unique(.init(conflictResolution: onConflict))
+            )
         }
         
         /// Creates a new `DEFAULT <expr>` column constraint.
         ///
         /// - parameters
         ///     - expression: Expression to evaluate when setting the default value.
+        ///     - named: Optional constraint name.
         /// - returns: New column constraint.
-        public static func `default`(_ expression: Expression) -> ColumnConstraint {
-            return .init(.default(expression))
+        public static func `default`(_ expression: Expression, named name: String? = nil) -> ColumnConstraint {
+            return .init(name: name, value: .default(expression))
         }
         
         /// Creates a new `REFERENCES` column constraint.
         ///
         /// - parameters
         ///     - keyPath: Swift `KeyPath` to referenced column.
+        ///     - onDelete: `ON DELETE` foreign key action.
+        ///     - onUpdate: `ON UPDATE` foreign key action.
+        ///     - deferrable: Foreign key check deferrence.
+        ///     - named: Optional constraint name.
         /// - returns: New column constraint.
-        public static func references<Table, Value>(_ keyPath: KeyPath<Table, Value>) -> ColumnConstraint
+        public static func references<Table, Value>(
+            _ keyPath: KeyPath<Table, Value>,
+            onDelete: ForeignKey.Action? = nil,
+            onUpdate: ForeignKey.Action? = nil,
+            deferrable: ForeignKey.Deferrence? = nil,
+            named name: String? = nil
+        ) -> ColumnConstraint
             where Table: SQLiteTable
         {
-            return .init(.references(.init(
-                foreignTable: Table.sqliteTableName,
-                foreignColumns: [keyPath.sqliteColumnName.name],
-                onDelete: nil,
-                onUpdate: nil,
-                match: nil,
-                deferrence: nil
-            )))
+            return .init(
+                name: name,
+                value: .references(.init(
+                    foreignTable: Table.sqliteTableName,
+                    foreignColumns: [keyPath.sqliteColumnName.name],
+                    onDelete: onDelete,
+                    onUpdate: onUpdate,
+                    deferrence: deferrable
+                )
+            ))
         }
         
         /// Supported column constraint values.
@@ -64,7 +113,7 @@ extension SQLiteQuery {
             case collate(String)
             
             /// `REFERENCES`
-            case references(ForeignKeyReference)
+            case references(ForeignKey.Reference)
         }
         
         /// Optional constraint name.
@@ -78,7 +127,7 @@ extension SQLiteQuery {
         /// - parameters:
         ///     - name: Optional constraint name.
         ///     - value: Constraint value.
-        public init(name: String? = nil, _ value: Value) {
+        public init(name: String? = nil, value: Value) {
             self.name = name
             self.value = value
         }

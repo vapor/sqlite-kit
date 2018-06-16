@@ -1,14 +1,5 @@
 extension SQLiteQuery {
-    public struct ForeignKeyReference {
-        public struct Deferrence {
-            public enum Value {
-                case deferred
-                case immediate
-            }
-            public var not: Bool
-            public var value: Value?
-        }
-        
+    public struct ForeignKey {
         public enum Action {
             case setNull
             case setDefault
@@ -17,35 +8,37 @@ extension SQLiteQuery {
             case noAction
         }
         
-        public var foreignTable: TableName
-        public var foreignColumns: [Name]
-        public var onDelete: Action?
-        public var onUpdate: Action?
-        public var match: String?
-        public var deferrence: Deferrence?
-        
-        public init(
-            foreignTable: TableName,
-            foreignColumns: [Name],
-            onDelete: Action? = nil,
-            onUpdate: Action? = nil,
-            match: String? = nil,
-            deferrence: Deferrence? = nil
-        ) {
-            self.foreignTable = foreignTable
-            self.foreignColumns = foreignColumns
-            self.onDelete = onDelete
-            self.onUpdate = onUpdate
-            self.match = match
-            self.deferrence = deferrence
+        public enum Deferrence {
+            case not
+            case immediate
         }
-    }
-    
-    public struct ForeignKey {
-        public var columns: [Name]
-        public var reference: ForeignKeyReference
         
-        public init(columns: [Name], reference: ForeignKeyReference) {
+        public struct Reference {
+            public var foreignTable: TableName
+            public var foreignColumns: [Name]
+            public var onDelete: Action?
+            public var onUpdate: Action?
+            public var deferrence: Deferrence?
+            
+            public init(
+                foreignTable: TableName,
+                foreignColumns: [Name],
+                onDelete: Action? = nil,
+                onUpdate: Action? = nil,
+                deferrence: Deferrence? = nil
+            ) {
+                self.foreignTable = foreignTable
+                self.foreignColumns = foreignColumns
+                self.onDelete = onDelete
+                self.onUpdate = onUpdate
+                self.deferrence = deferrence
+            }
+        }
+        
+        public var columns: [Name]
+        public var reference: Reference
+        
+        public init(columns: [Name], reference: Reference) {
             self.columns = columns
             self.reference = reference
         }
@@ -61,7 +54,7 @@ extension SQLiteSerializer {
         return sql.joined(separator: " ")
     }
     
-    func serialize(_ foreignKey: SQLiteQuery.ForeignKeyReference) -> String {
+    func serialize(_ foreignKey: SQLiteQuery.ForeignKey.Reference) -> String {
         var sql: [String] = []
         sql.append("REFERENCES")
         sql.append(serialize(foreignKey.foreignTable))
@@ -76,17 +69,13 @@ extension SQLiteSerializer {
             sql.append("ON UPDATE")
             sql.append(serialize(onUpdate))
         }
-        if let match = foreignKey.match {
-            sql.append("MATCH")
-            sql.append(match)
-        }
         if let deferrence = foreignKey.deferrence {
             sql.append(serialize(deferrence))
         }
         return sql.joined(separator: " ")
     }
     
-    func serialize(_ action: SQLiteQuery.ForeignKeyReference.Action) -> String {
+    func serialize(_ action: SQLiteQuery.ForeignKey.Action) -> String {
         switch action {
         case .cascade: return "CASCADE"
         case .noAction: return "NO ACTION"
@@ -96,20 +85,10 @@ extension SQLiteSerializer {
         }
     }
     
-    func serialize(_ deferrence: SQLiteQuery.ForeignKeyReference.Deferrence) -> String {
-        var sql: [String] = []
-        if deferrence.not {
-            sql.append("NOT")
+    func serialize(_ deferrence: SQLiteQuery.ForeignKey.Deferrence) -> String {
+        switch deferrence {
+        case .not: return "NOT DEFERRABLE"
+        case .immediate: return "DEFERRABLE INITIALLY IMMEDIATE"
         }
-        sql.append("DEFERRABLE")
-        switch deferrence.value {
-        case .none: break
-        case .some(let value):
-            switch value {
-            case .deferred: sql.append("INITIALLY DEFERRED")
-            case .immediate: sql.append("INITIALLY IMMEDIATE")
-            }
-        }
-        return sql.joined(separator: " ")
     }
 }

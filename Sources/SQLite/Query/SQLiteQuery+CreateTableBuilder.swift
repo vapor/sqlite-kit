@@ -11,7 +11,7 @@ extension SQLiteQuery {
         @discardableResult
         public func column<Table, Value>(
             for keyPath: KeyPath<Table, Value>,
-            _ typeName: TypeName? = nil,
+            type typeName: TypeName,
             _ constraints: SQLiteQuery.ColumnConstraint...
         ) -> Self
             where Table: SQLiteTable

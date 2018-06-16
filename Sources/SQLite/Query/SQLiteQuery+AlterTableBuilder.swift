@@ -40,7 +40,7 @@ extension SQLiteQuery {
         /// - returns: Self for chaining.
         public func addColumn<Value>(
             for keyPath: KeyPath<Table, Value>,
-            type typeName: TypeName? = nil,
+            type typeName: TypeName,
             _ constraints: SQLiteQuery.ColumnConstraint...
         ) -> Self {
             return addColumn(.init(name: keyPath.sqliteColumnName.name, typeName: typeName, constraints: constraints))

@@ -53,6 +53,18 @@ extension SQLiteQuery.Expression {
         
         /// `OR`
         case or
+        
+        /// `IS`
+        case `is`
+        
+        /// `IS NOT`
+        case isNot
+        
+        /// `IN`
+        case `in`
+        
+        /// `NOT IN`
+        case notIn
     }
 }
 
@@ -109,6 +121,10 @@ extension SQLiteSerializer {
         case .subtract: return "-"
         case .and: return "AND"
         case .or: return "OR"
+        case .in: return "IN"
+        case .notIn: return "NOT IN"
+        case .is: return "IS"
+        case .isNot: return "IS NOT"
         }
     }
 }
