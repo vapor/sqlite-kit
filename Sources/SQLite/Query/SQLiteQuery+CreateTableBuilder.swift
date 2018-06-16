@@ -13,7 +13,7 @@ extension SQLiteQuery {
         ///     - table: Name of existing table to create.
         ///     - connection: `SQLiteConnection` to perform the query on.
         init(table: Table.Type, on connection: SQLiteConnection) {
-            self.create = .init(table: Table.sqliteTableName, source: .schema(.init(columns: [])))
+            self.create = .init(table: Table.sqliteTableName, schemaSource: .definition(.init(columns: [])))
             self.connection = connection
         }
         
@@ -61,7 +61,7 @@ extension SQLiteQuery {
         ///     - columnDefinition: Column definition to add.
         /// - returns: Self for chaining.
         public func column(_ columnDefinition: ColumnDefinition) -> Self {
-            schema.columns.append(columnDefinition)
+            schemaDefinition.columns.append(columnDefinition)
             return self
         }
         
@@ -71,7 +71,7 @@ extension SQLiteQuery {
         ///
         /// https://www.sqlite.org/withoutrowid.html
         public func withoutRowID() -> Self {
-            schema.withoutRowID = true
+            schemaDefinition.withoutRowID = true
             return self
         }
         
@@ -85,7 +85,7 @@ extension SQLiteQuery {
         ///     - closure: Closure accepting a `SQLiteConnection` and returning a `SelectBuilder`.
         /// - returns: Self for chaining.
         public func `as`(_ closure: (SQLiteConnection) -> SelectBuilder) -> Self {
-            create.source = .select(closure(connection).select)
+            create.schemaSource = .select(closure(connection).select)
             return self
         }
         
@@ -101,15 +101,15 @@ extension SQLiteQuery {
         // MARK: Private
         
         /// Convenience accessor for setting schema.
-        private var schema: CreateTable.Schema {
+        private var schemaDefinition: CreateTable.SchemaDefinition {
             get {
-                switch create.source {
-                case .schema(let schema): return schema
+                switch create.schemaSource {
+                case .definition(let definition): return definition
                 case .select: return .init(columns: [])
                 }
             }
             set {
-                create.source = .schema(newValue)
+                create.schemaSource = .definition(newValue)
             }
         }
     }
