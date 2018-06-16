@@ -20,6 +20,10 @@ struct Galaxy: SQLiteTable {
     }
 }
 
+struct Galaxy2: SQLiteTable {
+    
+}
+
 class SQLiteTests: XCTestCase {
     func testVersion() throws {
         let conn = try SQLiteConnection.makeTest()
@@ -51,16 +55,16 @@ class SQLiteTests: XCTestCase {
             .run().wait()
         
         try conn.create(table: Galaxy.self)
-            .column(for: \Galaxy.id, type: .integer, .primaryKey(), .notNull())
-            .column(for: \Galaxy.name, type: .text)
+            .column(for: \.id, type: .integer, .primaryKey(), .notNull())
+            .column(for: \.name, type: .text)
             .run().wait()
         try conn.create(table: Planet.self)
-            .column(for: \Planet.id, type: .integer, .primaryKey(), .notNull())
-            .column(for: \Planet.galaxyID, type: .integer, .notNull(), .references(\Galaxy.id))
+            .column(for: \.id, type: .integer, .primaryKey(), .notNull())
+            .column(for: \.galaxyID, type: .integer, .notNull(), .references(\Galaxy.id))
             .run().wait()
 
         try conn.alter(table: Planet.self)
-            .addColumn(for: \Planet.name, type: .text, .notNull(), .default(.literal("Unamed Planet")))
+            .addColumn(for: \.name, type: .text, .notNull(), .default(.literal("Unamed Planet")))
             .run().wait()
 
         try conn.insert(into: Galaxy.self)
@@ -107,6 +111,10 @@ class SQLiteTests: XCTestCase {
             .run { try ($0.decode(Planet.self), $0.decode(Galaxy.self)) }
             .wait()
         print(selectC)
+        
+        try conn.create(table: Galaxy2.self).temporary().ifNotExists()
+            .as { $0.select().all().from(Galaxy.self) }
+            .run().wait()
     }
     
     func testTables() throws {
