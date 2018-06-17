@@ -84,6 +84,12 @@ public enum SQLiteQuery: SQLQuery {
     public typealias Insert = GenericSQLInsert<TableIdentifier, ColumnIdentifier, Expression>
     
     /// See `SQLQuery`.
+    public typealias Join = GenericSQLJoin<JoinMethod, TableIdentifier, Expression>
+    
+    /// See `SQLQuery`.
+    public typealias JoinMethod = GenericSQLJoinMethod
+    
+    /// See `SQLQuery`.
     public typealias Literal = GenericSQLLiteral
     
     /// See `SQLQuery`.
@@ -93,7 +99,7 @@ public enum SQLiteQuery: SQLQuery {
     public typealias PrimaryKey = SQLitePrimaryKey
     
     /// See `SQLQuery`.
-    public typealias Select = GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Expression, GroupBy, OrderBy>
+    public typealias Select = GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Join, Expression, GroupBy, OrderBy>
     
     /// See `SQLQuery`.
     public typealias SelectExpression = GenericSQLSelectExpression<Expression>

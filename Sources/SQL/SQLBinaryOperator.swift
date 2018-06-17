@@ -160,3 +160,10 @@ public func != <T,V,E>(_ lhs: KeyPath<T, V>, _ rhs: V) -> E
 {
     return E.binary(.column(.keyPath(lhs)), .notEqual, .bind(.encodable(rhs)))
 }
+
+
+public func == <A, B, C, D, E>(_ lhs: KeyPath<A, B>, _ rhs: KeyPath<C, D>) -> E
+    where A: SQLTable, B: Encodable, C: SQLTable, D: Encodable, E: SQLExpression
+{
+    return E.binary(.column(.keyPath(lhs)), .equal, .column(.keyPath(rhs)))
+}

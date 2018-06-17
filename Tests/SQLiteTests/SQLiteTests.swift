@@ -57,14 +57,15 @@ class SQLiteTests: XCTestCase {
             .column(for: \Galaxy.name, type: .text, .notNull)
             .run().wait()
         try conn.create(table: Planet.self)
+            .temporary()
+            .ifNotExists()
             .column(for: \Planet.id, type: .integer, .primaryKey)
-            .withoutRowID()
+            .column(for: \Planet.name, type: .text, .notNull)
             .column(for: \Planet.galaxyID, type: .integer, .notNull, .references(\Galaxy.id))
             .run().wait()
         
         try conn.insert(into: Galaxy.self)
             .value(Galaxy(name: "Milky Way"))
-            .value(Galaxy(id: 5, name: "Milky Way"))
             .run().wait()
         
         let a = try conn.select().all().from(Galaxy.self)
@@ -73,6 +74,33 @@ class SQLiteTests: XCTestCase {
             .orderBy(\Galaxy.name, .descending)
             .all(decoding: Galaxy.self).wait()
         print(a)
+        
+        let galaxyID = conn.lastAutoincrementID.flatMap(Int.init)!
+        try conn.insert(into: Planet.self)
+            .value(Planet(name: "Earth", galaxyID: galaxyID))
+            .run().wait()
+
+        try conn.insert(into: Planet.self)
+            .values([
+                Planet(name: "Mercury", galaxyID: galaxyID),
+                Planet(name: "Venus", galaxyID: galaxyID),
+                Planet(name: "Mars", galaxyID: galaxyID),
+                Planet(name: "Jpuiter", galaxyID: galaxyID),
+                Planet(name: "Pluto", galaxyID: galaxyID)
+            ])
+            .run().wait()
+
+        try conn.update(Planet.self)
+            .where(\Planet.name == "Jpuiter")
+            .set(["name": "Jupiter"])
+            .run().wait()
+
+        let selectC = try conn.select().all()
+            .from(Planet.self)
+            .join(\Planet.galaxyID, to: \Galaxy.id)
+            .all(decoding: Planet.self, Galaxy.self)
+            .wait()
+        print(selectC)
         
         try conn.update(Galaxy.self)
             .set(\Galaxy.name, to: "Milky Way 2")
@@ -114,26 +142,7 @@ class SQLiteTests: XCTestCase {
 //            .value(Galaxy(name: "Milky Way"))
 //            .run().wait()
 //
-//        let galaxyID = conn.lastAutoincrementID.flatMap(Int.init)!
-//
-//        try conn.insert(into: Planet.self)
-//            .value(Planet(name: "Earth", galaxyID: galaxyID))
-//            .run().wait()
-//
-//        try conn.insert(into: Planet.self)
-//            .values([
-//                Planet(name: "Mercury", galaxyID: galaxyID),
-//                Planet(name: "Venus", galaxyID: galaxyID),
-//                Planet(name: "Mars", galaxyID: galaxyID),
-//                Planet(name: "Jpuiter", galaxyID: galaxyID),
-//                Planet(name: "Pluto", galaxyID: galaxyID)
-//            ])
-//            .run().wait()
-//
-//        try conn.update(Planet.self)
-//            .where(\Planet.name == "Jpuiter")
-//            .set(["name": "Jupiter"])
-//            .run().wait()
+
 //
 //        let selectA = try conn.select().all()
 //            .from(Planet.self)

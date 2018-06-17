@@ -2,6 +2,7 @@ public protocol SQLSelect: SQLSerializable {
     associatedtype Distinct: SQLDistinct
     associatedtype SelectExpression: SQLSelectExpression
     associatedtype TableIdentifier: SQLTableIdentifier
+    associatedtype Join: SQLJoin
     associatedtype Expression: SQLExpression
     associatedtype GroupBy: SQLGroupBy
     associatedtype OrderBy: SQLOrderBy
@@ -10,29 +11,31 @@ public protocol SQLSelect: SQLSerializable {
     
     var distinct: Distinct? { get set }
     var columns: [SelectExpression] { get set }
-    var from: [TableIdentifier] { get set }
-    var `where`: Expression? { get set }
+    var tables: [TableIdentifier] { get set }
+    var joins: [Join] { get set }
+    var predicate: Expression? { get set }
     var groupBy: [GroupBy] { get set }
     var orderBy: [OrderBy] { get set }
 }
 
 // MARK: Generic
 
-public struct GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Expression, GroupBy, OrderBy>: SQLSelect
-    where Distinct: SQLDistinct, SelectExpression: SQLSelectExpression, TableIdentifier: SQLTableIdentifier, Expression: SQLExpression, GroupBy: SQLGroupBy, OrderBy: SQLOrderBy
+public struct GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Join, Expression, GroupBy, OrderBy>: SQLSelect
+where Distinct: SQLDistinct, SelectExpression: SQLSelectExpression, TableIdentifier: SQLTableIdentifier, Join: SQLJoin, Expression: SQLExpression, GroupBy: SQLGroupBy, OrderBy: SQLOrderBy
 {
-    public typealias `Self` = GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Expression, GroupBy, OrderBy>
+    public typealias `Self` = GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Join, Expression, GroupBy, OrderBy>
     
     public var distinct: Distinct?
     public var columns: [SelectExpression]
-    public var from: [TableIdentifier]
-    public var `where`: Expression?
+    public var tables: [TableIdentifier]
+    public var joins: [Join]
+    public var predicate: Expression?
     public var groupBy: [GroupBy]
     public var orderBy: [OrderBy]
     
     /// See `SQLSelect`.
     public static func select() -> Self {
-        return .init(distinct: nil, columns: [], from: [], where: nil, groupBy: [], orderBy: [])
+        return .init(distinct: nil, columns: [], tables: [], joins: [], predicate: nil, groupBy: [], orderBy: [])
     }
     
     /// See `SQLSerializable`.
@@ -43,13 +46,16 @@ public struct GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Expr
             sql.append(distinct.serialize(&binds))
         }
         sql.append(columns.serialize(&binds))
-        if !from.isEmpty {
+        if !tables.isEmpty {
             sql.append("FROM")
-            sql.append(from.serialize(&binds))
+            sql.append(tables.serialize(&binds))
         }
-        if let `where` = self.where {
+        if !joins.isEmpty {
+            sql.append(joins.serialize(&binds))
+        }
+        if let predicate = self.predicate {
             sql.append("WHERE")
-            sql.append(`where`.serialize(&binds))
+            sql.append(predicate.serialize(&binds))
         }
         if !groupBy.isEmpty {
             sql.append("GROUP BY")

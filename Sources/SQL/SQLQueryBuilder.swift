@@ -24,6 +24,47 @@ extension SQLQueryFetcher {
         return run(decoding: D.self) { all.append($0) }.map { all }
     }
     
+    public func all<A, B>(decoding a: A.Type, _ b: B.Type) -> Future<[(A, B)]>
+        where A: SQLTable, B: SQLTable
+    {
+        var all: [(A, B)] = []
+        return run(decoding: A.self, B.self) { all.append(($0, $1)) }.map { all }
+    }
+    
+    public func all<A, B, C>(decoding a: A.Type, _ b: B.Type, _ c: C.Type) -> Future<[(A, B, C)]>
+        where A: SQLTable, B: SQLTable, C: SQLTable
+    {
+        var all: [(A, B, C)] = []
+        return run(decoding: A.self, B.self, C.self) { all.append(($0, $1, $2)) }.map { all }
+    }
+    
+    public func run<A, B, C>(
+        decoding a: A.Type, _ b: B.Type, _ c: C.Type,
+        into handler: @escaping (A, B, C) throws -> ()
+    ) -> Future<Void>
+        where A: SQLTable, B: SQLTable, C: SQLTable
+    {
+        return run { row in
+            let a = try Connection.Query.RowDecoder.init().decode(A.self, from: row, table: .table(A.self))
+            let b = try Connection.Query.RowDecoder.init().decode(B.self, from: row, table: .table(B.self))
+            let c = try Connection.Query.RowDecoder.init().decode(C.self, from: row, table: .table(C.self))
+            try handler(a, b, c)
+        }
+    }
+    
+    public func run<A, B>(
+        decoding a: A.Type, _ b: B.Type,
+        into handler: @escaping (A, B) throws -> ()
+    ) -> Future<Void>
+        where A: SQLTable, B: SQLTable
+    {
+        return run { row in
+            let a = try Connection.Query.RowDecoder.init().decode(A.self, from: row, table: .table(A.self))
+            let b = try Connection.Query.RowDecoder.init().decode(B.self, from: row, table: .table(B.self))
+            try handler(a, b)
+        }
+    }
+    
     public func run<D>(
         decoding type: D.Type,
         into handler: @escaping (D) throws -> ()

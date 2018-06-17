@@ -4,12 +4,12 @@ public protocol SQLDelete: SQLSerializable {
     
     static func delete(_ table: TableIdentifier) -> Self
     
-    var from: TableIdentifier { get set }
+    var table: TableIdentifier { get set }
     
     /// If the WHERE clause is not present, all records in the table are deleted. If a WHERE clause is supplied,
     /// then only those rows for which the WHERE clause boolean expression is true are deleted. Rows for which
     /// the expression is false or NULL are retained.
-    var `where`: Expression? { get set }
+    var predicate: Expression? { get set }
 }
 
 // MARK: Generic
@@ -19,23 +19,23 @@ public struct GenericSQLDelete<TableIdentifier, Expression>: SQLDelete
 {
     /// See `SQLDelete`.
     public static func delete(_ table: TableIdentifier) -> GenericSQLDelete<TableIdentifier, Expression> {
-        return .init(from: table, where: nil)
+        return .init(table: table, predicate: nil)
     }
     
     /// See `SQLDelete`.
-    public var from: TableIdentifier
+    public var table: TableIdentifier
     
     /// See `SQLDelete`.
-    public var `where`: Expression?
+    public var predicate: Expression?
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {
         var sql: [String] = []
         sql.append("DELETE FROM")
-        sql.append(from.serialize(&binds))
-        if let `where` = self.where {
+        sql.append(table.serialize(&binds))
+        if let predicate = self.predicate {
             sql.append("WHERE")
-            sql.append(`where`.serialize(&binds))
+            sql.append(predicate.serialize(&binds))
         }
         return sql.joined(separator: " ")
     }

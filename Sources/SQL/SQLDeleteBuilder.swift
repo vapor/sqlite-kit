@@ -1,4 +1,4 @@
-public final class SQLDeleteBuilder<Connection>: SQLQueryBuilder, SQLWhereBuilder
+public final class SQLDeleteBuilder<Connection>: SQLQueryBuilder, SQLPredicateBuilder
     where Connection: SQLConnection
 {
     /// `Delete` query being built.
@@ -13,9 +13,9 @@ public final class SQLDeleteBuilder<Connection>: SQLQueryBuilder, SQLWhereBuilde
     }
     
     /// See `SQLWhereBuilder`.
-    public var `where`: Connection.Query.Delete.Expression? {
-        get { return delete.where }
-        set { delete.where = newValue }
+    public var predicate: Connection.Query.Delete.Expression? {
+        get { return delete.predicate }
+        set { delete.predicate = newValue }
     }
     
     /// Creates a new `SQLDeleteBuilder`.

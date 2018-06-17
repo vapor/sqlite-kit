@@ -1,4 +1,4 @@
-public final class SQLUpdateBuilder<Connection>: SQLQueryBuilder, SQLWhereBuilder
+public final class SQLUpdateBuilder<Connection>: SQLQueryBuilder, SQLPredicateBuilder
     where Connection: SQLConnection
 {
     /// `Update` query being built.
@@ -13,9 +13,9 @@ public final class SQLUpdateBuilder<Connection>: SQLQueryBuilder, SQLWhereBuilde
     }
     
     /// See `SQLWhereBuilder`.
-    public var `where`: Connection.Query.Update.Expression? {
-        get { return update.where }
-        set { update.where = newValue }
+    public var predicate: Connection.Query.Update.Expression? {
+        get { return update.predicate }
+        set { update.predicate = newValue }
     }
     
     /// Creates a new `SQLDeleteBuilder`.

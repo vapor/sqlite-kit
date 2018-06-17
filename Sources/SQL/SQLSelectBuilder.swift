@@ -1,4 +1,4 @@
-public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLWhereBuilder
+public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLPredicateBuilder
     where Connection: SQLConnection
 {
     /// `Select` query being built.
@@ -13,9 +13,9 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLWhereBuilde
     }
     
     /// See `SQLWhereBuilder`.
-    public var `where`: Connection.Query.Select.Expression? {
-        get { return select.where }
-        set { select.where = newValue }
+    public var predicate: Connection.Query.Select.Expression? {
+        get { return select.predicate }
+        set { select.predicate = newValue }
     }
     
     /// Creates a new `SQLCreateTableBuilder`.
@@ -50,14 +50,42 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLWhereBuilde
     }
     
     public func from(_ tables: Connection.Query.Select.TableIdentifier...) -> Self {
-        select.from += tables
+        select.tables += tables
         return self
     }
     
     public func from<Table>(_ table: Table.Type) -> Self
         where Table: SQLTable
     {
-        select.from.append(.table(.identifier(Table.sqlTableIdentifierString)))
+        select.tables.append(.table(.identifier(Table.sqlTableIdentifierString)))
+        return self
+    }
+    
+    public func join<A, B, C, D>(
+        _ local: KeyPath<A, B>,
+        to foreign: KeyPath<C, D>
+    ) -> Self where A: SQLTable, B: Encodable, C: SQLTable, D: Encodable {
+        return join(.default, local, to: foreign)
+    }
+    
+    public func join<A, B, C, D>(
+        _ method: Connection.Query.Select.Join.Method,
+        _ local: KeyPath<A, B>,
+        to foreign: KeyPath<C, D>
+    ) -> Self where A: SQLTable, B: Encodable, C: SQLTable, D: Encodable {
+        return join(method, C.self, on: local == foreign)
+    }
+    
+    public func join<Table>(_ table: Table.Type, on expression: Connection.Query.Select.Join.Expression) -> Self
+        where Table: SQLTable
+    {
+        return join(.default, table, on: expression)
+    }
+    
+    public func join<Table>(_ method: Connection.Query.Select.Join.Method, _ table: Table.Type, on expression: Connection.Query.Select.Join.Expression) -> Self
+        where Table: SQLTable
+    {
+        select.joins.append(.join(method, .table(Table.self), expression))
         return self
     }
     
