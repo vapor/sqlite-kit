@@ -1,6 +1,21 @@
-struct SQLiteDataDecoder {
-    init() { }
+/// Decodes `Decodable` types from `SQLiteData`.
+///
+///     let string = try SQLiteDecoder().decode(String.self, from: .text("Hello"))
+///     print(string) // "Hello"
+///
+public struct SQLiteDataDecoder {
+    /// Creates a new `SQLiteDataDecoder`.
+    public init() { }
     
+    /// Decodes `Decodable` types from `SQLiteData`.
+    ///
+    ///     let string = try SQLiteDecoder().decode(String.self, from: .text("Hello"))
+    ///     print(string) // "Hello"
+    ///
+    /// - parameters:
+    ///     - type: `Decodable` type to decode.
+    ///     - data: `SQLiteData` to decode.
+    /// - returns: Instance of decoded type.
     public func decode<D>(_ type: D.Type, from data: SQLiteData) throws -> D where D: Decodable {
         if let convertible = type as? SQLiteDataConvertible.Type {
             return try convertible.convertFromSQLiteData(data) as! D

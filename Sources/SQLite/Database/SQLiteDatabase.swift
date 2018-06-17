@@ -4,16 +4,33 @@ import CSQLite
 import SQLite3
 #endif
 
-/// SQlite database. Used to make connections.
+/// An open SQLite database using in-memory or file-based storage.
+///
+///     let sqliteDB = SQLiteDatabase(storage: .memory)
+///
+/// Use this database to create new connections for executing queries.
+///
+///     let conn = try sqliteDB.newConnection(on: ...).wait()
+///     try conn.query("SELECT sqlite_version();").wait()
+///
 public final class SQLiteDatabase: Database, LogSupporting {
-    /// The path to the SQLite file.
+    /// SQLite storage method. See `SQLiteStorage`.
     public let storage: SQLiteStorage
     
+    /// Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
     internal let blockingIO: BlockingIOThreadPool
     
+    /// Internal SQLite database handle.
     internal let handle: OpaquePointer
 
     /// Create a new SQLite database.
+    ///
+    ///     let sqliteDB = SQLiteDatabase(storage: .memory)
+    ///
+    /// - parameters:
+    ///     - storage: SQLite storage method. See `SQLiteStorage`.
+    ///     - threadPool: Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
+    /// - throws: Errors creating the SQLite database.
     public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
         self.storage = storage
         self.blockingIO = threadPool ?? BlockingIOThreadPool(numberOfThreads: 2)
@@ -38,6 +55,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
         conn.logger = logger
     }
     
+    /// Closes the open SQLite handle on deinit.
     deinit {
         sqlite3_close(handle)
         self.blockingIO.shutdownGracefully { error in
@@ -45,12 +63,5 @@ public final class SQLiteDatabase: Database, LogSupporting {
                 print("[SQLite] [ERROR] Could not shutdown BlockingIOThreadPool: \(error)")
             }
         }
-    }
-}
-
-extension DatabaseIdentifier {
-    /// Default `DatabaseIdentifier` for SQLite databases.
-    public static var sqlite: DatabaseIdentifier<SQLiteDatabase> {
-        return "sqlite"
     }
 }
