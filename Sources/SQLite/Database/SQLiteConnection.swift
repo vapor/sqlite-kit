@@ -18,7 +18,7 @@ import SQLite3
 ///         .column(function: "sqlite_version", as: "version")
 ///         .run().wait()
 ///
-public final class SQLiteConnection: BasicWorker, DatabaseConnection {
+public final class SQLiteConnection: BasicWorker, DatabaseConnection, SQLConnection {
     /// See `DatabaseConnection`.
     public typealias Database = SQLiteDatabase
     
@@ -82,16 +82,17 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection {
     ///     - query: `SQLiteQuery` to execute.
     ///     - onRow: Callback for handling each row.
     /// - returns: A `Future` that signals completion of the query.
-    public func query(_ query: SQLiteQuery, onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
-        var binds: [SQLiteData] = []
+    public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
+        var binds: [Encodable] = []
         let sql = query.serialize(&binds)
         let promise = eventLoop.newPromise(Void.self)
+        let data = try! binds.map { try SQLiteDataEncoder().encode($0) }
         // log before anything happens, in case there's an error
-        logger?.record(query: sql, values: binds.map { $0.description })
+        logger?.record(query: sql, values: data.map { $0.description })
         database.blockingIO.submit { state in
             do {
                 let statement = try SQLiteStatement(query: sql, on: self)
-                try statement.bind(binds)
+                try statement.bind(data)
                 if let columns = try statement.getColumns() {
                     while let row = try statement.nextRow(for: columns) {
                         self.eventLoop.execute {

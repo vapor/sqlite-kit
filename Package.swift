@@ -14,13 +14,14 @@ let package = Package(
         .package(url: "https://github.com/vapor/database-kit.git", from: "1.0.0"),
     ],
     targets: [
+        .target(name: "SQL", dependencies: ["Core"]),
         .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
     ]
 )
 
 #if os(Linux)
 package.targets.append(.target(name: "CSQLite"))
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging"]))
+package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging", "SQL"]))
 #else
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "DatabaseKit", "Debugging"]))
+package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "DatabaseKit", "Debugging", "SQL"]))
 #endif
