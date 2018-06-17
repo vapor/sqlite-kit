@@ -24,11 +24,11 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLPredicateBu
         self.connection = connection
     }
     
-    public func column(function: String, as alias: String? = nil) -> Self {
-        return column(function: function, as: alias)
-    }
-    
-    public func column(function: String, _ arguments: Connection.Query.Select.SelectExpression.Expression.Function.Argument..., as alias: String? = nil) -> Self {
+    public func column(
+        function: String,
+        _ arguments: Connection.Query.Select.SelectExpression.Expression.Function.Argument...,
+        as alias: String? = nil
+    ) -> Self {
         return column(expression: .function(.function(function, arguments)), as: alias)
     }
     

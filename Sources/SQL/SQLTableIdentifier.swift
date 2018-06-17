@@ -17,17 +17,27 @@ extension SQLTableIdentifier {
 
 // MARK: Generic
 
-public struct GenericSQLTableIdentifier<Identifier>: SQLTableIdentifier
+public struct GenericSQLTableIdentifier<Identifier>: SQLTableIdentifier, ExpressibleByStringLiteral
     where Identifier: SQLIdentifier
 {
     /// See `SQLTableIdentifier`.
     public static func table(_ identifier: Identifier) -> GenericSQLTableIdentifier<Identifier> {
-        return .init(identifier: identifier)
+        return .init(identifier)
     }
     
     /// See `SQLTableIdentifier`.
     public var identifier: Identifier
-    
+
+    /// Creates a new `GenericSQLTableIdentifier`.
+    public init(_ identifier: Identifier) {
+        self.identifier = identifier
+    }
+
+    /// See `ExpressibleByStringLiteral`.
+    public init(stringLiteral value: String) {
+        self.identifier = .identifier(value)
+    }
+
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {
         return identifier.serialize(&binds)

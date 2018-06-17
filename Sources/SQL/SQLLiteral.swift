@@ -10,7 +10,7 @@ public protocol SQLLiteral: SQLSerializable {
 
 // MARK: Generic
 
-public enum GenericSQLLiteral: SQLLiteral {
+public enum GenericSQLLiteral: SQLLiteral, ExpressibleByStringLiteral, ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
     /// See `SQLLiteral`.
     public static func string(_ string: String) -> GenericSQLLiteral {
         return ._string(string)
@@ -35,7 +35,22 @@ public enum GenericSQLLiteral: SQLLiteral {
     public static func boolean(_ bool: Bool) -> GenericSQLLiteral {
         return ._boolean(bool)
     }
-    
+
+    /// See `ExpressibleByStringLiteral`.
+    public init(stringLiteral value: String) {
+        self = .string(value)
+    }
+
+    /// See `ExpressibleByFloatLiteral`.
+    public init(floatLiteral value: Double) {
+        self = .numeric(value.description)
+    }
+
+    /// See `ExpressibleByIntegerLiteral`.
+    public init(integerLiteral value: Int) {
+        self = .numeric(value.description)
+    }
+
     case _string(String)
     case _numeric(String)
     case _null

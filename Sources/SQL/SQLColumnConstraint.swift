@@ -51,7 +51,7 @@ extension SQLColumnConstraint {
     public static func `default`(
         _ expression: ColumnConstraintAlgorithm.Expression,
         identifier: Identifier? = nil
-        ) -> Self {
+    ) -> Self {
         return .constraint(.default(expression), identifier)
     }
     

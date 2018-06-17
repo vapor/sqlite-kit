@@ -26,7 +26,7 @@ public struct SQLiteRowDecoder: SQLRowDecoder {
     ///     - type: `Decodable` type to decode.
     ///     - data: SQLite row (`[SQLiteColumn: SQLiteData]`) to decode.
     /// - returns: Instance of decoded type.
-    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: SQLiteQuery.TableIdentifier? = nil) throws -> D
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: SQLiteTableIdentifier? = nil) throws -> D
         where D: Decodable
     {
         return try D(from: _Decoder(row: row, table: table?.identifier.string))

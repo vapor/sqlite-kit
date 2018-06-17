@@ -5,5 +5,5 @@
 /// By default, types will encode to `SQLiteQuery.Expression.data(...)`.
 public protocol SQLiteQueryExpressionRepresentable {
     /// Custom `SQLiteQuery.Expression` to encode to. 
-    var sqliteQueryExpression: SQLiteQuery.Expression { get }
+    var sqliteQueryExpression: SQLiteExpression { get }
 }

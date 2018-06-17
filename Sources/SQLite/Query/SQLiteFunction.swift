@@ -1,5 +1,5 @@
 public struct SQLiteFunction: SQLFunction {
-    public typealias Argument = GenericSQLFunctionArgument<SQLiteQuery.Expression>
+    public typealias Argument = GenericSQLFunctionArgument<SQLiteExpression>
     
     public static var count: SQLiteFunction {
         return .init(name: "COUNT", arguments: [.all])

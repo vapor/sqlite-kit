@@ -12,7 +12,7 @@ public protocol SQLColumnIdentifier: SQLSerializable {
 
 
 extension SQLColumnIdentifier {
-    static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
+    public static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
         guard let property = try! T.reflectProperty(forKey: keyPath) else {
             fatalError("Could not reflect property of type \(V.self) on \(T.self): \(keyPath)")
         }
@@ -20,13 +20,13 @@ extension SQLColumnIdentifier {
     }
 }
 extension SQLTableIdentifier {
-    static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
+    public static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
         return .table(.identifier(T.sqlTableIdentifierString))
     }
 }
 
 extension SQLIdentifier {
-    static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
+    public static func keyPath<T,V>(_ keyPath: KeyPath<T, V>) -> Self where T: SQLTable {
         guard let property = try! T.reflectProperty(forKey: keyPath) else {
             fatalError("Could not reflect property of type \(V.self) on \(T.self): \(keyPath)")
         }

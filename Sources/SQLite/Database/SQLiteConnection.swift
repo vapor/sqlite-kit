@@ -60,18 +60,6 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, SQLConnect
         return String(cString: raw)
     }
     
-    /// Executes the supplied `SQLiteQuery` on the connection, aggregating the results into an array.
-    ///
-    ///     let rows = try conn.query("SELECT * FROM users").wait()
-    ///
-    /// - parameters:
-    ///     - query: `SQLiteQuery` to execute.
-    /// - returns: A `Future` containing array of rows.
-    public func query(_ query: SQLiteQuery) -> Future<[[SQLiteColumn: SQLiteData]]> {
-        var rows: [[SQLiteColumn: SQLiteData]] = []
-        return self.query(query) { rows.append($0) }.map { rows }
-    }
-    
     /// Executes the supplied `SQLiteQuery` on the connection, calling the supplied closure for each row returned.
     ///
     ///     try conn.query("SELECT * FROM users") { row in

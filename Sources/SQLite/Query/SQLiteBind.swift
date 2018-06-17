@@ -11,7 +11,7 @@ public struct SQLiteBind: SQLBind {
     }
     
     public enum Value {
-        case expression(SQLiteQuery.Expression)
+        case expression(SQLiteExpression)
         case encodable(Encodable)
     }
     

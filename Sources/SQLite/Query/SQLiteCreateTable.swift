@@ -15,12 +15,14 @@ extension SQLCreateTableBuilder where Connection.Query.CreateTable == SQLiteCrea
 /// https://www.sqlite.org/lang_createtable.html
 public struct SQLiteCreateTable: SQLCreateTable {
     /// See `SQLCreateTable`.
-    public static func createTable(_ table: SQLiteQuery.TableIdentifier) -> SQLiteCreateTable {
+    public static func createTable(_ table: SQLiteTableIdentifier) -> SQLiteCreateTable {
         return .init(createTable: .createTable(table), withoutRowID: false)
     }
     
     /// See `SQLCreateTable`.
-    public var createTable: GenericSQLCreateTable<SQLiteQuery.TableIdentifier, SQLiteQuery.ColumnDefinition, SQLiteQuery.TableConstraint>
+    public var createTable: GenericSQLCreateTable<
+        SQLiteTableIdentifier, SQLiteColumnDefinition, SQLiteTableConstraint
+    >
     
     
     /// See `SQLCreateTable`.
@@ -36,19 +38,19 @@ public struct SQLiteCreateTable: SQLCreateTable {
     }
     
     /// See `SQLCreateTable`.
-    public var table: SQLiteQuery.TableIdentifier {
+    public var table: SQLiteTableIdentifier {
         get { return createTable.table }
         set { return createTable.table = newValue }
     }
     
     /// See `SQLCreateTable`.
-    public var columns: [SQLiteQuery.ColumnDefinition] {
+    public var columns: [SQLiteColumnDefinition] {
         get { return createTable.columns }
         set { return createTable.columns = newValue }
     }
     
     /// See `SQLCreateTable`.
-    public var tableConstraints: [SQLiteQuery.TableConstraint] {
+    public var tableConstraints: [SQLiteTableConstraint] {
         get { return createTable.tableConstraints }
         set { return createTable.tableConstraints = newValue }
     }
