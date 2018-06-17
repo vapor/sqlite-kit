@@ -1,29 +1,25 @@
 public protocol SQLUpdate: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Identifier: SQLIdentifier
-    associatedtype Expression: SQLExpression
+    associatedtype Query: SQLQuery
     
-    static func update(_ table: TableIdentifier) -> Self
+    static func update(_ table: Query.TableIdentifier) -> Self
     
-    var table: TableIdentifier { get set }
-    var values: [(Identifier, Expression)] { get set }
-    var predicate: Expression? { get set }
+    var table: Query.TableIdentifier { get set }
+    var values: [(Query.Identifier, Query.Expression)] { get set }
+    var predicate: Query.Expression? { get set }
 }
 
 // MARK: Generic
 
-public struct GenericSQLUpdate<TableIdentifier, Identifier, Expression>: SQLUpdate
-    where TableIdentifier: SQLTableIdentifier, Identifier: SQLIdentifier, Expression: SQLExpression
-{
-    public typealias `Self` = GenericSQLUpdate<TableIdentifier, Identifier, Expression>
+public struct GenericSQLUpdate<Query>: SQLUpdate where Query: SQLQuery {
+    public typealias `Self` = GenericSQLUpdate<Query>
     
-    public static func update(_ table: TableIdentifier) -> Self {
+    public static func update(_ table: Query.TableIdentifier) -> Self {
         return .init(table: table, values: [], predicate: nil)
     }
     
-    public var table: TableIdentifier
-    public var values: [(Identifier, Expression)]
-    public var predicate: Expression?
+    public var table: Query.TableIdentifier
+    public var values: [(Query.Identifier, Query.Expression)]
+    public var predicate: Query.Expression?
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

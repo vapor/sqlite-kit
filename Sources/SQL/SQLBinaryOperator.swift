@@ -1,4 +1,5 @@
 public protocol SQLBinaryOperator: SQLSerializable {
+    associatedtype Query: SQLQuery
     static var equal: Self { get }
     static var notEqual: Self { get }
     static var and: Self { get }
@@ -7,18 +8,18 @@ public protocol SQLBinaryOperator: SQLSerializable {
 
 // MARK: Generic
 
-public enum GenericSQLBinaryOperator: SQLBinaryOperator {
+public enum GenericSQLBinaryOperator<Query>: SQLBinaryOperator where Query: SQLQuery {
     /// See `SQLBinaryOperator`.
-    public static var equal: GenericSQLBinaryOperator { return ._equal }
+    public static var equal: GenericSQLBinaryOperator<Query> { return ._equal }
     
     /// See `SQLBinaryOperator`.
-    public static var notEqual: GenericSQLBinaryOperator { return ._notEqual }
+    public static var notEqual: GenericSQLBinaryOperator<Query> { return ._notEqual }
     
     /// See `SQLBinaryOperator`.
-    public static var and: GenericSQLBinaryOperator { return ._and }
+    public static var and: GenericSQLBinaryOperator<Query> { return ._and }
     
     /// See `SQLBinaryOperator`.
-    public static var or: GenericSQLBinaryOperator { return ._or }
+    public static var or: GenericSQLBinaryOperator<Query> { return ._or }
     
     /// `||`
     case _concatenate

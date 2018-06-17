@@ -1,8 +1,8 @@
 public protocol SQLTableIdentifier: SQLSerializable {
-    associatedtype Identifier: SQLIdentifier
+    associatedtype Query: SQLQuery
     
-    static func table(_ identifier: Identifier) -> Self
-    var identifier: Identifier { get set }
+    static func table(_ identifier: Query.Identifier) -> Self
+    var identifier: Query.Identifier { get set }
 }
 
 // MARK: Convenience
@@ -17,19 +17,19 @@ extension SQLTableIdentifier {
 
 // MARK: Generic
 
-public struct GenericSQLTableIdentifier<Identifier>: SQLTableIdentifier, ExpressibleByStringLiteral
-    where Identifier: SQLIdentifier
-{
+public struct GenericSQLTableIdentifier<Query>: where Query: SQLQuery {
+    public typealias `Self` = GenericSQLTableIdentifier<Query>
+
     /// See `SQLTableIdentifier`.
-    public static func table(_ identifier: Identifier) -> GenericSQLTableIdentifier<Identifier> {
+    public static func table(_ identifier: Identifier) -> Self {
         return .init(identifier)
     }
     
     /// See `SQLTableIdentifier`.
-    public var identifier: Identifier
+    public var identifier: Query.Identifier
 
     /// Creates a new `GenericSQLTableIdentifier`.
-    public init(_ identifier: Identifier) {
+    public init(_ identifier: Query.Identifier) {
         self.identifier = identifier
     }
 

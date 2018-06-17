@@ -1,26 +1,21 @@
 public protocol SQLColumnConstraintAlgorithm: SQLSerializable {
-    associatedtype Expression: SQLExpression
-    associatedtype Collation: SQLCollation
-    associatedtype PrimaryKey: SQLPrimaryKey
-    associatedtype ForeignKey: SQLForeignKey
-    static func primaryKey(_ primaryKey: PrimaryKey) -> Self
+    associatedtype Query: SQLQuery
+    static func primaryKey(_ primaryKey: Query.PrimaryKey) -> Self
     static var notNull: Self { get }
     static var unique: Self { get }
-    static func check(_ expression: Expression) -> Self
-    static func collate(_ collation: Collation) -> Self
-    static func `default`(_ expression: Expression) -> Self
-    static func foreignKey(_ foreignKey: ForeignKey) -> Self
+    static func check(_ expression: Query.Expression) -> Self
+    static func collate(_ collation: Query.Collation) -> Self
+    static func `default`(_ expression: Query.Expression) -> Self
+    static func foreignKey(_ foreignKey: Query.ForeignKey) -> Self
 }
 
 // MARK: Generic
 
-public enum GenericSQLColumnConstraintAlgorithm<Expression, Collation, PrimaryKey, ForeignKey>: SQLColumnConstraintAlgorithm
-    where Expression: SQLExpression, Collation: SQLCollation, PrimaryKey: SQLPrimaryKey, ForeignKey: SQLForeignKey
-{
-    public typealias `Self` = GenericSQLColumnConstraintAlgorithm<Expression, Collation, PrimaryKey, ForeignKey>
+public enum GenericSQLColumnConstraintAlgorithm<Query>: SQLColumnConstraintAlgorithm where Query: SQLQuery {
+    public typealias `Self` = GenericSQLColumnConstraintAlgorithm<Query>
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func primaryKey(_ primaryKey: PrimaryKey) -> Self {
+    public static func primaryKey(_ primaryKey: Query.PrimaryKey) -> Self {
         return ._primaryKey(primaryKey)
     }
     
@@ -35,22 +30,22 @@ public enum GenericSQLColumnConstraintAlgorithm<Expression, Collation, PrimaryKe
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func check(_ expression: Expression) -> Self {
+    public static func check(_ expression: Query.Expression) -> Self {
         return ._check(expression)
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func collate(_ collation: Collation) -> Self {
+    public static func collate(_ collation: Query.Collation) -> Self {
         return .collate(collation)
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func `default`(_ expression: Expression) -> Self {
+    public static func `default`(_ expression: Query.Expression) -> Self {
         return ._default(expression)
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func foreignKey(_ foreignKey: ForeignKey) -> Self {
+    public static func foreignKey(_ foreignKey: Query.ForeignKey) -> Self {
         return ._foreignKey(foreignKey)
     }
     

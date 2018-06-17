@@ -1,4 +1,5 @@
 public protocol SQLDistinct: SQLSerializable {
+    associatedtype Query: SQLQuery
     static var all: Self { get }
     static var distinct: Self { get }
     var isDistinct: Bool { get }
@@ -18,14 +19,16 @@ extension SQLDistinct {
 
 // MARK: Generic
 
-public enum GenericSQLDistinct: SQLDistinct {
+public enum GenericSQLDistinct<Query>: SQLDistinct where Query: SQLQuery {
+    public typealias `Self` = GenericSQLDistinct<Query>
+
     /// See `SQLDistinct`.
-    public static var all: GenericSQLDistinct {
+    public static var all: Self {
         return ._all
     }
     
     /// See `SQLDistinct`.
-    public static var distinct: GenericSQLDistinct {
+    public static var distinct: Self {
         return ._distinct
     }
     

@@ -1,37 +1,30 @@
 public protocol SQLSelect: SQLSerializable {
-    associatedtype Distinct: SQLDistinct
-    associatedtype SelectExpression: SQLSelectExpression
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Join: SQLJoin
-    associatedtype Expression: SQLExpression
-    associatedtype GroupBy: SQLGroupBy
-    associatedtype OrderBy: SQLOrderBy
+    associatedtype Query: SQLQuery
     
     static func select() -> Self
     
-    var distinct: Distinct? { get set }
-    var columns: [SelectExpression] { get set }
-    var tables: [TableIdentifier] { get set }
-    var joins: [Join] { get set }
-    var predicate: Expression? { get set }
-    var groupBy: [GroupBy] { get set }
-    var orderBy: [OrderBy] { get set }
+    var distinct: Query.Distinct? { get set }
+    var columns: [Query.SelectExpression] { get set }
+    var tables: [Query.TableIdentifier] { get set }
+    var joins: [Query.Join] { get set }
+    var predicate: Query.Expression? { get set }
+    var groupBy: [Query.GroupBy] { get set }
+    var orderBy: [Query.OrderBy] { get set }
 }
 
 // MARK: Generic
 
-public struct GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Join, Expression, GroupBy, OrderBy>: SQLSelect
-where Distinct: SQLDistinct, SelectExpression: SQLSelectExpression, TableIdentifier: SQLTableIdentifier, Join: SQLJoin, Expression: SQLExpression, GroupBy: SQLGroupBy, OrderBy: SQLOrderBy
+public struct GenericSQLSelect<Query>: SQLSelect where Query: SQLQuery
 {
-    public typealias `Self` = GenericSQLSelect<Distinct, SelectExpression, TableIdentifier, Join, Expression, GroupBy, OrderBy>
+    public typealias `Self` = GenericSQLSelect<Query>
     
-    public var distinct: Distinct?
-    public var columns: [SelectExpression]
-    public var tables: [TableIdentifier]
-    public var joins: [Join]
-    public var predicate: Expression?
-    public var groupBy: [GroupBy]
-    public var orderBy: [OrderBy]
+    public var distinct: Query.Distinct?
+    public var columns: [Query.SelectExpression]
+    public var tables: [Query.TableIdentifier]
+    public var joins: [Query.Join]
+    public var predicate: Query.Expression?
+    public var groupBy: [Query.GroupBy]
+    public var orderBy: [Query.OrderBy]
     
     /// See `SQLSelect`.
     public static func select() -> Self {

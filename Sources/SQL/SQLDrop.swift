@@ -1,26 +1,26 @@
 public protocol SQLDropTable: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
+    associatedtype Query: SQLQuery
     
     /// Creates a new `SQLDropTable`.
-    static func dropTable(_ table: TableIdentifier, ifExists: Bool) -> Self
+    static func dropTable(_ table: Query.TableIdentifier, ifExists: Bool) -> Self
     
     /// Table to drop.
-    var table: TableIdentifier { get set }
+    var table: Query.TableIdentifier { get set }
     
     /// The optional IF EXISTS clause suppresses the error that would normally result if the table does not exist.
     var ifExists: Bool { get set }
 }
 
-public struct GenericSQLDropTable<TableIdentifier>: SQLDropTable
-    where TableIdentifier: SQLTableIdentifier
-{
+public struct GenericSQLDropTable<Query>: SQLDropTable where Query: SQLQuery {
+    public typealias `Self` = GenericSQLDropTable<Query>
+
     /// See `SQLDropTable`.
-    public static func dropTable(_ table: TableIdentifier, ifExists: Bool) -> GenericSQLDropTable<TableIdentifier> {
+    public static func dropTable(_ table: Query.TableIdentifier, ifExists: Bool) -> Self {
         return .init(table: table, ifExists: ifExists)
     }
  
     /// See `SQLDropTable`.
-    public var table: TableIdentifier
+    public var table: Query.TableIdentifier
     
     /// See `SQLDropTable`.
     public var ifExists: Bool

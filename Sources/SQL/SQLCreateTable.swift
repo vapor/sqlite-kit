@@ -1,9 +1,7 @@
 public protocol SQLCreateTable: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype ColumnDefinition: SQLColumnDefinition
-    associatedtype TableConstraint: SQLTableConstraint
+    associatedtype Query: SQLQuery
     
-    static func createTable(_ table: TableIdentifier) -> Self
+    static func createTable(_ table: Query.TableIdentifier) -> Self
     
     /// If the "TEMP" or "TEMPORARY" keyword occurs between the "CREATE" and "TABLE" then the new table is created in the temp database.
     var temporary: Bool { get set }
@@ -21,13 +19,11 @@ public protocol SQLCreateTable: SQLSerializable {
 }
 
 /// The `CREATE TABLE` command is used to create a new table in a database.
-public struct GenericSQLCreateTable<TableIdentifier, ColumnDefinition, TableConstraint>: SQLCreateTable
-    where TableIdentifier: SQLTableIdentifier, ColumnDefinition: SQLColumnDefinition, TableConstraint: SQLTableConstraint
-{
-    public typealias `Self` = GenericSQLCreateTable<TableIdentifier, ColumnDefinition, TableConstraint>
+public struct GenericSQLCreateTable<Query>: SQLCreateTable where Query: SQLQuery {
+    public typealias `Self` = GenericSQLCreateTable<Query>
     
     /// See `SQLCreateTable`.
-    public static func createTable(_ table: TableIdentifier) -> Self {
+    public static func createTable(_ table: Query.TableIdentifier) -> Self {
         return .init(temporary: false, ifNotExists: false, table: table, columns: [], tableConstraints: [])
     }
     
@@ -38,13 +34,13 @@ public struct GenericSQLCreateTable<TableIdentifier, ColumnDefinition, TableCons
     public var ifNotExists: Bool
     
     /// See `SQLCreateTable`.
-    public var table: TableIdentifier
+    public var table: Query.TableIdentifier
     
     /// See `SQLCreateTable`.
-    public var columns: [ColumnDefinition]
+    public var columns: [Query.ColumnDefinition]
     
     /// See `SQLCreateTable`.
-    public var tableConstraints: [TableConstraint]
+    public var tableConstraints: [Query.TableConstraint]
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

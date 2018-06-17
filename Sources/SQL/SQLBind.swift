@@ -1,13 +1,14 @@
 public protocol SQLBind: SQLSerializable {
+    associatedtype Query: SQLQuery
     static func encodable<E>(_ value: E) -> Self
         where E: Encodable
 }
 
 // MARK: Generic
 
-public struct GenericSQLBind: SQLBind {
+public struct GenericSQLBind<Query>: SQLBind where Query: SQLQuery {
     /// See `SQLBind`.
-    public static func encodable<E>(_ value: E) -> GenericSQLBind
+    public static func encodable<E>(_ value: E) -> GenericSQLBind<Query>
         where E: Encodable
     {
         return self.init(value: value)

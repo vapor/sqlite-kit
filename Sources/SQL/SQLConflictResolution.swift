@@ -1,7 +1,9 @@
-public protocol SQLConflictResolution: SQLSerializable { }
+public protocol SQLConflictResolution: SQLSerializable {
+    associatedtype Query: SQLQuery
+}
 
 /// `ON CONFLICT` clause. Supported constraint conflict resolution algorithms.
-public enum GenericSQLConflictResolution: SQLConflictResolution {
+public enum GenericSQLConflictResolution<Query>: SQLConflictResolution where Query: SQLQuery {
     /// When a UNIQUE or PRIMARY KEY constraint violation occurs, the REPLACE algorithm deletes pre-existing rows that are causing
     /// the constraint violation prior to inserting or updating the current row and the command continues executing normally. If a
     /// NOT NULL constraint violation occurs, the REPLACE conflict resolution replaces the NULL value with the default value for

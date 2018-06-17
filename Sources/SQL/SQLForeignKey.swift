@@ -1,40 +1,36 @@
 public protocol SQLForeignKey: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Identifier: SQLIdentifier
-    associatedtype ConflictResolution: SQLConflictResolution
+    associatedtype Query: SQLQuery
     
     static func foreignKey(
-        _ foreignTable: TableIdentifier,
-        _ foreignColumns: [Identifier],
-        onDelete: ConflictResolution?,
-        onUpdate: ConflictResolution?
+        _ foreignTable: Query.TableIdentifier,
+        _ foreignColumns: [Query.Identifier],
+        onDelete: Query.ConflictResolution?,
+        onUpdate: Query.ConflictResolution?
     ) -> Self
 }
 
 // MARK: Generic
 
-public struct GenericSQLForeignKey<TableIdentifier, Identifier, ConflictResolution>: SQLForeignKey
-    where TableIdentifier: SQLTableIdentifier, Identifier: SQLIdentifier, ConflictResolution: SQLConflictResolution
-{
-    public typealias `Self` = GenericSQLForeignKey<TableIdentifier, Identifier, ConflictResolution>
+public struct GenericSQLForeignKey<Query>: SQLForeignKey where Query: SQLQuery {
+    public typealias `Self` = GenericSQLForeignKey<Query>
     
     /// See `SQLForeignKey`.
     public static func foreignKey(
-        _ foreignTable: TableIdentifier,
-        _ foreignColumns: [Identifier],
-        onDelete: ConflictResolution?,
-        onUpdate: ConflictResolution?
+        _ foreignTable: Query.TableIdentifier,
+        _ foreignColumns: [Query.Identifier],
+        onDelete: Query.ConflictResolution?,
+        onUpdate: Query.ConflictResolution?
     ) -> Self {
         return .init(foreignTable: foreignTable, foreignColumns: foreignColumns, onDelete: onDelete, onUpdate: onUpdate)
     }
     
-    public var foreignTable: TableIdentifier
+    public var foreignTable: Query.TableIdentifier
     
-    public var foreignColumns: [Identifier]
+    public var foreignColumns: [Query.Identifier]
     
-    public var onDelete: ConflictResolution?
+    public var onDelete: Query.ConflictResolution?
     
-    public var onUpdate: ConflictResolution?
+    public var onUpdate: Query.ConflictResolution?
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

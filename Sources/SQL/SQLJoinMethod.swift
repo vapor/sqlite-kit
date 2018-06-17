@@ -1,10 +1,13 @@
 public protocol SQLJoinMethod: SQLSerializable {
+    associatedtype Query: SQLQuery
     static var `default`: Self { get }
 }
 
-public enum GenericSQLJoinMethod: SQLJoinMethod {
+public enum GenericSQLJoinMethod<Query>: SQLJoinMethod where Query: SQLQuery {
+    public typealias `Self` = GenericSQLJoinMethod<Query>
+
     /// See `SQLJoinMethod`.
-    public static var `default`: GenericSQLJoinMethod {
+    public static var `default`: Self {
         return .inner
     }
     

@@ -1,2 +1,3 @@
-
-public protocol SQLCollation: SQLSerializable { }
+public protocol SQLCollation: SQLSerializable {
+    associatedtype Query: SQLQuery
+}

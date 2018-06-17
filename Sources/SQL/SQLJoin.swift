@@ -1,23 +1,26 @@
 public protocol SQLJoin: SQLSerializable {
-    associatedtype Method: SQLJoinMethod
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Expression: SQLExpression
+    associatedtype Query: SQLQuery
     
-    static func join(_ method: Method, _ table: TableIdentifier, _ expression: Expression) -> Self
+    static func join(
+        _ method: Query.JoinMethod,
+        _ table: Query.TableIdentifier,
+        _ expression: Query.Expression
+    ) -> Self
 }
 
-public struct GenericSQLJoin<Method, TableIdentifier, Expression>: SQLJoin
-    where Method: SQLJoinMethod, TableIdentifier: SQLTableIdentifier, Expression: SQLExpression
-    
-{
+public struct GenericSQLJoin<Query>: SQLJoin where Query: SQLQuery {
     /// See `SQLJoin`.
-    public static func join(_ method: Method, _ table: TableIdentifier, _ expression: Expression) -> GenericSQLJoin<Method, TableIdentifier, Expression> {
+    public static func join(
+        _ method: Query.JoinMethod,
+        _ table: Query.TableIdentifier,
+        _ expression: Query.Expression
+    ) -> GenericSQLJoin<Query> {
         return .init(method: method, table: table, expression: expression)
     }
     
-    public var method: Method
-    public var table: TableIdentifier
-    public var expression: Expression
+    public var method: Query.JoinMethod
+    public var table: Query.TableIdentifier
+    public var expression: Query.Expression
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

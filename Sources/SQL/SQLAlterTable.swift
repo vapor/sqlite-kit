@@ -1,7 +1,7 @@
 public protocol SQLAlterTable: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
+    associatedtype Query: SQLQuery
 
-    static func alterTable(_ table: TableIdentifier) -> Self
+    static func alterTable(_ table: Query.TableIdentifier) -> Self
 }
 
 // No generic ALTER table is offered since they differ too much

@@ -1,32 +1,29 @@
 public protocol SQLDelete: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Expression: SQLExpression
+    associatedtype Query: SQLQuery
     
-    static func delete(_ table: TableIdentifier) -> Self
+    static func delete(_ table: Query.TableIdentifier) -> Self
     
-    var table: TableIdentifier { get set }
+    var table: Query.TableIdentifier { get set }
     
     /// If the WHERE clause is not present, all records in the table are deleted. If a WHERE clause is supplied,
     /// then only those rows for which the WHERE clause boolean expression is true are deleted. Rows for which
     /// the expression is false or NULL are retained.
-    var predicate: Expression? { get set }
+    var predicate: Query.Expression? { get set }
 }
 
 // MARK: Generic
 
-public struct GenericSQLDelete<TableIdentifier, Expression>: SQLDelete
-    where TableIdentifier: SQLTableIdentifier, Expression: SQLExpression
-{
+public struct GenericSQLDelete<Query>: SQLDelete where Query: SQLQuery {
     /// See `SQLDelete`.
-    public static func delete(_ table: TableIdentifier) -> GenericSQLDelete<TableIdentifier, Expression> {
+    public static func delete(_ table: Query.TableIdentifier) -> GenericSQLDelete<Query> {
         return .init(table: table, predicate: nil)
     }
     
     /// See `SQLDelete`.
-    public var table: TableIdentifier
+    public var table: Query.TableIdentifier
     
     /// See `SQLDelete`.
-    public var predicate: Expression?
+    public var predicate: Query.Expression?
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

@@ -1,13 +1,13 @@
 public protocol SQLSelectExpression: SQLSerializable {
-    associatedtype Expression: SQLExpression
+    associatedtype Query: SQLQuery
     
     static var all: Self { get }
     static func allTable(_ table: String) -> Self
-    static func expression(_ expression: Expression, alias: String?) -> Self
+    static func expression(_ expression: Query.Expression, alias: String?) -> Self
     
     var isAll: Bool { get }
     var allTable: String? { get }
-    var expression: (expression: Expression, alias: String?)? { get }
+    var expression: (expression: Query.Expression, alias: String?)? { get }
 }
 
 // MARK: Default
@@ -31,26 +31,26 @@ extension SQLSelectExpression {
 // MARK: Convenience
 
 extension SQLSelectExpression {
-    public static func function(_ function: Expression, as alias: String? = nil) -> Self {
+    public static func function(_ function: Query.Expression, as alias: String? = nil) -> Self {
         return .expression(function, alias: alias)
     }
 }
 
 // MARK: Generic
 
-public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Expression: SQLExpression {
+public enum GenericSQLSelectExpression<Query>: SQLSelectExpression where Query: SQLQuery {
     /// See `SQLSelectExpression`.
-    public static var all: GenericSQLSelectExpression<Expression> {
+    public static var all: GenericSQLSelectExpression<Query> {
         return ._all
     }
     
     /// See `SQLSelectExpression`.
-    public static func allTable(_ table: String) -> GenericSQLSelectExpression<Expression> {
+    public static func allTable(_ table: String) -> GenericSQLSelectExpression<Query> {
         return ._allTable(table)
     }
     
     /// See `SQLSelectExpression`.
-    public static func expression(_ expression: Expression, alias: String?) -> GenericSQLSelectExpression<Expression> {
+    public static func expression(_ expression: Query.Expression, alias: String?) -> GenericSQLSelectExpression<Query> {
         return ._expression(expression, alias: alias)
     }
     
@@ -71,7 +71,7 @@ public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Ex
     }
     
     /// See `SQLSelectExpression`.
-    public var expression: (expression: Expression, alias: String?)? {
+    public var expression: (expression: Query.Expression, alias: String?)? {
         switch self {
         case ._expression(let expr, let alias): return (expr, alias)
         default: return nil
@@ -85,5 +85,5 @@ public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Ex
     case _allTable(String)
     
     /// `md5(a) AS hash`
-    case _expression(Expression, alias: String?)
+    case _expression(Query.Expression, alias: String?)
 }

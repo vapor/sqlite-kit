@@ -1,18 +1,19 @@
 public protocol SQLOrderBy: SQLSerializable {
-    associatedtype Expression: SQLExpression
-    associatedtype Direction: SQLDirection
-    static func orderBy(_ expression: Expression, _ direction: Direction) -> Self
+    associatedtype Query: SQLQuery
+    static func orderBy(_ expression: Query.Expression, _ direction: Query.Direction) -> Self
 }
 
 // MARK: Generic
 
-public struct GenericSQLOrderBy<Expression, Direction>: SQLOrderBy where Expression: SQLExpression, Direction: SQLDirection {
-    public static func orderBy(_ expression: Expression, _ direction: Direction) -> GenericSQLOrderBy<Expression, Direction> {
+public struct GenericSQLOrderBy<Query>: SQLOrderBy where Query: SQLQuery {
+    public typealias `Self` = GenericSQLOrderBy<Query>
+
+    public static func orderBy(_ expression: Query.Expression, _ direction: Query.Direction) -> Self {
         return .init(expression: expression, direction: direction)
     }
     
-    public var expression: Expression
-    public var direction: Direction
+    public var expression: Query.Expression
+    public var direction: Query.Direction
     
     public func serialize(_ binds: inout [Encodable]) -> String {
         return expression.serialize(&binds) + " " + direction.serialize(&binds)

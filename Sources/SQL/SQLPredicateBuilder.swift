@@ -1,29 +1,33 @@
 public protocol SQLPredicateBuilder: class {
-    associatedtype Expression: SQLExpression
-    var predicate: Expression? { get set }
+    associatedtype Connection: SQLConnection
+    var predicate: Connection.Query.Expression? { get set }
 }
 
 extension SQLPredicateBuilder {
-    public func `where`(_ expressions: Expression...) -> Self {
+    public func `where`(_ expressions: Connection.Query.Expression...) -> Self {
         for expression in expressions {
             self.predicate &= expression
         }
         return self
     }
     
-    public func orWhere(_ expressions: Expression...) -> Self {
+    public func orWhere(_ expressions: Connection.Query.Expression...) -> Self {
         for expression in expressions {
             self.predicate |= expression
         }
         return self
     }
     
-    public func `where`(_ lhs: Expression, _ op: Expression.BinaryOperator, _ rhs: Expression) -> Self {
+    public func `where`(
+        _ lhs: Connection.Query.Expression, _ op: Connection.Query.BinaryOperator, _ rhs: Connection.Query.Expression
+    ) -> Self {
         self.predicate &= .binary(lhs, op, rhs)
         return self
     }
     
-    public func orWhere(_ lhs: Expression, _ op: Expression.BinaryOperator, _ rhs: Expression) -> Self {
+    public func orWhere(
+        _ lhs: Connection.Query.Expression, _ op: Connection.Query.BinaryOperator, _ rhs: Connection.Query.Expression
+    ) -> Self {
         self.predicate |= .binary(lhs, op, rhs)
         return self
     }

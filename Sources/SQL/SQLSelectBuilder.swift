@@ -13,7 +13,7 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLPredicateBu
     }
     
     /// See `SQLWhereBuilder`.
-    public var predicate: Connection.Query.Select.Expression? {
+    public var predicate: Connection.Query.Expression? {
         get { return select.predicate }
         set { select.predicate = newValue }
     }
@@ -26,7 +26,7 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLPredicateBu
     
     public func column(
         function: String,
-        _ arguments: Connection.Query.Select.SelectExpression.Expression.Function.Argument...,
+        _ arguments: Connection.Query.Select.Function.Argument...,
         as alias: String? = nil
     ) -> Self {
         return column(expression: .function(.function(function, arguments)), as: alias)
@@ -69,20 +69,20 @@ public final class SQLSelectBuilder<Connection>: SQLQueryFetcher, SQLPredicateBu
     }
     
     public func join<A, B, C, D>(
-        _ method: Connection.Query.Select.Join.Method,
+        _ method: Connection.Query.JoinMethod,
         _ local: KeyPath<A, B>,
         to foreign: KeyPath<C, D>
     ) -> Self where A: SQLTable, B: Encodable, C: SQLTable, D: Encodable {
         return join(method, C.self, on: local == foreign)
     }
     
-    public func join<Table>(_ table: Table.Type, on expression: Connection.Query.Select.Join.Expression) -> Self
+    public func join<Table>(_ table: Table.Type, on expression: Connection.Query.Expression) -> Self
         where Table: SQLTable
     {
         return join(.default, table, on: expression)
     }
     
-    public func join<Table>(_ method: Connection.Query.Select.Join.Method, _ table: Table.Type, on expression: Connection.Query.Select.Join.Expression) -> Self
+    public func join<Table>(_ method: Connection.Query.JoinMethod, _ table: Table.Type, on expression: Connection.Query.Expression) -> Self
         where Table: SQLTable
     {
         select.joins.append(.join(method, .table(Table.self), expression))

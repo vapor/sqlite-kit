@@ -1,28 +1,24 @@
 public protocol SQLInsert: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype ColumnIdentifier: SQLColumnIdentifier
-    associatedtype Expression: SQLExpression
+    associatedtype Query: SQLQuery
 
-    static func insert(_ table: TableIdentifier) -> Self
-    var columns: [ColumnIdentifier] { get set }
-    var values: [[Expression]] { get set }
+    static func insert(_ table: Query.TableIdentifier) -> Self
+    var columns: [Query.ColumnIdentifier] { get set }
+    var values: [[Query.Expression]] { get set }
 }
 
 // MARK: Generic
 
-public struct GenericSQLInsert<TableIdentifier, ColumnIdentifier, Expression>: SQLInsert
-    where TableIdentifier: SQLTableIdentifier, ColumnIdentifier: SQLColumnIdentifier, Expression: SQLExpression
-{
-    public typealias `Self` = GenericSQLInsert<TableIdentifier, ColumnIdentifier, Expression>
+public struct GenericSQLInsert<Query>: SQLInsert where Query: SQLQuery {
+    public typealias `Self` = GenericSQLInsert<Query>
     
     /// See `SQLInsert`.
     public static func insert(_ table: TableIdentifier) -> Self {
         return .init(table: table, columns: [], values: [])
     }
     
-    public var table: TableIdentifier
-    public var columns: [ColumnIdentifier]
-    public var values: [[Expression]]
+    public var table: Query.TableIdentifier
+    public var columns: [Query.ColumnIdentifier]
+    public var values: [[Query.Expression]]
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

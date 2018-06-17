@@ -1,11 +1,10 @@
 public protocol SQLColumnIdentifier: SQLSerializable {
-    associatedtype TableIdentifier: SQLTableIdentifier
-    associatedtype Identifier: SQLIdentifier
+    associatedtype Query: SQLQuery
     
-    static func column(_ table: TableIdentifier?, _ identifier: Identifier) -> Self
+    static func column(_ table: Query.TableIdentifier?, _ identifier: Query.Identifier) -> Self
     
-    var table: TableIdentifier? { get set }
-    var identifier: Identifier { get set }
+    var table: Query.TableIdentifier? { get set }
+    var identifier: Query.Identifier { get set }
 }
 
 // MARK: Convenience
@@ -36,19 +35,19 @@ extension SQLIdentifier {
 
 // MARK: Generic
 
-public struct GenericSQLColumnIdentifier<TableIdentifier, Identifier>: SQLColumnIdentifier
-    where TableIdentifier: SQLTableIdentifier, Identifier: SQLIdentifier
-{
+public struct GenericSQLColumnIdentifier<Query>: SQLColumnIdentifier where Query: SQLQuery {
+    public typealias `Self` = GenericSQLColumnIdentifier<Query>
+
     /// See `SQLColumnIdentifier`.
-    public static func column(_ table: TableIdentifier?, _ identifier: Identifier) -> GenericSQLColumnIdentifier<TableIdentifier, Identifier> {
+    public static func column(_ table: Query.TableIdentifier?, _ identifier:Query. Identifier) -> Self {
         return self.init(table: table, identifier: identifier)
     }
     
     /// See `SQLColumnIdentifier`.
-    public var table: TableIdentifier?
+    public var table: Query.TableIdentifier?
     
     /// See `SQLColumnIdentifier`.
-    public var identifier: Identifier
+    public var identifier: Query.Identifier
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

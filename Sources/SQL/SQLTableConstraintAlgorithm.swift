@@ -1,25 +1,20 @@
 public protocol SQLTableConstraintAlgorithm: SQLSerializable {
-    associatedtype ColumnIdentifier: SQLColumnIdentifier
-    associatedtype Expression: SQLExpression
-    associatedtype Collation: SQLCollation
-    associatedtype PrimaryKey: SQLPrimaryKey
-    associatedtype ForeignKey: SQLForeignKey
-    static func primaryKey(_ columns: [ColumnIdentifier],_ primaryKey: PrimaryKey) -> Self
+    associatedtype Query: SQLQuery
+    static func primaryKey(_ columns: [Query.ColumnIdentifier],_ primaryKey: Query.PrimaryKey) -> Self
     static var notNull: Self { get }
-    static func unique(_ columns: [ColumnIdentifier]) -> Self
-    static func check(_ expression: Expression) -> Self
-    static func foreignKey(_ columns: [ColumnIdentifier], _ foreignKey: ForeignKey) -> Self
+    static func unique(_ columns: [Query.ColumnIdentifier]) -> Self
+    static func check(_ expression: Query.Expression) -> Self
+    static func foreignKey(_ columns: [Query.ColumnIdentifier], _ foreignKey: Query.ForeignKey) -> Self
 }
 
 // MARK: Generic
 
-public enum GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Collation, PrimaryKey, ForeignKey>: SQLTableConstraintAlgorithm
-    where ColumnIdentifier: SQLColumnIdentifier, Expression: SQLExpression, Collation: SQLCollation, PrimaryKey: SQLPrimaryKey, ForeignKey: SQLForeignKey
+public enum GenericSQLTableConstraintAlgorithm<Query>: SQLTableConstraintAlgorithm where Query: SQLQuery
 {
-    public typealias `Self` = GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Collation, PrimaryKey, ForeignKey>
+    public typealias `Self` = GenericSQLTableConstraintAlgorithm<Query>
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func primaryKey(_ columns: [ColumnIdentifier], _ primaryKey: PrimaryKey) -> Self {
+    public static func primaryKey(_ columns: [Query.ColumnIdentifier], _ primaryKey: Query.PrimaryKey) -> Self {
         return ._primaryKey(columns, primaryKey)
     }
     
@@ -29,25 +24,25 @@ public enum GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Col
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func unique(_ columns: [ColumnIdentifier]) -> Self {
+    public static func unique(_ columns: [Query.ColumnIdentifier]) -> Self {
         return ._unique(columns)
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func check(_ expression: Expression) -> Self {
+    public static func check(_ expression: Query.Expression) -> Self {
         return ._check(expression)
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func foreignKey(_ columns: [ColumnIdentifier], _ foreignKey: ForeignKey) -> Self {
+    public static func foreignKey(_ columns: [Query.ColumnIdentifier], _ foreignKey: Query.ForeignKey) -> Self {
         return ._foreignKey(columns, foreignKey)
     }
     
-    case _primaryKey([ColumnIdentifier], PrimaryKey)
+    case _primaryKey([Query.ColumnIdentifier], Query.PrimaryKey)
     case _notNull
-    case _unique([ColumnIdentifier])
-    case _check(Expression)
-    case _foreignKey([ColumnIdentifier], ForeignKey)
+    case _unique([Query.ColumnIdentifier])
+    case _check(Query.Expression)
+    case _foreignKey([Query.ColumnIdentifier], Query.ForeignKey)
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

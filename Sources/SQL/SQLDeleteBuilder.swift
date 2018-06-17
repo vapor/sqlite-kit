@@ -13,7 +13,7 @@ public final class SQLDeleteBuilder<Connection>: SQLQueryBuilder, SQLPredicateBu
     }
     
     /// See `SQLWhereBuilder`.
-    public var predicate: Connection.Query.Delete.Expression? {
+    public var predicate: Connection.Query.Expression? {
         get { return delete.predicate }
         set { delete.predicate = newValue }
     }
