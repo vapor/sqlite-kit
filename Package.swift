@@ -4,7 +4,6 @@ import PackageDescription
 let package = Package(
     name: "SQLite",
     products: [
-        .library(name: "SQL", targets: ["SQL"]),
         .library(name: "SQLite", targets: ["SQLite"]),
     ],
     dependencies: [
@@ -13,9 +12,11 @@ let package = Package(
 
         // 🗄 Core services for creating database integrations.
         .package(url: "https://github.com/vapor/database-kit.git", from: "1.0.0"),
+        
+        // *️⃣ Build SQL queries in Swift. Extensible, protocol-based design that supports DQL, DML, and DDL.
+        .package(url: "https://github.com/vapor/sql.git", .branch("sql")),
     ],
     targets: [
-        .target(name: "SQL", dependencies: ["Core"]),
         .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
     ]
 )

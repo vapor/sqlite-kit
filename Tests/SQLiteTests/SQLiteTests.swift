@@ -2,24 +2,7 @@ import SQL
 import SQLite
 import XCTest
 
-struct Planet: SQLiteTable {
-    var id: Int?
-    var name: String
-    var galaxyID: Int
-    init(id: Int? = nil, name: String, galaxyID: Int) {
-        self.id = id
-        self.name = name
-        self.galaxyID = galaxyID
-    }
-}
-struct Galaxy: SQLiteTable {
-    var id: Int?
-    var name: String
-    init(id: Int? = nil, name: String) {
-        self.id = id
-        self.name = name
-    }
-}
+
 
 struct Galaxy2: SQLiteTable {
     
@@ -42,84 +25,6 @@ class SQLiteTests: XCTestCase {
         print(res)
     }
 
-    func testSQL() throws {
-        let conn = try SQLiteConnection.makeTest()
-        
-        try conn.drop(table: Planet.self)
-            .ifExists()
-            .run().wait()
-        try conn.drop(table: Galaxy.self)
-            .ifExists()
-            .run().wait()
-
-        try conn.create(table: Galaxy.self)
-            .column(for: \Galaxy.id, type: .integer, .primaryKey)
-            .column(for: \Galaxy.name, type: .text, .notNull)
-            .run().wait()
-        try conn.create(table: Planet.self)
-            .temporary()
-            .ifNotExists()
-            .column(for: \Planet.id, type: .integer, .primaryKey)
-            .column(for: \Planet.galaxyID, type: .integer, .notNull, .references(\Galaxy.id))
-            .run().wait()
-
-        try conn.alter(table: Planet.self)
-            .addColumn(for: \Planet.name, type: .text, .notNull, .default(.literal("Unamed Planet")))
-            .run().wait()
-
-        try conn.insert(into: Galaxy.self)
-            .value(Galaxy(name: "Milky Way"))
-            .run().wait()
-        
-        let a = try conn.select().all().from(Galaxy.self)
-            .where(\Galaxy.name == "Milky Way")
-            .groupBy(\Galaxy.name)
-            .orderBy(\Galaxy.name, .descending)
-            .all(decoding: Galaxy.self).wait()
-        print(a)
-        
-        let galaxyID = conn.lastAutoincrementID.flatMap(Int.init)!
-        try conn.insert(into: Planet.self)
-            .value(Planet(name: "Earth", galaxyID: galaxyID))
-            .run().wait()
-
-        try conn.insert(into: Planet.self)
-            .values([
-                Planet(name: "Mercury", galaxyID: galaxyID),
-                Planet(name: "Venus", galaxyID: galaxyID),
-                Planet(name: "Mars", galaxyID: galaxyID),
-                Planet(name: "Jpuiter", galaxyID: galaxyID),
-                Planet(name: "Pluto", galaxyID: galaxyID)
-            ])
-            .run().wait()
-
-        try conn.update(Planet.self)
-            .where(\Planet.name == "Jpuiter")
-            .set(["name": "Jupiter"])
-            .run().wait()
-
-        let selectC = try conn.select().all()
-            .from(Planet.self)
-            .join(\Planet.galaxyID, to: \Galaxy.id)
-            .all(decoding: Planet.self, Galaxy.self)
-            .wait()
-        print(selectC)
-        
-        try conn.update(Galaxy.self)
-            .set(\Galaxy.name, to: "Milky Way 2")
-            .where(\Galaxy.name == "Milky Way")
-            .run().wait()
-        
-        try conn.delete(from: Galaxy.self)
-            .where(\Galaxy.name == "Milky Way")
-            .run().wait()
-        
-        let b = try conn.select()
-            .column(.count(as: "c"))
-            .from(Galaxy.self)
-            .all().wait()
-        print(b)
-    }
 
 
     func testTables() throws {
