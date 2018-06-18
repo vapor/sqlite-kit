@@ -1,25 +1,25 @@
 public protocol SQLTableConstraintAlgorithm: SQLSerializable {
-    associatedtype ColumnIdentifier: SQLColumnIdentifier
+    associatedtype Identifier: SQLIdentifier
     associatedtype Expression: SQLExpression
     associatedtype Collation: SQLCollation
     associatedtype PrimaryKey: SQLPrimaryKey
     associatedtype ForeignKey: SQLForeignKey
-    static func primaryKey(_ columns: [ColumnIdentifier],_ primaryKey: PrimaryKey) -> Self
+    static func primaryKey(_ columns: [Identifier],_ primaryKey: PrimaryKey) -> Self
     static var notNull: Self { get }
-    static func unique(_ columns: [ColumnIdentifier]) -> Self
+    static func unique(_ columns: [Identifier]) -> Self
     static func check(_ expression: Expression) -> Self
-    static func foreignKey(_ columns: [ColumnIdentifier], _ foreignKey: ForeignKey) -> Self
+    static func foreignKey(_ columns: [Identifier], _ foreignKey: ForeignKey) -> Self
 }
 
 // MARK: Generic
 
-public enum GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Collation, PrimaryKey, ForeignKey>: SQLTableConstraintAlgorithm
-    where ColumnIdentifier: SQLColumnIdentifier, Expression: SQLExpression, Collation: SQLCollation, PrimaryKey: SQLPrimaryKey, ForeignKey: SQLForeignKey
+public enum GenericSQLTableConstraintAlgorithm<Identifier, Expression, Collation, PrimaryKey, ForeignKey>: SQLTableConstraintAlgorithm
+    where Identifier: SQLIdentifier, Expression: SQLExpression, Collation: SQLCollation, PrimaryKey: SQLPrimaryKey, ForeignKey: SQLForeignKey
 {
-    public typealias `Self` = GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Collation, PrimaryKey, ForeignKey>
+    public typealias `Self` = GenericSQLTableConstraintAlgorithm<Identifier, Expression, Collation, PrimaryKey, ForeignKey>
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func primaryKey(_ columns: [ColumnIdentifier], _ primaryKey: PrimaryKey) -> Self {
+    public static func primaryKey(_ columns: [Identifier], _ primaryKey: PrimaryKey) -> Self {
         return ._primaryKey(columns, primaryKey)
     }
     
@@ -29,7 +29,7 @@ public enum GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Col
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func unique(_ columns: [ColumnIdentifier]) -> Self {
+    public static func unique(_ columns: [Identifier]) -> Self {
         return ._unique(columns)
     }
     
@@ -39,15 +39,15 @@ public enum GenericSQLTableConstraintAlgorithm<ColumnIdentifier, Expression, Col
     }
     
     /// See `SQLColumnConstraintAlgorithm`.
-    public static func foreignKey(_ columns: [ColumnIdentifier], _ foreignKey: ForeignKey) -> Self {
+    public static func foreignKey(_ columns: [Identifier], _ foreignKey: ForeignKey) -> Self {
         return ._foreignKey(columns, foreignKey)
     }
     
-    case _primaryKey([ColumnIdentifier], PrimaryKey)
+    case _primaryKey([Identifier], PrimaryKey)
     case _notNull
-    case _unique([ColumnIdentifier])
+    case _unique([Identifier])
     case _check(Expression)
-    case _foreignKey([ColumnIdentifier], ForeignKey)
+    case _foreignKey([Identifier], ForeignKey)
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

@@ -31,13 +31,6 @@ public protocol SQLExpression: SQLSerializable {
     // FIXME: cast
     
     var isNull: Bool { get }
-//    var literal: Literal? { get }
-//    var bind: Bind? { get }
-//    var column: ColumnIdentifier? { get }
-//    var binary: (Self, BinaryOperator, Self)? { get }
-//    var function: Function? { get }
-//    var group: [Self]? { get }
-//    var select: Select? { get }
 }
 
 // MARK: Convenience
@@ -70,7 +63,7 @@ public func |= <E>(_ lhs: inout E?, _ rhs: E) where E: SQLExpression {
 // MARK: Generic
 
 public indirect enum GenericSQLExpression<Literal, Bind, ColumnIdentifier, BinaryOperator, Function, Subquery>: SQLExpression
-    where Literal: SQLLiteral, Bind: SQLBind, ColumnIdentifier: SQLColumnIdentifier, BinaryOperator: SQLBinaryOperator, Function: SQLFunction, Subquery: SQLSerializable
+    where Literal: SQLLiteral, Bind: SQLBind, ColumnIdentifier: SQLColumnIdentifier, BinaryOperator: SQLBinaryOperator & Equatable, Function: SQLFunction, Subquery: SQLSerializable
 {
     public typealias `Self` = GenericSQLExpression<Literal, Bind, ColumnIdentifier, BinaryOperator, Function, Subquery>
 
@@ -102,55 +95,6 @@ public indirect enum GenericSQLExpression<Literal, Bind, ColumnIdentifier, Binar
         return ._subquery(subquery)
     }
 
-//    public var literal: Literal? {
-//        switch self {
-//        case ._literal(let literal): return literal
-//        default: return nil
-//        }
-//    }
-//
-//    public var bind: Bind? {
-//        switch self {
-//        case ._bind(let bind): return bind
-//        default: return nil
-//        }
-//    }
-//
-//    public var column: ColumnIdentifier? {
-//        switch self {
-//        case ._column(let column): return column
-//        default: return nil
-//        }
-//    }
-//
-//    public var binary: (Self, BinaryOperator, Self)? {
-//        switch self {
-//        case ._binary(let lhs, let op, let rhs): return (lhs, op, rhs)
-//        default: return nil
-//        }
-//    }
-//
-//    public var function: Function? {
-//        switch self {
-//        case ._function(let function): return function
-//        default: return nil
-//        }
-//    }
-//
-//    public var group: [Self]? {
-//        switch self {
-//        case ._group(let group): return group
-//        default: return nil
-//        }
-//    }
-//
-//    public var select: Select? {
-//        switch self {
-//        case ._select(let select): return select
-//        default: return nil
-//        }
-//    }
-
     case _literal(Literal)
     case _bind(Bind)
     case _column(ColumnIdentifier)
@@ -172,6 +116,19 @@ public indirect enum GenericSQLExpression<Literal, Bind, ColumnIdentifier, Binar
         case ._bind(let bind): return bind.serialize(&binds)
         case ._column(let column): return column.serialize(&binds)
         case ._binary(let lhs, let op, let rhs):
+            switch rhs {
+            case ._literal(let literal):
+                if literal.isNull {
+                    switch op {
+                    case .equal:
+                        return lhs.serialize(&binds) + " IS NULL"
+                    case .notEqual:
+                        return lhs.serialize(&binds) + " IS NOT NULL"
+                    default: break
+                    }
+                }
+            default: break
+            }
             return lhs.serialize(&binds) + " " + op.serialize(&binds) + " " + rhs.serialize(&binds)
         case ._function(let function): return function.serialize(&binds)
         case ._group(let group):

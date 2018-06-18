@@ -1,18 +1,46 @@
 public protocol SQLBinaryOperator: SQLSerializable {
     static var equal: Self { get }
     static var notEqual: Self { get }
+    static var greaterThan: Self { get }
+    static var lessThan: Self { get }
+    static var greaterThanOrEqual: Self { get }
+    static var lessThanOrEqual: Self { get }
+    static var like: Self { get }
+    static var `in`: Self { get }
+    static var `notIn`: Self { get }
     static var and: Self { get }
     static var or: Self { get }
 }
 
 // MARK: Generic
 
-public enum GenericSQLBinaryOperator: SQLBinaryOperator {
+public enum GenericSQLBinaryOperator: SQLBinaryOperator, Equatable {
     /// See `SQLBinaryOperator`.
     public static var equal: GenericSQLBinaryOperator { return ._equal }
     
     /// See `SQLBinaryOperator`.
     public static var notEqual: GenericSQLBinaryOperator { return ._notEqual }
+    
+    /// See `SQLBinaryOperator`.
+    public static var greaterThan: GenericSQLBinaryOperator { return ._greaterThan }
+    
+    /// See `SQLBinaryOperator`.
+    public static var lessThan: GenericSQLBinaryOperator { return ._lessThan }
+    
+    /// See `SQLBinaryOperator`.
+    public static var greaterThanOrEqual: GenericSQLBinaryOperator { return ._greaterThanOrEqual }
+    
+    /// See `SQLBinaryOperator`.
+    public static var lessThanOrEqual: GenericSQLBinaryOperator { return ._lessThanOrEqual }
+    
+    /// See `SQLBinaryOperator`.
+    public static var like: GenericSQLBinaryOperator { return ._like }
+    
+    /// See `SQLBinaryOperator`.
+    public static var `in`: GenericSQLBinaryOperator { return ._in }
+    
+    /// See `SQLBinaryOperator`.
+    public static var `notIn`: GenericSQLBinaryOperator { return ._notIn }
     
     /// See `SQLBinaryOperator`.
     public static var and: GenericSQLBinaryOperator { return ._and }

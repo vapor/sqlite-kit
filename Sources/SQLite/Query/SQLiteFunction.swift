@@ -17,8 +17,8 @@ public struct SQLiteFunction: SQLFunction {
     }
 }
 
-extension SQLSelectExpression where Expression.Function == SQLiteFunction {
-    public static func count(as alias: String? = nil) -> Self {
+extension SQLSelectExpression where Expression.Function == SQLiteFunction, Identifier == SQLiteIdentifier {
+    public static func count(as alias: SQLiteIdentifier? = nil) -> Self {
         return .expression(.function(.count), alias: alias)
     }
 }

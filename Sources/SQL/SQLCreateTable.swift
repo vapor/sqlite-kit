@@ -58,7 +58,8 @@ public struct GenericSQLCreateTable<TableIdentifier, ColumnDefinition, TableCons
             sql.append("IF NOT EXISTS")
         }
         sql.append(table.serialize(&binds))
-        sql.append("(" + columns.serialize(&binds) + tableConstraints.serialize(&binds) + ")")
+        let actions = columns.map { $0.serialize(&binds) } + tableConstraints.map { $0.serialize(&binds) }
+        sql.append("(" + actions.joined(separator: ", ") + ")")
         return sql.joined(separator: " ")
     }
 }

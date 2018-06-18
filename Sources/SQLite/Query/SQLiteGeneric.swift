@@ -79,11 +79,11 @@ public typealias SQLiteSelect = GenericSQLSelect<
 >
 
 /// See `SQLQuery`.
-public typealias SQLiteSelectExpression = GenericSQLSelectExpression<SQLiteExpression>
+public typealias SQLiteSelectExpression = GenericSQLSelectExpression<SQLiteExpression, SQLiteIdentifier>
 
 /// See `SQLQuery`.
 public typealias SQLiteTableConstraintAlgorithm = GenericSQLTableConstraintAlgorithm<
-    SQLiteColumnIdentifier, SQLiteExpression, SQLiteCollation, SQLitePrimaryKey, SQLiteForeignKey
+    SQLiteIdentifier, SQLiteExpression, SQLiteCollation, SQLitePrimaryKey, SQLiteForeignKey
 >
 
 /// See `SQLQuery`.

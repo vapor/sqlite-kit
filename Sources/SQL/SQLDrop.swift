@@ -2,7 +2,7 @@ public protocol SQLDropTable: SQLSerializable {
     associatedtype TableIdentifier: SQLTableIdentifier
     
     /// Creates a new `SQLDropTable`.
-    static func dropTable(_ table: TableIdentifier, ifExists: Bool) -> Self
+    static func dropTable(_ table: TableIdentifier) -> Self
     
     /// Table to drop.
     var table: TableIdentifier { get set }
@@ -15,8 +15,8 @@ public struct GenericSQLDropTable<TableIdentifier>: SQLDropTable
     where TableIdentifier: SQLTableIdentifier
 {
     /// See `SQLDropTable`.
-    public static func dropTable(_ table: TableIdentifier, ifExists: Bool) -> GenericSQLDropTable<TableIdentifier> {
-        return .init(table: table, ifExists: ifExists)
+    public static func dropTable(_ table: TableIdentifier) -> GenericSQLDropTable<TableIdentifier> {
+        return .init(table: table, ifExists: false)
     }
  
     /// See `SQLDropTable`.

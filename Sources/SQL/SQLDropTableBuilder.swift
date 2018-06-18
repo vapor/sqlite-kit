@@ -30,6 +30,6 @@ extension SQLConnection {
     public func drop<Table>(table: Table.Type) -> SQLDropTableBuilder<Self>
         where Table: SQLTable
     {
-        return .init(.dropTable(.table(Table.self), ifExists: false), on: self)
+        return .init(.dropTable(.table(Table.self)), on: self)
     }
 }

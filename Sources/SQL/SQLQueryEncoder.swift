@@ -12,9 +12,9 @@
 /// or `SQLiteDataConvertible` will be specially encoded.
 ///
 /// This encoder does _not_ support unkeyed or single value codable objects.
-internal struct SQLQueryEncoder<Expression> where Expression: SQLExpression {
+public struct SQLQueryEncoder<Expression> where Expression: SQLExpression {
     /// Creates a new `SQLQueryEncoder`.
-    internal init(_ type: Expression.Type) { }
+    public init(_ type: Expression.Type) { }
     
     /// Encodes keyed `Encodable` values to a `SQLiteQuery` expression dictionary.
     ///
@@ -29,7 +29,7 @@ internal struct SQLQueryEncoder<Expression> where Expression: SQLExpression {
     /// - parameters:
     ///     - value: `Encodable` value to encode.
     /// - returns: `SQLiteQuery` compatible data.
-    internal func encode<E>(_ value: E) -> [String: Expression]
+    public func encode<E>(_ value: E) -> [String: Expression]
         where E: Encodable
     {
         let encoder = _Encoder()

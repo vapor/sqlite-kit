@@ -1,31 +1,31 @@
 public protocol SQLTableConstraint: SQLSerializable {
     associatedtype Identifier: SQLIdentifier
-    associatedtype TableConstraintAlgorithm: SQLTableConstraintAlgorithm
-    static func constraint(_ algorithm: TableConstraintAlgorithm, _ identifier: Identifier?) -> Self
+    associatedtype Algorithm: SQLTableConstraintAlgorithm
+    static func constraint(_ algorithm: Algorithm, _ identifier: Identifier?) -> Self
 }
 
 // MARK: Convenience
 
 extension SQLTableConstraint {
     public static func primaryKey(
-        _ columns: TableConstraintAlgorithm.ColumnIdentifier...,
+        _ columns: Algorithm.Identifier...,
         identifier: Identifier? = nil
     ) -> Self {
         return .constraint(.primaryKey(columns, .primaryKey()), identifier)
     }
     public static func unique(
-        _ columns: TableConstraintAlgorithm.ColumnIdentifier...,
+        _ columns: Algorithm.Identifier...,
         identifier: Identifier? = nil
     ) -> Self {
         return .constraint(.unique(columns), identifier)
     }
     
     public static func foreignKey(
-        _ columns: [TableConstraintAlgorithm.ColumnIdentifier],
-        references foreignTable: TableConstraintAlgorithm.ForeignKey.TableIdentifier,
-        _ foreignColumns: [TableConstraintAlgorithm.ForeignKey.Identifier],
-        onDelete: TableConstraintAlgorithm.ForeignKey.ConflictResolution? = nil,
-        onUpdate: TableConstraintAlgorithm.ForeignKey.ConflictResolution? = nil,
+        _ columns: [Algorithm.Identifier],
+        references foreignTable: Algorithm.ForeignKey.TableIdentifier,
+        _ foreignColumns: [Algorithm.ForeignKey.Identifier],
+        onDelete: Algorithm.ForeignKey.ConflictResolution? = nil,
+        onUpdate: Algorithm.ForeignKey.ConflictResolution? = nil,
         identifier: Identifier? = nil
     ) -> Self {
         return .constraint(.foreignKey(columns, .foreignKey(foreignTable, foreignColumns, onDelete: onDelete, onUpdate: onUpdate)), identifier)
@@ -34,19 +34,19 @@ extension SQLTableConstraint {
 
 // MARK: Generic
 
-public struct GenericSQLTableConstraint<Identifier, TableConstraintAlgorithm>: SQLTableConstraint
-    where Identifier: SQLIdentifier, TableConstraintAlgorithm: SQLTableConstraintAlgorithm
+public struct GenericSQLTableConstraint<Identifier, Algorithm>: SQLTableConstraint
+    where Identifier: SQLIdentifier, Algorithm: SQLTableConstraintAlgorithm
 {
-    public typealias `Self` = GenericSQLTableConstraint<Identifier, TableConstraintAlgorithm>
+    public typealias `Self` = GenericSQLTableConstraint<Identifier, Algorithm>
     
     /// See `SQLColumnConstraint`.
-    public static func constraint(_ algorithm: TableConstraintAlgorithm, _ identifier: Identifier?) -> Self {
+    public static func constraint(_ algorithm: Algorithm, _ identifier: Identifier?) -> Self {
         return .init(identifier: identifier, algorithm: algorithm)
     }
     
     public var identifier: Identifier?
     
-    public var algorithm: TableConstraintAlgorithm
+    public var algorithm: Algorithm
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {

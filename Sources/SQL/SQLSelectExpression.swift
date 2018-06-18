@@ -1,56 +1,43 @@
 public protocol SQLSelectExpression: SQLSerializable {
     associatedtype Expression: SQLExpression
+    associatedtype Identifier: SQLIdentifier
     
     static var all: Self { get }
     static func allTable(_ table: String) -> Self
-    static func expression(_ expression: Expression, alias: String?) -> Self
+    static func expression(_ expression: Expression, alias: Identifier?) -> Self
     
     var isAll: Bool { get }
     var allTable: String? { get }
-    var expression: (expression: Expression, alias: String?)? { get }
+    var expression: (expression: Expression, alias: Identifier?)? { get }
 }
-
-// MARK: Default
-
-extension SQLSelectExpression {
-    public func serialize(_ binds: inout [Encodable]) -> String {
-        switch (isAll, allTable, expression) {
-        case (true, .none, .none): return "*"
-        case (false, .some(let table), .none): return table + ".*"
-        case (false, .none, .some(let e)):
-            switch e.alias {
-            case .none: return e.expression.serialize(&binds)
-            case .some(let alias): return e.expression.serialize(&binds) + " AS " + alias
-            }
-        default: fatalError("Unsupported SQLSelectExpression.")
-        }
-    }
-}
-
 
 // MARK: Convenience
 
 extension SQLSelectExpression {
-    public static func function(_ function: Expression, as alias: String? = nil) -> Self {
+    public static func function(_ function: Expression, as alias: Identifier? = nil) -> Self {
         return .expression(function, alias: alias)
     }
 }
 
 // MARK: Generic
 
-public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Expression: SQLExpression {
+public enum GenericSQLSelectExpression<Expression, Identifier>: SQLSelectExpression where
+    Expression: SQLExpression, Identifier: SQLIdentifier
+{
+    public typealias `Self` = GenericSQLSelectExpression<Expression, Identifier>
+    
     /// See `SQLSelectExpression`.
-    public static var all: GenericSQLSelectExpression<Expression> {
+    public static var all: Self {
         return ._all
     }
     
     /// See `SQLSelectExpression`.
-    public static func allTable(_ table: String) -> GenericSQLSelectExpression<Expression> {
+    public static func allTable(_ table: String) ->Self {
         return ._allTable(table)
     }
     
     /// See `SQLSelectExpression`.
-    public static func expression(_ expression: Expression, alias: String?) -> GenericSQLSelectExpression<Expression> {
+    public static func expression(_ expression: Expression, alias: Identifier?) -> Self {
         return ._expression(expression, alias: alias)
     }
     
@@ -71,7 +58,7 @@ public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Ex
     }
     
     /// See `SQLSelectExpression`.
-    public var expression: (expression: Expression, alias: String?)? {
+    public var expression: (expression: Expression, alias: Identifier?)? {
         switch self {
         case ._expression(let expr, let alias): return (expr, alias)
         default: return nil
@@ -85,5 +72,18 @@ public enum GenericSQLSelectExpression<Expression>: SQLSelectExpression where Ex
     case _allTable(String)
     
     /// `md5(a) AS hash`
-    case _expression(Expression, alias: String?)
+    case _expression(Expression, alias: Identifier?)
+    
+    /// See `SQLSerializable`.
+    public func serialize(_ binds: inout [Encodable]) -> String {
+        switch self {
+        case ._all: return "*"
+        case ._allTable(let table): return table + ".*"
+        case ._expression(let expr, let alias):
+            switch alias {
+            case .none: return expr.serialize(&binds)
+            case .some(let alias): return expr.serialize(&binds) + " AS " + alias.serialize(&binds)
+            }
+        }
+    }
 }
