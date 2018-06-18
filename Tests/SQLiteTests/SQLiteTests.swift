@@ -5,8 +5,8 @@ import XCTest
 class SQLiteTests: XCTestCase {
     func testBenchmark() throws {
         let conn = try SQLiteConnection.makeTest()
-        let benchmark = SQLBenchmark(on: conn)
-        try benchmark.run()
+        let benchmarker = SQLBenchmarker(on: conn)
+        try benchmarker.run()
     }
     
     func testVersion() throws {
