@@ -4,6 +4,7 @@ import PackageDescription
 let package = Package(
     name: "SQLite",
     products: [
+        .library(name: "SQL", targets: ["SQL"]),
         .library(name: "SQLite", targets: ["SQLite"]),
     ],
     dependencies: [
