@@ -1,6 +1,9 @@
 /// Represents an `ALTER TABLE ...` query.
 public struct SQLiteAlterTable: SQLAlterTable {
     /// See `SQLAlterTable`.
+    public typealias ColumnDefinition = SQLiteColumnDefinition
+    
+    /// See `SQLAlterTable`.
     public typealias TableIdentifier = SQLiteTableIdentifier
 
     /// See `SQLAlterTable`.
@@ -36,6 +39,25 @@ public struct SQLiteAlterTable: SQLAlterTable {
 
     /// Type of `ALTER` to perform.
     public var value: Value
+    
+    /// See `SQLAlterTable`.
+    public var columns: [SQLiteColumnDefinition] {
+        get {
+            switch value {
+            case .addColumn(let col): return [col]
+            default: return []
+            }
+        }
+        set {
+            switch newValue.count {
+            case 1: value = .addColumn(newValue[0])
+            default:
+                assertionFailure("SQLite only supports adding one column during ALTER TABLE query.")
+                break
+            }
+        }
+    }
+    
 
     /// Creates a new `AlterTable`.
     ///

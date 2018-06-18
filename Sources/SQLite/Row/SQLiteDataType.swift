@@ -1,4 +1,12 @@
 public enum SQLiteDataType: SQLDataType {
+    /// See `SQLDataType`.
+    public static func dataType(appropriateFor type: Any.Type) -> SQLiteDataType? {
+        if let type = type as? SQLiteDataTypeStaticRepresentable.Type {
+            return type.sqliteDataType
+        }
+        return nil
+    }
+    
     case integer
     case real
     case text

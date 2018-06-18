@@ -1,14 +1,14 @@
-import SQL
 import SQLite
+import SQLBenchmark
 import XCTest
 
-
-
-struct Galaxy2: SQLiteTable {
-    
-}
-
 class SQLiteTests: XCTestCase {
+    func testBenchmark() throws {
+        let conn = try SQLiteConnection.makeTest()
+        let benchmark = SQLBenchmark(on: conn)
+        try benchmark.run()
+    }
+    
     func testVersion() throws {
         let conn = try SQLiteConnection.makeTest()
         
@@ -20,12 +20,10 @@ class SQLiteTests: XCTestCase {
         let conn = try SQLiteConnection.makeTest()
 
         let res = try conn.select()
-            .column(function: "sqlite_version", as: "version")
+            .column(.function("sqlite_version", [], as: .identifier("version")))
             .all().wait()
         print(res)
     }
-
-
 
     func testTables() throws {
         let database = try SQLiteConnection.makeTest()
@@ -161,9 +159,9 @@ class SQLiteTests: XCTestCase {
     }
 
     static let allTests = [
+        ("testBenchmark", testBenchmark),
         ("testVersion", testVersion),
         ("testVersionBuild", testVersionBuild),
-        ("testSQL", testSQL),
         ("testTables", testTables),
         ("testUnicode", testUnicode),
         ("testBigInts", testBigInts),

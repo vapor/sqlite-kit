@@ -18,7 +18,7 @@ import SQLite3
 ///         .column(function: "sqlite_version", as: "version")
 ///         .run().wait()
 ///
-public final class SQLiteConnection: BasicWorker, DatabaseConnection, SQLConnection {
+public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQueryable {
     /// See `DatabaseConnection`.
     public typealias Database = SQLiteDatabase
     
