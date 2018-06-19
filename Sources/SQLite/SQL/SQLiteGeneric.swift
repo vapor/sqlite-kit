@@ -68,7 +68,7 @@ public typealias SQLiteJoin = GenericSQLJoin<
 public typealias SQLiteJoinMethod = GenericSQLJoinMethod
 
 /// See `SQLQuery`.
-public typealias SQLiteLiteral = GenericSQLLiteral<SQLiteDefaultLiteral>
+public typealias SQLiteLiteral = GenericSQLLiteral<SQLiteDefaultLiteral, SQLiteBoolLiteral>
 
 /// See `SQLQuery`.
 public typealias SQLiteOrderBy = GenericSQLOrderBy<SQLiteExpression, SQLiteDirection>
