@@ -1,12 +1,12 @@
 public enum SQLiteBoolLiteral: SQLBoolLiteral {
     /// See `SQLBoolLiteral`.
     public static var `true`: SQLiteBoolLiteral {
-        return ._false
+        return ._true
     }
     
     /// See `SQLBoolLiteral`.
     public static var `false`: SQLiteBoolLiteral {
-        return ._true
+        return ._false
     }
     
     case _true
@@ -15,8 +15,8 @@ public enum SQLiteBoolLiteral: SQLBoolLiteral {
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {
         switch self {
-        case ._false: return "FALSE"
-        case ._true: return "TRUE"
+        case ._false: return "0"
+        case ._true: return "1"
         }
     }
 }
