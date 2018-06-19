@@ -1,13 +1,11 @@
-public struct SQLitePrimaryKey: SQLPrimaryKey {
+public enum SQLitePrimaryKeyDefault: SQLPrimaryKeyDefault {
     /// See `SQLPrimaryKey`.
-    public static func primaryKey() -> SQLitePrimaryKey {
-        return .init(autoIncrement: false)
+    public static var `default`: SQLitePrimaryKeyDefault {
+        return .autoIncrement
     }
     
-    /// See `SQLPrimaryKey`.
-    public static func primaryKey(autoIncrement: Bool) -> SQLitePrimaryKey {
-        return .init(autoIncrement: autoIncrement)
-    }
+    /// Default. Uses ROWID as default primary key.
+    case rowID
     
     /// The AUTOINCREMENT keyword imposes extra CPU, memory, disk space, and disk I/O overhead and should be avoided if not strictly needed.
     /// It is usually not needed.
@@ -16,20 +14,13 @@ public struct SQLitePrimaryKey: SQLPrimaryKey {
     /// signed integer.
     ///
     /// https://www.sqlite.org/autoinc.html
-    public var autoIncrement: Bool
+    case autoIncrement
     
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {
-        if autoIncrement {
-            return "AUTOINCREMENT"
-        } else {
-            return ""
+        switch self {
+        case .rowID: return ""
+        case .autoIncrement: return "AUTOINCREMENT"
         }
-    }
-}
-
-extension SQLColumnConstraint where ColumnConstraintAlgorithm.PrimaryKey == SQLitePrimaryKey {
-    public static func primaryKey(autoIncrement: Bool) -> Self {
-        return .constraint(.primaryKey(.primaryKey(autoIncrement: autoIncrement)), nil)
     }
 }

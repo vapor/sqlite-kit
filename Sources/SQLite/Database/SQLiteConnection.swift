@@ -18,7 +18,7 @@ import SQLite3
 ///         .column(function: "sqlite_version", as: "version")
 ///         .run().wait()
 ///
-public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQueryable {
+public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQueryable, SQLConnection {
     /// See `DatabaseConnection`.
     public typealias Database = SQLiteDatabase
     
@@ -58,6 +58,11 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
             return nil
         }
         return String(cString: raw)
+    }
+    
+    /// See `SQLConnection`.
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn : SQLiteData], table: GenericSQLTableIdentifier<SQLiteIdentifier>?) throws -> D where D : Decodable {
+        return try SQLiteRowDecoder().decode(D.self, from: row, table: table)
     }
     
     /// Executes the supplied `SQLiteQuery` on the connection, calling the supplied closure for each row returned.

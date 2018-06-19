@@ -3,7 +3,7 @@ public typealias SQLiteBinaryOperator = GenericSQLBinaryOperator
 
 /// See `SQLQuery`.
 public typealias SQLiteColumnConstraintAlgorithm = GenericSQLColumnConstraintAlgorithm<
-    SQLiteExpression, SQLiteCollation, SQLitePrimaryKey, SQLiteForeignKey
+    SQLiteExpression, SQLiteCollation, SQLitePrimaryKeyDefault, SQLiteForeignKey
 >
 
 /// See `SQLQuery`.
@@ -68,7 +68,7 @@ public typealias SQLiteJoin = GenericSQLJoin<
 public typealias SQLiteJoinMethod = GenericSQLJoinMethod
 
 /// See `SQLQuery`.
-public typealias SQLiteLiteral = GenericSQLLiteral
+public typealias SQLiteLiteral = GenericSQLLiteral<SQLiteDefaultLiteral>
 
 /// See `SQLQuery`.
 public typealias SQLiteOrderBy = GenericSQLOrderBy<SQLiteExpression, SQLiteDirection>
@@ -83,7 +83,7 @@ public typealias SQLiteSelectExpression = GenericSQLSelectExpression<SQLiteExpre
 
 /// See `SQLQuery`.
 public typealias SQLiteTableConstraintAlgorithm = GenericSQLTableConstraintAlgorithm<
-    SQLiteIdentifier, SQLiteExpression, SQLiteCollation, SQLitePrimaryKey, SQLiteForeignKey
+    SQLiteIdentifier, SQLiteExpression, SQLiteCollation, SQLiteForeignKey
 >
 
 /// See `SQLQuery`.

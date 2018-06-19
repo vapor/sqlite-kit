@@ -9,7 +9,7 @@
 ///
 /// Uses `SQLiteDataDecoder` internally to decode each column. Use `SQLiteDataConvertible` to
 /// customize how your types are decoded.
-public struct SQLiteRowDecoder: SQLRowDecoder {
+public struct SQLiteRowDecoder {
     /// Creates a new `SQLiteRowDecoder`.
     public init() { }
     
