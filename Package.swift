@@ -11,16 +11,19 @@ let package = Package(
         .package(url: "https://github.com/vapor/core.git", from: "3.0.0"),
 
         // 🗄 Core services for creating database integrations.
-        .package(url: "https://github.com/vapor/database-kit.git", from: "1.0.0"),
+        .package(url: "https://github.com/vapor/database-kit.git", from: "1.2.0"),
+        
+        // *️⃣ Build SQL queries in Swift. Extensible, protocol-based design that supports DQL, DML, and DDL.
+        .package(url: "https://github.com/vapor/sql.git", from: "2.0.0-beta"),
     ],
     targets: [
-        .testTarget(name: "SQLiteTests", dependencies: ["SQLite"]),
+        .testTarget(name: "SQLiteTests", dependencies: ["SQLite", "SQLBenchmark"]),
     ]
 )
 
 #if os(Linux)
 package.targets.append(.target(name: "CSQLite"))
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging"]))
+package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging", "SQL"]))
 #else
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "DatabaseKit", "Debugging"]))
+package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "DatabaseKit", "Debugging", "SQL"]))
 #endif

@@ -1,10 +1,35 @@
+/// Decodes `Decodable` types from SQLite rows (`[SQLiteColumn: SQLiteData]`).
+///
+///     struct User: Codable {
+///         var name: String
+///     }
+///
+///     let row: [SQLiteColumn: SQLiteData] ...
+///     let user = try SQLiteRowDecoder().decode(User.self, from: row, table: "users")
+///
+/// Uses `SQLiteDataDecoder` internally to decode each column. Use `SQLiteDataConvertible` to
+/// customize how your types are decoded.
 public struct SQLiteRowDecoder {
+    /// Creates a new `SQLiteRowDecoder`.
     public init() { }
     
-    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: String? = nil) throws -> D
+    /// Decodes `Decodable` types from SQLite rows (`[SQLiteColumn: SQLiteData]`).
+    ///
+    ///     struct User: Codable {
+    ///         var name: String
+    ///     }
+    ///
+    ///     let row: [SQLiteColumn: SQLiteData] ...
+    ///     let user = try SQLiteRowDecoder().decode(User.self, from: row, table: "users")
+    ///
+    /// - parameters:
+    ///     - type: `Decodable` type to decode.
+    ///     - data: SQLite row (`[SQLiteColumn: SQLiteData]`) to decode.
+    /// - returns: Instance of decoded type.
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: SQLiteTableIdentifier? = nil) throws -> D
         where D: Decodable
     {
-        return try D(from: _Decoder(row: row, table: table))
+        return try D(from: _Decoder(row: row, table: table?.identifier.string))
     }
     
     // MARK: Private

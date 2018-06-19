@@ -1,25 +1,42 @@
-public protocol SQLiteQueryExpressionRepresentable {
-    var sqliteQueryExpression: SQLiteQuery.Expression { get }
-}
-
-struct SQLiteQueryExpressionEncoder {
-    init() { }
+/// Encodes `Encodable` values to `SQLiteData`.
+///
+///     let expr = try SQLiteDataEncoder().encode("Hello")
+///     print(expr) // .text("Hello")
+///
+/// Conform your types to `SQLiteDataConvertible` to
+/// customize how they are encoded.
+public struct SQLiteDataEncoder {
+    /// Creates a new `SQLiteDataEncoder`.
+    public init() { }
     
-    func encode<E>(_ value: E) throws -> SQLiteQuery.Expression
-        where E: Encodable
-    {
-        if let sqlite = value as? SQLiteQueryExpressionRepresentable {
-            return sqlite.sqliteQueryExpression
-        } else if let value = value as? SQLiteDataConvertible {
-            return try .data(value.convertToSQLiteData())
+    /// Encodes `Encodable` values to `SQLiteData`.
+    ///
+    ///     let expr = try SQLiteDataEncoder().encode("Hello")
+    ///     print(expr) // .text("Hello")
+    ///
+    /// - parameters:
+    ///     - value: `Encodable` value to encode.
+    /// - returns: `SQLiteData` representing the encoded data.
+    public func encode(_ value: Encodable) throws -> SQLiteData {
+        if let value = value as? SQLiteDataConvertible {
+            return try value.convertToSQLiteData()
         } else {
             let encoder = _Encoder()
             do {
                 try value.encode(to: encoder)
                 return encoder.data!
             } catch is _DoJSONError {
-                let json = try JSONEncoder().encode(value)
-                return .data(.blob(json))
+                struct AnyEncodable: Encodable {
+                    var encodable: Encodable
+                    init(_ encodable: Encodable) {
+                        self.encodable = encodable
+                    }
+                    func encode(to encoder: Encoder) throws {
+                        try encodable.encode(to: encoder)
+                    }
+                }
+                let json = try JSONEncoder().encode(AnyEncodable(value))
+                return .blob(json)
             }
         }
     }
@@ -29,7 +46,7 @@ struct SQLiteQueryExpressionEncoder {
     private final class _Encoder: Encoder {
         let codingPath: [CodingKey] = []
         let userInfo: [CodingUserInfoKey: Any] = [:]
-        var data: SQLiteQuery.Expression?
+        var data: SQLiteData?
         
         init() {
             self.data = nil
@@ -60,15 +77,12 @@ struct SQLiteQueryExpressionEncoder {
         }
         
         mutating func encodeNil() throws {
-            encoder.data = .literal(.null)
+            encoder.data = .null
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
-            if let sqlite = value as? SQLiteQueryExpressionRepresentable {
-                encoder.data = sqlite.sqliteQueryExpression
-                return
-            } else if let convertible = value as? SQLiteDataConvertible {
-                encoder.data = try .data(convertible.convertToSQLiteData())
+            if let convertible = value as? SQLiteDataConvertible {
+                encoder.data = try convertible.convertToSQLiteData()
                 return
             }
             try value.encode(to: encoder)
