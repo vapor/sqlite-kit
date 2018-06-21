@@ -22,9 +22,6 @@ public typealias SQLiteColumnIdentifier = GenericSQLColumnIdentifier<
 >
 
 /// See `SQLQuery`.
-public typealias SQLiteConflictResolution = GenericSQLConflictResolution
-
-/// See `SQLQuery`.
 public typealias SQLiteDelete = GenericSQLDelete<
     SQLiteTableIdentifier, SQLiteExpression
 >
@@ -45,8 +42,11 @@ public typealias SQLiteExpression = GenericSQLExpression<
 
 /// See `SQLQuery`.
 public typealias SQLiteForeignKey = GenericSQLForeignKey<
-    SQLiteTableIdentifier, SQLiteIdentifier, SQLiteConflictResolution
+    SQLiteTableIdentifier, SQLiteIdentifier, SQLiteForeignKeyAction
 >
+
+/// See `SQLQuery`.
+public typealias SQLiteForeignKeyAction = GenericSQLForeignKeyAction
 
 /// See `SQLQuery`.
 public typealias SQLiteGroupBy = GenericSQLGroupBy<SQLiteExpression>
