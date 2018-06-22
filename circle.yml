@@ -1,14 +1,6 @@
 version: 2
 
 jobs:
-  macos:
-    macos:
-      xcode: "9.2"
-    steps:
-      - checkout
-      - run: swift build
-      - run: swift test
-
   linux:
     docker:
       - image: codevapor/swift:4.1
@@ -20,7 +12,6 @@ jobs:
       - run: 
           name: Run unit tests
           command: swift test
-
   linux-release:
     docker:
       - image: codevapor/swift:4.1
@@ -29,8 +20,6 @@ jobs:
       - run: 
           name: Compile code with optimizations
           command: swift build -c release
-
-
   linux-fluent:
     docker:
       - image: codevapor/swift:4.1
@@ -47,8 +36,6 @@ jobs:
           name: Run Fluent SQLite unit tests
           command: swift test
           working_directory: ~/fluent-sqlite
-
-
 workflows:
   version: 2
   tests:
@@ -56,8 +43,6 @@ workflows:
       - linux
       - linux-fluent
       - linux-release
-      # - macos
-
   nightly:
     triggers:
       - schedule:
@@ -68,5 +53,3 @@ workflows:
                 - master
     jobs:
       - linux
-      # - macos
-      

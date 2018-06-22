@@ -22,6 +22,11 @@ public typealias SQLiteColumnIdentifier = GenericSQLColumnIdentifier<
 >
 
 /// See `SQLQuery`.
+public typealias SQLiteCreateIndex = GenericSQLCreateIndex<
+    SQLiteIndexModifier, SQLiteIdentifier, SQLiteTableIdentifier
+>
+
+/// See `SQLQuery`.
 public typealias SQLiteDelete = GenericSQLDelete<
     SQLiteTableIdentifier, SQLiteExpression
 >
@@ -53,6 +58,9 @@ public typealias SQLiteGroupBy = GenericSQLGroupBy<SQLiteExpression>
 
 /// See `SQLQuery`.
 public typealias SQLiteIdentifier = GenericSQLIdentifier
+
+/// See `SQLQuery`.
+public typealias SQLiteIndexModifier = GenericSQLIndexModifier
 
 /// See `SQLQuery`.
 public typealias SQLiteInsert = GenericSQLInsert<
