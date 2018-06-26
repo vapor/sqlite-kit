@@ -158,6 +158,18 @@ class SQLiteTests: XCTestCase {
         group.wait()
     }
     
+    func testNonEmptyArrayEncodingDecoding() throws {
+        let nonEmptyArray = ["foo", "bar"]
+        let encoder = SQLiteDataEncoder()
+        
+        let data = try encoder.encode(nonEmptyArray)
+        
+        let decoder = SQLiteDataDecoder()
+        
+        let result = try decoder.decode([String].self, from: data)
+        XCTAssertEqual(result, nonEmptyArray, "Should convert back to original array")
+    }
+    
     func testEmptyArrayEncodingDecoding() throws {
         let emptyArray = [String]()
         let encoder = SQLiteDataEncoder()
