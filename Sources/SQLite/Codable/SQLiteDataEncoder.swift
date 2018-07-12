@@ -24,7 +24,8 @@ public struct SQLiteDataEncoder {
             let encoder = _Encoder()
             do {
                 try value.encode(to: encoder)
-                return encoder.data!
+                guard let data = encoder.data else { throw _DoJSONError() }
+                return data
             } catch is _DoJSONError {
                 struct AnyEncodable: Encodable {
                     var encodable: Encodable
