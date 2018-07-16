@@ -1,3 +1,4 @@
+/// SQLite specific `SQLQuery`.
 public enum SQLiteQuery: SQLQuery {
     /// See `SQLQuery`.
     public typealias AlterTable = SQLiteAlterTable
