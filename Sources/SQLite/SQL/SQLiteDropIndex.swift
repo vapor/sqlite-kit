@@ -11,7 +11,7 @@ public struct SQLiteDropIndex: SQLDropIndex {
 }
 
 public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
-    where Connection: DatabaseQueryable, Connection.Query == SQLiteQuery
+    where Connection: SQLConnection, Connection.Query == SQLiteQuery
 {
     /// `AlterTable` query being built.
     public var dropIndex: SQLiteDropIndex
@@ -32,7 +32,7 @@ public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
 }
 
 
-extension DatabaseQueryable where Query == SQLiteQuery {
+extension SQLConnection where Query == SQLiteQuery {
     public func drop(index identifier: SQLiteIdentifier) -> SQLiteDropIndexBuilder<Self> {
         return .init(SQLiteDropIndex(identifier: identifier), on: self)
     }

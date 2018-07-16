@@ -23,7 +23,7 @@ public typealias SQLiteColumnIdentifier = GenericSQLColumnIdentifier<
 
 /// See `SQLQuery`.
 public typealias SQLiteCreateIndex = GenericSQLCreateIndex<
-    SQLiteIndexModifier, SQLiteIdentifier, SQLiteTableIdentifier
+    SQLiteIndexModifier, SQLiteIdentifier, SQLiteColumnIdentifier
 >
 
 /// See `SQLQuery`.
@@ -87,7 +87,7 @@ public typealias SQLiteSelect = GenericSQLSelect<
 >
 
 /// See `SQLQuery`.
-public typealias SQLiteSelectExpression = GenericSQLSelectExpression<SQLiteExpression, SQLiteIdentifier>
+public typealias SQLiteSelectExpression = GenericSQLSelectExpression<SQLiteExpression, SQLiteIdentifier, SQLiteTableIdentifier>
 
 /// See `SQLQuery`.
 public typealias SQLiteTableConstraintAlgorithm = GenericSQLTableConstraintAlgorithm<
