@@ -1,3 +1,4 @@
+/// SQLite specific `SQLDefaultLiteral`.
 public struct SQLiteDefaultLiteral: SQLDefaultLiteral {
     /// See `SQLDefaultLiteral`.
     public static var `default`: SQLiteDefaultLiteral {

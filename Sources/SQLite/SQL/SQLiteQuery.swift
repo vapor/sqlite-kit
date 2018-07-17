@@ -130,6 +130,7 @@ public enum SQLiteQuery: SQLQuery {
 }
 
 extension SQLiteQuery: ExpressibleByStringLiteral {
+    /// See `ExpressibleByStringLiteral`.
     public init(stringLiteral value: String) {
         self = ._raw(value, [])
     }

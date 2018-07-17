@@ -1,4 +1,6 @@
+/// SQLite specific `SQLDropIndex`.
 public struct SQLiteDropIndex: SQLDropIndex {
+    /// See `SQLDropIndex`.
     public var identifier: SQLiteIdentifier
     
     /// See `SQLSerializable`.
@@ -10,6 +12,7 @@ public struct SQLiteDropIndex: SQLDropIndex {
     }
 }
 
+/// SQLite specific drop index builder.
 public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
     where Connection: SQLConnection, Connection.Query == SQLiteQuery
 {
@@ -33,6 +36,7 @@ public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
 
 
 extension SQLConnection where Query == SQLiteQuery {
+    /// Drops an index from a SQLite database.
     public func drop(index identifier: SQLiteIdentifier) -> SQLiteDropIndexBuilder<Self> {
         return .init(SQLiteDropIndex(identifier: identifier), on: self)
     }

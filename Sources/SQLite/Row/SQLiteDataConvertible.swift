@@ -1,5 +1,9 @@
+/// Capable of converting to and from `SQLiteData`.
 public protocol SQLiteDataConvertible {
+    /// Creates `Self` from `SQLiteData`.
     static func convertFromSQLiteData(_ data: SQLiteData) throws -> Self
+    
+    /// Converts `self` to `SQLiteData`.
     func convertToSQLiteData() throws -> SQLiteData
 }
 

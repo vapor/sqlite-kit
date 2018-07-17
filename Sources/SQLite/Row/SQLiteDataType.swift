@@ -1,3 +1,4 @@
+/// Supported SQLite column data types when defining schemas.
 public enum SQLiteDataType: SQLDataType {
     /// See `SQLDataType`.
     public static func dataType(appropriateFor type: Any.Type) -> SQLiteDataType? {
@@ -7,10 +8,19 @@ public enum SQLiteDataType: SQLDataType {
         return nil
     }
     
+    /// `INTEGER`.
     case integer
+    
+    /// `REAL`.
     case real
+    
+    /// `TEXT`.
     case text
+    
+    /// `BLOB`.
     case blob
+    
+    /// `NULL`.
     case null
     
     /// See `SQLSerializable`.

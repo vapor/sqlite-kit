@@ -1,3 +1,4 @@
+/// SQLite specific `SQLBoolLiteral`.
 public enum SQLiteBoolLiteral: SQLBoolLiteral {
     /// See `SQLBoolLiteral`.
     public static var `true`: SQLiteBoolLiteral {
@@ -9,7 +10,10 @@ public enum SQLiteBoolLiteral: SQLBoolLiteral {
         return ._false
     }
     
+    /// See `SQLBoolLiteral`.
     case _true
+    
+    /// See `SQLBoolLiteral`.
     case _false
     
     /// See `SQLSerializable`.
