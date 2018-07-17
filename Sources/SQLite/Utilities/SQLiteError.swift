@@ -8,9 +8,17 @@ import Debugging
 /// Errors that can be thrown while using SQLite
 public struct SQLiteError: Debuggable {
     let problem: Problem
+    
+    /// See `Debuggable`.
     public let reason: String
+    
+    /// See `Debuggable`.
     public var sourceLocation: SourceLocation?
+    
+    /// See `Debuggable`.
     public var stackTrace: [String]
+    
+    /// See `Debuggable`.
     public var identifier: String {
         return problem.rawValue
     }
