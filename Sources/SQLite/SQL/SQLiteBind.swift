@@ -1,3 +1,4 @@
+/// SQLite specific `SQLBind`.
 public struct SQLiteBind: SQLBind {
     /// See `SQLBind`.
     public static func encodable<E>(_ value: E) -> SQLiteBind
@@ -10,11 +11,16 @@ public struct SQLiteBind: SQLBind {
         }
     }
     
+    /// Supported bind values.
     public enum Value {
+        /// A sub-expression.
         case expression(SQLiteExpression)
+        
+        /// Encodable value.
         case encodable(Encodable)
     }
     
+    /// Bind value.
     public var value: Value
     
     /// See `SQLSerializable`.

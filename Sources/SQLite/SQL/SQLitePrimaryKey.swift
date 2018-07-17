@@ -1,3 +1,4 @@
+/// SQLite specific `SQLPrimaryKeyDefault`.
 public enum SQLitePrimaryKeyDefault: SQLPrimaryKeyDefault {
     /// See `SQLPrimaryKey`.
     public static var `default`: SQLitePrimaryKeyDefault {

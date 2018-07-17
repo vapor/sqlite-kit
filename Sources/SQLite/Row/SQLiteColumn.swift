@@ -1,3 +1,4 @@
+/// Column in a SQLite result set.
 public struct SQLiteColumn {
     /// The table name.
     public var table: String?

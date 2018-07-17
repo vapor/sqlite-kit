@@ -1,12 +1,30 @@
+/// Supported SQLite data types.
 public enum SQLiteData: Equatable, Encodable {
+    /// `Int`.
     case integer(Int)
+    
+    /// `Double`.
     case float(Double)
+    
+    /// `String`.
     case text(String)
+    
+    /// `Data`.
     case blob(Foundation.Data)
+    
+    /// `NULL`.
     case null
     
+    /// See `Encodable`.
     public func encode(to encoder: Encoder) throws {
-        fatalError()
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .integer(let value): try container.encode(value)
+        case .float(let value): try container.encode(value)
+        case .text(let value): try container.encode(value)
+        case .blob(let value): try container.encode(value)
+        case .null: try container.encodeNil()
+        }
     }
 }
 
