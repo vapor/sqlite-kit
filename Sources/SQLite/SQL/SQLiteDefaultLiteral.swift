@@ -1,6 +1,6 @@
 public struct SQLiteDefaultLiteral: SQLDefaultLiteral {
     /// See `SQLDefaultLiteral`.
-    public static func `default`() -> SQLiteDefaultLiteral {
+    public static var `default`: SQLiteDefaultLiteral {
         return self.init()
     }
     

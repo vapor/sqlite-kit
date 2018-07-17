@@ -65,12 +65,12 @@ class SQLiteTests: XCTestCase {
         _ = try database.query("DROP TABLE IF EXISTS `foo`").wait()
         _ = try database.query("CREATE TABLE `foo` (bar TEXT)").wait()
 
-        _ = try database.query("INSERT INTO `foo` VALUES(?)", [unicode]).wait()
+        _ = try database.raw("INSERT INTO `foo` VALUES(?)").bind(unicode).run().wait()
         let selectAllResults = try database.query("SELECT * FROM `foo`").wait().first
         XCTAssertNotNil(selectAllResults)
         XCTAssertEqual(selectAllResults!.firstValue(forColumn: "bar"), .text(unicode))
 
-        let selectWhereResults = try database.query("SELECT * FROM `foo` WHERE bar = '\(unicode)'").wait().first
+        let selectWhereResults = try database.raw("SELECT * FROM `foo` WHERE bar = '\(unicode)'").all().wait().first
         XCTAssertNotNil(selectWhereResults)
         XCTAssertEqual(selectWhereResults!.firstValue(forColumn: "bar"), .text(unicode))
     }
@@ -81,7 +81,7 @@ class SQLiteTests: XCTestCase {
 
         _ = try database.query("DROP TABLE IF EXISTS foo").wait()
         _ = try database.query("CREATE TABLE foo (max INT)").wait()
-        _ = try database.query("INSERT INTO foo VALUES (?)", [max]).wait()
+        _ = try database.raw("INSERT INTO foo VALUES (?)").bind(max).run().wait()
 
         if let result = try! database.query("SELECT * FROM foo").wait().first {
             XCTAssertEqual(result.firstValue(forColumn: "max"), .integer(max))
@@ -94,7 +94,7 @@ class SQLiteTests: XCTestCase {
 
         _ = try database.query("DROP TABLE IF EXISTS `foo`").wait()
         _ = try database.query("CREATE TABLE foo (bar BLOB(4))").wait()
-        _ = try database.query("INSERT INTO foo VALUES (?)", [data]).wait()
+        _ = try database.raw("INSERT INTO foo VALUES (?)").bind(data).run().wait()
 
         if let result = try database.query("SELECT * FROM foo").wait().first {
             XCTAssertEqual(result.firstValue(forColumn: "bar"), .blob(data))
