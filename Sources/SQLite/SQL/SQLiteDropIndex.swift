@@ -13,14 +13,14 @@ public struct SQLiteDropIndex: SQLDropIndex {
 }
 
 /// SQLite specific drop index builder.
-public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
-    where Connection: SQLConnection, Connection.Query == SQLiteQuery
+public final class SQLiteDropIndexBuilder<Connectable>: SQLQueryBuilder
+    where Connectable: SQLConnectable, Connectable.Connection.Query == SQLiteQuery
 {
     /// `AlterTable` query being built.
     public var dropIndex: SQLiteDropIndex
     
     /// See `SQLQueryBuilder`.
-    public var connection: Connection
+    public var connectable: Connectable
     
     /// See `SQLQueryBuilder`.
     public var query: SQLiteQuery {
@@ -28,14 +28,14 @@ public final class SQLiteDropIndexBuilder<Connection>: SQLQueryBuilder
     }
     
     /// Creates a new `SQLCreateIndexBuilder`.
-    public init(_ dropIndex: SQLiteDropIndex, on connection: Connection) {
+    public init(_ dropIndex: SQLiteDropIndex, on connectable: Connectable) {
         self.dropIndex = dropIndex
-        self.connection = connection
+        self.connectable = connectable
     }
 }
 
 
-extension SQLConnection where Query == SQLiteQuery {
+extension SQLConnectable where Connection.Query == SQLiteQuery {
     /// Drops an index from a SQLite database.
     public func drop(index identifier: SQLiteIdentifier) -> SQLiteDropIndexBuilder<Self> {
         return .init(SQLiteDropIndex(identifier: identifier), on: self)
