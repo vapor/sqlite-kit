@@ -20,7 +20,7 @@ public final class SQLiteDropIndexBuilder<Connectable>: SQLQueryBuilder
     public var dropIndex: SQLiteDropIndex
     
     /// See `SQLQueryBuilder`.
-    public var connection: Connectable
+    public var connectable: Connectable
     
     /// See `SQLQueryBuilder`.
     public var query: SQLiteQuery {
@@ -28,9 +28,9 @@ public final class SQLiteDropIndexBuilder<Connectable>: SQLQueryBuilder
     }
     
     /// Creates a new `SQLCreateIndexBuilder`.
-    public init(_ dropIndex: SQLiteDropIndex, on connection: Connectable) {
+    public init(_ dropIndex: SQLiteDropIndex, on connectable: Connectable) {
         self.dropIndex = dropIndex
-        self.connection = connection
+        self.connectable = connectable
     }
 }
 

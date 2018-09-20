@@ -1,4 +1,4 @@
-extension SQLAlterTableBuilder where Connection.Connection.Query.AlterTable == SQLiteAlterTable {
+extension SQLAlterTableBuilder where Connectable.Connection.Query.AlterTable == SQLiteAlterTable {
     /// Renames the table.
     ///
     ///     conn.alter(table: Bar.self).rename(to: "foo").run()

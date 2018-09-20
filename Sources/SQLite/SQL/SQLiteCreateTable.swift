@@ -1,4 +1,4 @@
-extension SQLCreateTableBuilder where Connection.Connection.Query.CreateTable == SQLiteCreateTable {
+extension SQLCreateTableBuilder where Connectable.Connection.Query.CreateTable == SQLiteCreateTable {
     /// By default, every row in SQLite has a special column, usually called the "rowid", that uniquely identifies that row within
     /// the table. However if the phrase "WITHOUT ROWID" is added to the end of a CREATE TABLE statement, then the special "rowid"
     /// column is omitted. There are sometimes space and performance advantages to omitting the rowid.
