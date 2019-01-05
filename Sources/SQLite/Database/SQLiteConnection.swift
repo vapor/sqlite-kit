@@ -112,11 +112,14 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// See `DatabaseConnection`.
     public func close() {
+        sqlite3_close(handle)
         isClosed = true
     }
     
     /// Closes the open SQLite handle on deinit.
     deinit {
-        sqlite3_close(handle)
+        if !isClosed {
+            close()
+        }
     }
 }
