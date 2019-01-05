@@ -5,17 +5,17 @@ import SQLite3
 #endif
 
 internal struct SQLiteStatement {
-    internal let connection: SQLiteConnection
-    internal let c: OpaquePointer
-
+    private let c: OpaquePointer
+    private let connection: SQLiteConnection
+    
     internal init(query: String, on connection: SQLiteConnection) throws {
         var handle: OpaquePointer?
-        let ret = sqlite3_prepare_v2(connection.database.handle, query, -1, &handle, nil)
+        let ret = sqlite3_prepare_v2(connection.handle, query, -1, &handle, nil)
         guard ret == SQLITE_OK, let c = handle else {
             throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
         }
-        self.connection = connection
         self.c = c
+        self.connection = connection
     }
     
     internal func bind(_ binds: [SQLiteData]) throws {
@@ -52,21 +52,21 @@ internal struct SQLiteStatement {
                 }
             }
         }
-
+        
     }
-
+    
     internal func getColumns() throws -> [SQLiteColumn]? {
         var columns: [SQLiteColumn] = []
-
+        
         let count = sqlite3_column_count(c)
         columns.reserveCapacity(Int(count))
-
+        
         // iterate over column count and intialize columns once
         // we will then re-use the columns for each row
         for i in 0..<count {
             try columns.append(column(at: i))
         }
-
+        
         return columns
     }
     
@@ -85,7 +85,7 @@ internal struct SQLiteStatement {
         case SQLITE_ROW: break
         default: throw SQLiteError(statusCode: step, connection: connection, source: .capture())
         }
-
+        
         
         var row: [SQLiteColumn: SQLiteData] = [:]
         

@@ -17,51 +17,34 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// SQLite storage method. See `SQLiteStorage`.
     public let storage: SQLiteStorage
     
-    /// Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
-    internal let blockingIO: BlockingIOThreadPool
+    /// Dispatch queue for performing blocking IO work. See `DispatchQueue`.
+    internal let queue: DispatchQueue
     
-    /// Internal SQLite database handle.
-    internal let handle: OpaquePointer
-
     /// Create a new SQLite database.
     ///
     ///     let sqliteDB = SQLiteDatabase(storage: .memory)
     ///
     /// - parameters:
     ///     - storage: SQLite storage method. See `SQLiteStorage`.
-    ///     - threadPool: Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
+    ///     - queue: Dispatch queue for performing blocking IO work. See `DispatchQueue`.
     /// - throws: Errors creating the SQLite database.
-    public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
+    public init(storage: SQLiteStorage = .memory, queue: DispatchQueue = DispatchQueue(label: "SQLite Database Queue", attributes: .concurrent)) throws {
         self.storage = storage
-        self.blockingIO = threadPool ?? BlockingIOThreadPool(numberOfThreads: 2)
-        self.blockingIO.start()
-        // make connection
-        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
-        var handle: OpaquePointer?
-        guard sqlite3_open_v2(self.storage.path, &handle, options, nil) == SQLITE_OK, let c = handle else {
-            throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
-        }
-        self.handle = c
+        self.queue = queue
     }
-
+    
     /// See `Database`.
     public func newConnection(on worker: Worker) -> Future<SQLiteConnection> {
-        let conn = SQLiteConnection(database: self, on: worker)
-        return worker.future(conn)
+        do {
+            let conn = try SQLiteConnection(database: self, on: worker)
+            return worker.future(conn)
+        } catch {
+            return worker.future(error: error)
+        }
     }
-
+    
     /// See `LogSupporting`.
     public static func enableLogging(_ logger: DatabaseLogger, on conn: SQLiteConnection) {
         conn.logger = logger
-    }
-    
-    /// Closes the open SQLite handle on deinit.
-    deinit {
-        sqlite3_close(handle)
-        self.blockingIO.shutdownGracefully { error in
-            if let error = error {
-                print("[SQLite] [ERROR] Could not shutdown BlockingIOThreadPool: \(error)")
-            }
-        }
     }
 }

@@ -23,41 +23,46 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     public typealias Database = SQLiteDatabase
     
     /// See `DatabaseConnection`.
-    public var isClosed: Bool
-
-    /// See `BasicWorker`.
-    public let eventLoop: EventLoop
-
+    public var isClosed: Bool = false
+    
     /// See `DatabaseConnection`.
-    public var extend: Extend
-
+    public var extend: Extend = [:]
+    
     /// Optional logger, if set queries should be logged to it.
     public var logger: DatabaseLogger?
-
+    
     /// Reference to parent `SQLiteDatabase` that created this connection.
     /// This reference will ensure the DB stays alive since this connection uses
-    /// it's C pointer handle.
-    internal let database: SQLiteDatabase
-
+    /// it's dispatch queue.
+    private let database: SQLiteDatabase
+    
+    /// Internal SQLite database handle.
+    internal let handle: OpaquePointer
+    
+    /// See `BasicWorker`.
+    public let eventLoop: EventLoop
+    
     /// Create a new SQLite conncetion.
-    internal init(database: SQLiteDatabase, on worker: Worker) {
+    internal init(database: SQLiteDatabase, on worker: Worker) throws {
         self.database = database
+        // Make database connection
+        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
+        var handle: OpaquePointer?
+        guard sqlite3_open_v2(database.storage.path, &handle, options, nil) == SQLITE_OK, let c = handle else {
+            throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
+        }
+        self.handle = c
         self.eventLoop = worker.eventLoop
-        self.extend = [:]
-        self.isClosed = false
     }
-
+    
     /// Returns an identifier for the last inserted row.
     public var lastAutoincrementID: Int64? {
-        return sqlite3_last_insert_rowid(database.handle)
+        return sqlite3_last_insert_rowid(handle)
     }
     
     /// Returns the last error message, if one exists.
     internal var errorMessage: String? {
-        guard let raw = sqlite3_errmsg(database.handle) else {
-            return nil
-        }
-        return String(cString: raw)
+        return sqlite3_errmsg(handle).map(String.init(cString:))
     }
     
     /// See `SQLConnection`.
@@ -78,11 +83,11 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
         var binds: [Encodable] = []
         let sql = query.serialize(&binds)
-        let promise = eventLoop.newPromise(Void.self)
         let data = try! binds.map { try SQLiteDataEncoder().encode($0) }
         // log before anything happens, in case there's an error
         logger?.record(query: sql, values: data.map { $0.description })
-        database.blockingIO.submit { state in
+        let promise = eventLoop.newPromise(Void.self)
+        database.queue.async {
             do {
                 let statement = try SQLiteStatement(query: sql, on: self)
                 try statement.bind(data)
@@ -97,9 +102,9 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
                         }
                     }
                 }
-                return promise.succeed(result: ())
+                promise.succeed(result: ())
             } catch {
-                return promise.fail(error: error)
+                promise.fail(error: error)
             }
         }
         return promise.futureResult
@@ -108,5 +113,10 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     /// See `DatabaseConnection`.
     public func close() {
         isClosed = true
+    }
+    
+    /// Closes the open SQLite handle on deinit.
+    deinit {
+        sqlite3_close(handle)
     }
 }
