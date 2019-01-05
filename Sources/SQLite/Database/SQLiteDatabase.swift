@@ -17,8 +17,8 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// SQLite storage method. See `SQLiteStorage`.
     public let storage: SQLiteStorage
     
-    /// Dispatch queue for performing blocking IO work. See `DispatchQueue`.
-    internal let queue: DispatchQueue
+    /// Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
+    internal let blockingIO: BlockingIOThreadPool
     
     /// Create a new SQLite database.
     ///
@@ -28,9 +28,9 @@ public final class SQLiteDatabase: Database, LogSupporting {
     ///     - storage: SQLite storage method. See `SQLiteStorage`.
     ///     - queue: Dispatch queue for performing blocking IO work. See `DispatchQueue`.
     /// - throws: Errors creating the SQLite database.
-    public init(storage: SQLiteStorage = .memory, queue: DispatchQueue = DispatchQueue(label: "SQLite Database Queue", attributes: .concurrent)) throws {
+    public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
         self.storage = storage
-        self.queue = queue
+        self.blockingIO = threadPool ?? BlockingIOThreadPool(numberOfThreads: 2)
     }
     
     /// See `Database`.

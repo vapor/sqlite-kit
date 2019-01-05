@@ -87,7 +87,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
         // log before anything happens, in case there's an error
         logger?.record(query: sql, values: data.map { $0.description })
         let promise = eventLoop.newPromise(Void.self)
-        database.queue.async {
+        database.blockingIO.submit { _ in
             do {
                 let statement = try SQLiteStatement(query: sql, on: self)
                 try statement.bind(data)
