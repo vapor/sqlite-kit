@@ -26,7 +26,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
     ///
     /// - parameters:
     ///     - storage: SQLite storage method. See `SQLiteStorage`.
-    ///     - queue: Dispatch queue for performing blocking IO work. See `DispatchQueue`.
+    ///     - threadPool: Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
     /// - throws: Errors creating the SQLite database.
     public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
         self.storage = storage
