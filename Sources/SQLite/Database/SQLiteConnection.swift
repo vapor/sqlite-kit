@@ -33,7 +33,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// Reference to parent `SQLiteDatabase` that created this connection.
     /// This reference will ensure the DB stays alive since this connection uses
-    /// it's dispatch queue.
+    /// it's thread pool.
     private let database: SQLiteDatabase
     
     /// Internal SQLite database handle.
@@ -45,15 +45,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     /// Create a new SQLite conncetion.
     internal init(database: SQLiteDatabase, on worker: Worker) throws {
         self.database = database
-        // Make database connection
-        var handle: OpaquePointer?
-        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
-        guard sqlite3_open_v2(database.storage.path, &handle, options, nil) == SQLITE_OK,
-            let c = handle,
-            sqlite3_busy_handler(c, { _, _ in 1 }, nil) == SQLITE_OK else {
-                throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
-        }
-        self.handle = c
+        self.handle = try database.openConnection()
         self.eventLoop = worker.eventLoop
     }
     

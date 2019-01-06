@@ -20,6 +20,10 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// Thread pool for performing blocking IO work. See `BlockingIOThreadPool`.
     internal let blockingIO: BlockingIOThreadPool
     
+    /// If the database uses in-memory storage, this property will be set to
+    /// keep the database alive when there is no `SQLiteConnection` to it.
+    private var handle: OpaquePointer?
+    
     /// Create a new SQLite database.
     ///
     ///     let sqliteDB = SQLiteDatabase(storage: .memory)
@@ -31,6 +35,28 @@ public final class SQLiteDatabase: Database, LogSupporting {
     public init(storage: SQLiteStorage = .memory, threadPool: BlockingIOThreadPool? = nil) throws {
         self.storage = storage
         self.blockingIO = threadPool ?? BlockingIOThreadPool(numberOfThreads: 2)
+        if case .memory = storage {
+            self.handle = try openConnection()
+        }
+    }
+    
+    // Make database connection
+    internal func openConnection() throws -> OpaquePointer {
+        let path: String
+        switch storage {
+        case .memory:
+            path = "file:\(ObjectIdentifier(self))?mode=memory&cache=shared"
+        case .file(let file):
+            path = file
+        }
+        var handle: OpaquePointer?
+        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
+        guard sqlite3_open_v2(path, &handle, options, nil) == SQLITE_OK,
+            let c = handle,
+            sqlite3_busy_handler(c, { _, _ in 1 }, nil) == SQLITE_OK else {
+                throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
+        }
+        return c
     }
     
     /// See `Database`.
@@ -46,5 +72,16 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// See `LogSupporting`.
     public static func enableLogging(_ logger: DatabaseLogger, on conn: SQLiteConnection) {
         conn.logger = logger
+    }
+    
+    deinit {
+        self.blockingIO.shutdownGracefully { [handle] error in
+            if let error = error {
+                print("[SQLite] [ERROR] Could not shutdown BlockingIOThreadPool: \(error)")
+            }
+            if let handle = handle, sqlite3_close(handle) != SQLITE_OK {
+                print("[SQLite] [ERROR] Could not close database.")
+            }
+        }
     }
 }
