@@ -52,7 +52,6 @@ internal struct SQLiteStatement {
                 }
             }
         }
-        
     }
     
     internal func getColumns() throws -> [SQLiteColumn]? {
@@ -86,14 +85,12 @@ internal struct SQLiteStatement {
         default: throw SQLiteError(statusCode: step, connection: connection, source: .capture())
         }
         
-        
         var row: [SQLiteColumn: SQLiteData] = [:]
         
         // iterator over column count again and create a field
         // for each column. Use the column we have already initialized.
-        for i in 0..<Int32(columns.count) {
-            let col = columns[Int(i)]
-            row[col] = try data(at: i)
+        for (i, col) in columns.enumerated() {
+            row[col] = try data(at: Int32(i))
         }
         
         // return to event loop

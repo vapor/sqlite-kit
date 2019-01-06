@@ -23,7 +23,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     public typealias Database = SQLiteDatabase
     
     /// See `DatabaseConnection`.
-    public var isClosed: Bool = false
+    public private(set) var isClosed: Bool = false
     
     /// See `DatabaseConnection`.
     public var extend: Extend = [:]
@@ -46,10 +46,12 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     internal init(database: SQLiteDatabase, on worker: Worker) throws {
         self.database = database
         // Make database connection
-        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
         var handle: OpaquePointer?
-        guard sqlite3_open_v2(database.storage.path, &handle, options, nil) == SQLITE_OK, let c = handle else {
-            throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
+        let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
+        guard sqlite3_open_v2(database.storage.path, &handle, options, nil) == SQLITE_OK,
+            let c = handle,
+            sqlite3_busy_handler(c, { _, _ in 1 }, nil) == SQLITE_OK else {
+                throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
         }
         self.handle = c
         self.eventLoop = worker.eventLoop
@@ -66,7 +68,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     }
     
     /// See `SQLConnection`.
-    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn : SQLiteData], table: GenericSQLTableIdentifier<SQLiteIdentifier>?) throws -> D where D : Decodable {
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: GenericSQLTableIdentifier<SQLiteIdentifier>?) throws -> D where D : Decodable {
         return try SQLiteRowDecoder().decode(D.self, from: row, table: table)
     }
     
@@ -80,12 +82,14 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     ///     - query: `SQLiteQuery` to execute.
     ///     - onRow: Callback for handling each row.
     /// - returns: A `Future` that signals completion of the query.
-    public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
+    public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> Void) -> Future<Void> {
         var binds: [Encodable] = []
         let sql = query.serialize(&binds)
-        let data = try! binds.map { try SQLiteDataEncoder().encode($0) }
+        let data = try! binds.map(SQLiteDataEncoder().encode)
+        
         // log before anything happens, in case there's an error
-        logger?.record(query: sql, values: data.map { $0.description })
+        logger?.record(query: sql, values: data.map(String.init(describing:)))
+        
         let promise = eventLoop.newPromise(Void.self)
         database.blockingIO.submit { _ in
             do {
@@ -102,9 +106,13 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
                         }
                     }
                 }
-                promise.succeed(result: ())
+                self.eventLoop.execute {
+                    promise.succeed()
+                }
             } catch {
-                promise.fail(error: error)
+                self.eventLoop.execute {
+                    promise.fail(error: error)
+                }
             }
         }
         return promise.futureResult
@@ -112,14 +120,8 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// See `DatabaseConnection`.
     public func close() {
-        sqlite3_close(handle)
-        isClosed = true
-    }
-    
-    /// Closes the open SQLite handle on deinit.
-    deinit {
-        if !isClosed {
-            close()
+        if sqlite3_close(handle) == SQLITE_OK {
+            isClosed = true
         }
     }
 }
