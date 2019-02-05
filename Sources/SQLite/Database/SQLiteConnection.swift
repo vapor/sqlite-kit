@@ -39,7 +39,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     private let database: SQLiteDatabase
 
     /// Internal SQLite database handle.
-    internal var handle: OpaquePointer!
+    internal private(set) var handle: OpaquePointer!
 
     /// See `BasicWorker`.
     public let eventLoop: EventLoop
