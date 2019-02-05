@@ -39,7 +39,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
             self.handle = try openConnection()
         }
     }
-    
+
     // Make database connection
     internal func openConnection() throws -> OpaquePointer {
         let path: String

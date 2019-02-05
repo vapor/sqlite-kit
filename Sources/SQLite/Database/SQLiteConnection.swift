@@ -37,7 +37,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     /// This reference will ensure the DB stays alive since this connection uses
     /// it's thread pool.
     private let database: SQLiteDatabase
-    
+
     /// Internal SQLite database handle.
     internal var handle: OpaquePointer!
 
@@ -84,7 +84,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
 
         // log before anything happens, in case there's an error
         logger?.record(query: sql, values: data.map(String.init(describing:)))
-        
+
         let promise = eventLoop.newPromise(Void.self)
         database.blockingIO.submit { _ in
             do {

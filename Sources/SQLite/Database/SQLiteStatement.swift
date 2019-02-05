@@ -7,7 +7,7 @@ import SQLite3
 internal struct SQLiteStatement {
     private let c: OpaquePointer
     private let connection: SQLiteConnection
-    
+
     internal init(query: String, on connection: SQLiteConnection) throws {
         var handle: OpaquePointer?
         let ret = sqlite3_prepare_v2(connection.handle, query, -1, &handle, nil)
@@ -53,19 +53,19 @@ internal struct SQLiteStatement {
             }
         }
     }
-    
+
     internal func getColumns() throws -> [SQLiteColumn]? {
         var columns: [SQLiteColumn] = []
-        
+
         let count = sqlite3_column_count(c)
         columns.reserveCapacity(Int(count))
-        
+
         // iterate over column count and intialize columns once
         // we will then re-use the columns for each row
         for i in 0..<count {
             try columns.append(column(at: i))
         }
-        
+
         return columns
     }
     
