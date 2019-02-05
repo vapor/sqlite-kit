@@ -59,7 +59,11 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// Returns the last error message, if one exists.
     internal var errorMessage: String? {
-        return sqlite3_errmsg(handle).map(String.init(cString:))
+        if let raw = sqlite3_errmsg(handle) {
+            return String(cString: raw)
+        } else {
+            return nil
+        }
     }
     
     /// See `SQLConnection`.
