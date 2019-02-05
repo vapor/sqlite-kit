@@ -23,32 +23,35 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     public typealias Database = SQLiteDatabase
     
     /// See `DatabaseConnection`.
-    public private(set) var isClosed: Bool = false
-    
+    public var isClosed: Bool {
+        return handle == nil
+    }
+
     /// See `DatabaseConnection`.
-    public var extend: Extend = [:]
-    
+    public var extend: Extend
+
     /// Optional logger, if set queries should be logged to it.
     public var logger: DatabaseLogger?
-    
+
     /// Reference to parent `SQLiteDatabase` that created this connection.
     /// This reference will ensure the DB stays alive since this connection uses
     /// it's thread pool.
     private let database: SQLiteDatabase
     
     /// Internal SQLite database handle.
-    internal let handle: OpaquePointer
-    
+    internal var handle: OpaquePointer!
+
     /// See `BasicWorker`.
     public let eventLoop: EventLoop
-    
+
     /// Create a new SQLite conncetion.
     internal init(database: SQLiteDatabase, on worker: Worker) throws {
+        self.extend = [:]
         self.database = database
         self.handle = try database.openConnection()
         self.eventLoop = worker.eventLoop
     }
-    
+
     /// Returns an identifier for the last inserted row.
     public var lastAutoincrementID: Int64? {
         return sqlite3_last_insert_rowid(handle)
@@ -78,7 +81,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
         var binds: [Encodable] = []
         let sql = query.serialize(&binds)
         let data = try! binds.map(SQLiteDataEncoder().encode)
-        
+
         // log before anything happens, in case there's an error
         logger?.record(query: sql, values: data.map(String.init(describing:)))
         
@@ -112,8 +115,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// See `DatabaseConnection`.
     public func close() {
-        if sqlite3_close(handle) == SQLITE_OK {
-            isClosed = true
-        }
+        sqlite3_close(handle)
+        handle = nil
     }
 }

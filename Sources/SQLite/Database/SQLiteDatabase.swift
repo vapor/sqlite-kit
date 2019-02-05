@@ -23,7 +23,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
     /// If the database uses in-memory storage, this property will be set to
     /// keep the database alive when there is no `SQLiteConnection` to it.
     private var handle: OpaquePointer?
-    
+
     /// Create a new SQLite database.
     ///
     ///     let sqliteDB = SQLiteDatabase(storage: .memory)
@@ -58,7 +58,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
         }
         return c
     }
-    
+
     /// See `Database`.
     public func newConnection(on worker: Worker) -> Future<SQLiteConnection> {
         do {
@@ -68,7 +68,7 @@ public final class SQLiteDatabase: Database, LogSupporting {
             return worker.future(error: error)
         }
     }
-    
+
     /// See `LogSupporting`.
     public static func enableLogging(_ logger: DatabaseLogger, on conn: SQLiteConnection) {
         conn.logger = logger
