@@ -23,10 +23,9 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     public typealias Database = SQLiteDatabase
     
     /// See `DatabaseConnection`.
-    public var isClosed: Bool
-
-    /// See `BasicWorker`.
-    public let eventLoop: EventLoop
+    public var isClosed: Bool {
+        return handle == nil
+    }
 
     /// See `DatabaseConnection`.
     public var extend: Extend
@@ -36,32 +35,39 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
 
     /// Reference to parent `SQLiteDatabase` that created this connection.
     /// This reference will ensure the DB stays alive since this connection uses
-    /// it's C pointer handle.
-    internal let database: SQLiteDatabase
+    /// it's thread pool.
+    private let database: SQLiteDatabase
+
+    /// Internal SQLite database handle.
+    internal private(set) var handle: OpaquePointer!
+
+    /// See `BasicWorker`.
+    public let eventLoop: EventLoop
 
     /// Create a new SQLite conncetion.
-    internal init(database: SQLiteDatabase, on worker: Worker) {
-        self.database = database
-        self.eventLoop = worker.eventLoop
+    internal init(database: SQLiteDatabase, on worker: Worker) throws {
         self.extend = [:]
-        self.isClosed = false
+        self.database = database
+        self.handle = try database.openConnection()
+        self.eventLoop = worker.eventLoop
     }
 
     /// Returns an identifier for the last inserted row.
     public var lastAutoincrementID: Int64? {
-        return sqlite3_last_insert_rowid(database.handle)
+        return sqlite3_last_insert_rowid(handle)
     }
     
     /// Returns the last error message, if one exists.
     internal var errorMessage: String? {
-        guard let raw = sqlite3_errmsg(database.handle) else {
+        if let raw = sqlite3_errmsg(handle) {
+            return String(cString: raw)
+        } else {
             return nil
         }
-        return String(cString: raw)
     }
     
     /// See `SQLConnection`.
-    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn : SQLiteData], table: GenericSQLTableIdentifier<SQLiteIdentifier>?) throws -> D where D : Decodable {
+    public func decode<D>(_ type: D.Type, from row: [SQLiteColumn: SQLiteData], table: GenericSQLTableIdentifier<SQLiteIdentifier>?) throws -> D where D : Decodable {
         return try SQLiteRowDecoder().decode(D.self, from: row, table: table)
     }
     
@@ -75,14 +81,16 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     ///     - query: `SQLiteQuery` to execute.
     ///     - onRow: Callback for handling each row.
     /// - returns: A `Future` that signals completion of the query.
-    public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> ()) -> Future<Void> {
+    public func query(_ query: SQLiteQuery, _ onRow: @escaping ([SQLiteColumn: SQLiteData]) throws -> Void) -> Future<Void> {
         var binds: [Encodable] = []
         let sql = query.serialize(&binds)
-        let promise = eventLoop.newPromise(Void.self)
-        let data = try! binds.map { try SQLiteDataEncoder().encode($0) }
+        let data = try! binds.map(SQLiteDataEncoder().encode)
+
         // log before anything happens, in case there's an error
-        logger?.record(query: sql, values: data.map { $0.description })
-        database.blockingIO.submit { state in
+        logger?.record(query: sql, values: data.map(String.init(describing:)))
+
+        let promise = eventLoop.newPromise(Void.self)
+        database.blockingIO.submit { _ in
             do {
                 let statement = try SQLiteStatement(query: sql, on: self)
                 try statement.bind(data)
@@ -97,9 +105,13 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
                         }
                     }
                 }
-                return promise.succeed(result: ())
+                self.eventLoop.execute {
+                    promise.succeed()
+                }
             } catch {
-                return promise.fail(error: error)
+                self.eventLoop.execute {
+                    promise.fail(error: error)
+                }
             }
         }
         return promise.futureResult
@@ -107,6 +119,7 @@ public final class SQLiteConnection: BasicWorker, DatabaseConnection, DatabaseQu
     
     /// See `DatabaseConnection`.
     public func close() {
-        isClosed = true
+        sqlite3_close(handle)
+        handle = nil
     }
 }
