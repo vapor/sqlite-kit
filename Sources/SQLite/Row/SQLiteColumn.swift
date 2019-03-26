@@ -33,8 +33,21 @@ extension SQLiteColumn: ExpressibleByStringLiteral {
 }
 
 extension SQLiteColumn: Hashable {
+    // #if compiler(>=4.2)
+    #if swift(>=4.1.50)
+    /// See `Hashable`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self._hashValue)
+    }
+    #else
     /// See `Hashable`.
     public var hashValue: Int {
+        return self._hashValue
+    }
+    #endif
+    
+    /// See `Hashable`.
+    private var _hashValue: Int {
         if let table = table {
             return table.hashValue &+ name.hashValue
         } else {

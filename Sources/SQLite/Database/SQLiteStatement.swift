@@ -24,8 +24,9 @@ internal struct SQLiteStatement {
             switch bind {
             case .blob(let value):
                 let count = Int32(value.count)
-                let pointer: UnsafePointer<UInt8> = value.withUnsafeBytes { $0 }
-                let ret = sqlite3_bind_blob(c, i, UnsafeRawPointer(pointer), count, SQLITE_TRANSIENT)
+                let ret = value.withUnsafeBytes { pointer in
+                    return sqlite3_bind_blob(c, i, UnsafeRawPointer(pointer), count, SQLITE_TRANSIENT)
+                }
                 guard ret == SQLITE_OK else {
                     throw SQLiteError(statusCode: ret, connection: connection, source: .capture())
                 }
