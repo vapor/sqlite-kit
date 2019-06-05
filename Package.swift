@@ -1,29 +1,22 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 import PackageDescription
 
 let package = Package(
-    name: "SQLite",
+    name: "sqlite-kit",
     products: [
-        .library(name: "SQLite", targets: ["SQLite"]),
+        .library(name: "SQLiteKit", targets: ["SQLiteKit"]),
     ],
     dependencies: [
-        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
-        .package(url: "https://github.com/vapor/core.git", from: "3.0.0"),
-
-        // 🗄 Core services for creating database integrations.
-        .package(url: "https://github.com/vapor/database-kit.git", from: "1.2.0"),
-        
-        // *️⃣ Build SQL queries in Swift. Extensible, protocol-based design that supports DQL, DML, and DDL.
-        .package(url: "https://github.com/vapor/sql.git", from: "2.0.2"),
+        .package(url: "https://github.com/vapor/nio-sqlite.git", .branch("master")),
+        .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-alpha"),
+        .package(url: "https://github.com/vapor/nio-kit.git", .branch("master")),
     ],
     targets: [
-        .testTarget(name: "SQLiteTests", dependencies: ["SQLite", "SQLBenchmark"]),
+        .target(name: "SQLiteKit", dependencies: [
+            "NIOKit",
+            "NIOSQLite",
+            "SQLKit"
+        ]),
+        .testTarget(name: "SQLiteKitTests", dependencies: ["SQLKitBenchmark", "SQLiteKit"]),
     ]
 )
-
-#if os(Linux)
-package.targets.append(.target(name: "CSQLite"))
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "CSQLite", "DatabaseKit", "Debugging", "SQL"]))
-#else
-package.targets.append(.target(name: "SQLite", dependencies: ["Async", "Bits", "Core", "DatabaseKit", "Debugging", "SQL"]))
-#endif
