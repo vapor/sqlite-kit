@@ -1,55 +1,57 @@
 version: 2
 
 jobs:
-  linux:
-    docker:
-      - image: codevapor/swift:4.1
+  macos:
+    macos:
+      xcode: "10.2.0"
     steps:
       - checkout
-      - run: 
-          name: Compile code
-          command: swift build
-      - run: 
-          name: Run unit tests
-          command: swift test
-  linux-release:
-    docker:
-      - image: codevapor/swift:4.1
+      - run: swift build
+      - run: swift test
+  macos-release:
+    macos:
+      xcode: "10.2.0"
     steps:
       - checkout
-      - run: 
-          name: Compile code with optimizations
-          command: swift build -c release
-  linux-fluent:
+      - run: swift build -c release
+  bionic:
     docker:
-      - image: codevapor/swift:4.1
+      - image: vapor/swift:5.1-bionic
     steps:
-      - run:
-          name: Clone Fluent SQLite
-          command: git clone -b master https://github.com/vapor/fluent-sqlite.git
-          working_directory: ~/
-      - run:
-          name: Switch Fluent SQLite to this SQLite revision
-          command: swift package edit SQLite --revision $CIRCLE_SHA1
-          working_directory: ~/fluent-sqlite
-      - run:
-          name: Run Fluent SQLite unit tests
-          command: swift test
-          working_directory: ~/fluent-sqlite
+      - checkout
+      - run: apt-get update; apt-get install -y sqlite3 libsqlite3-dev
+      - run: swift build
+      - run: swift test
+  bionic-release:
+    docker:
+      - image: vapor/swift:5.1-bionic
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y sqlite3 libsqlite3-dev
+      - run: swift build -c release
+  xenial:
+    docker:
+      - image: vapor/swift:5.1-xenial
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y sqlite3 libsqlite3-dev
+      - run: swift build
+      - run: swift test
+  xenial-release:
+    docker:
+      - image: vapor/swift:5.1-xenial
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y sqlite3 libsqlite3-dev
+      - run: swift build -c release
+
 workflows:
   version: 2
   tests:
     jobs:
-      - linux
-      - linux-fluent
-      - linux-release
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - linux
+      - macos
+      - macos-release
+      - bionic
+      - bionic-release
+      - xenial
+      - xenial-release
