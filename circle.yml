@@ -3,14 +3,14 @@ version: 2
 jobs:
   macos:
     macos:
-      xcode: "11.0.0"
+      xcode: "10.2.0"
     steps:
       - checkout
       - run: swift build
       - run: swift test
   macos-release:
     macos:
-      xcode: "11.0.0"
+      xcode: "10.2.0"
     steps:
       - checkout
       - run: swift build -c release
@@ -49,8 +49,8 @@ workflows:
   version: 2
   tests:
     jobs:
-#      - macos
-#      - macos-release
+      - macos
+      - macos-release
       - bionic
       - bionic-release
       - xenial
