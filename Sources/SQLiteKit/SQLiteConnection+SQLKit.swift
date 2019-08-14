@@ -2,11 +2,16 @@ extension SQLiteConnection: SQLDatabase {
     public func execute(sql query: SQLExpression, _ onRow: @escaping (SQLRow) throws -> ()) -> EventLoopFuture<Void> {
         var serializer = SQLSerializer(dialect: SQLiteDialect())
         query.serialize(to: &serializer)
-        print(serializer.sql)
-        return self.query(serializer.sql, serializer.binds.map { encodable in
-            return try! SQLiteDataEncoder().encode(encodable)
-        }) { row in
-            try! onRow(row)
+        let binds: [SQLiteData]
+        do {
+            binds = try serializer.binds.map { encodable in
+                return try SQLiteDataEncoder().encode(encodable)
+            }
+        } catch {
+            return self.eventLoop.makeFailedFuture(error)
+        }
+        return self.query(serializer.sql, binds) { row in
+            try onRow(row)
         }
     }
 }
