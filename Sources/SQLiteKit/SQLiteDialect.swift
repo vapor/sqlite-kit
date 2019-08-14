@@ -21,4 +21,8 @@ struct SQLiteDialect: SQLDialect {
         case false: return SQLRaw("FALSE")
         }
     }
+
+    var literalDefault: SQLExpression {
+        return SQLLiteral.null
+    }
 }
