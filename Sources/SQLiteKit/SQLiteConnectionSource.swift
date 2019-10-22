@@ -1,7 +1,6 @@
 import Logging
 
 public final class SQLiteConnectionSource: ConnectionPoolSource {
-    public var eventLoop: EventLoop
     private let storage: SQLiteConnection.Storage
     private let threadPool: NIOThreadPool
     private let logger: Logger
@@ -9,8 +8,7 @@ public final class SQLiteConnectionSource: ConnectionPoolSource {
     public init(
         configuration: SQLiteConfiguration,
         threadPool: NIOThreadPool,
-        logger: Logger = .init(label: "codes.sqlite.connection-source"),
-        on eventLoop: EventLoop
+        logger: Logger = .init(label: "codes.sqlite.connection-source")
     ) {
         switch configuration.storage {
         case .memory:
@@ -20,11 +18,10 @@ public final class SQLiteConnectionSource: ConnectionPoolSource {
         }
         self.threadPool = threadPool
         self.logger = logger
-        self.eventLoop = eventLoop
     }
 
-    public func makeConnection() -> EventLoopFuture<SQLiteConnection> {
-        return SQLiteConnection.open(storage: self.storage, threadPool: self.threadPool, on: self.eventLoop)
+    public func makeConnection(on eventLoop: EventLoop) -> EventLoopFuture<SQLiteConnection> {
+        return SQLiteConnection.open(storage: self.storage, threadPool: self.threadPool, on: eventLoop)
     }
 }
 

@@ -87,12 +87,12 @@ class SQLiteTests: XCTestCase {
     override func setUp() {
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.threadPool = .init(numberOfThreads: 2)
-        let db = SQLiteConnectionSource(configuration: .init(storage: .memory), threadPool: self.threadPool, on: self.eventLoopGroup.next())
-        self.db = ConnectionPool(config: .init(maxConnections: 8), source: db)
+        let db = SQLiteConnectionSource(configuration: .init(storage: .memory), threadPool: self.threadPool)
+        self.db = ConnectionPool(configuration: .init(maxConnections: 8), source: db, on: self.eventLoopGroup)
     }
 
     override func tearDown() {
-        try! self.db.close().wait()
+        self.db.shutdown()
         self.db = nil
         try! self.threadPool.syncShutdownGracefully()
         self.threadPool = nil

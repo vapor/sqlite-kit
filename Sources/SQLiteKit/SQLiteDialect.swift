@@ -1,28 +1,30 @@
-struct SQLiteDialect: SQLDialect {
-    var identifierQuote: SQLExpression {
+public struct SQLiteDialect: SQLDialect {
+    public var identifierQuote: SQLExpression {
         return SQLRaw("'")
     }
 
-    var literalStringQuote: SQLExpression {
+    public var literalStringQuote: SQLExpression {
         return SQLRaw("\"")
     }
 
-    var autoIncrementClause: SQLExpression {
+    public var autoIncrementClause: SQLExpression {
         return SQLRaw("AUTOINCREMENT")
     }
 
-    mutating func nextBindPlaceholder() -> SQLExpression {
+    public mutating func nextBindPlaceholder() -> SQLExpression {
         return SQLRaw("?")
     }
 
-    func literalBoolean(_ value: Bool) -> SQLExpression {
+    public func literalBoolean(_ value: Bool) -> SQLExpression {
         switch value {
         case true: return SQLRaw("TRUE")
         case false: return SQLRaw("FALSE")
         }
     }
 
-    var literalDefault: SQLExpression {
+    public var literalDefault: SQLExpression {
         return SQLLiteral.null
     }
+    
+    public init() { }
 }
