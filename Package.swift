@@ -7,9 +7,9 @@ let package = Package(
         .library(name: "SQLiteKit", targets: ["SQLiteKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/sqlite-nio.git", from: "1.0.0-alpha"),
-        .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-beta"),
-        .package(url: "https://github.com/vapor/async-kit.git", from: "1.0.0-beta"),
+        .package(url: "https://github.com/vapor/sqlite-nio.git", .branch("tn-sqlite-logger")),
+        .package(url: "https://github.com/vapor/sql-kit.git", .branch("tn-logging")),
+        .package(url: "https://github.com/vapor/async-kit.git", .branch("master")),
     ],
     targets: [
         .target(name: "SQLiteKit", dependencies: [
