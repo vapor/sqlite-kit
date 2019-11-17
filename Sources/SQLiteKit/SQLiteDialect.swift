@@ -1,4 +1,8 @@
 public struct SQLiteDialect: SQLDialect {
+    public var name: String {
+        "sqlite"
+    }
+    
     public var identifierQuote: SQLExpression {
         return SQLRaw("'")
     }
@@ -11,7 +15,7 @@ public struct SQLiteDialect: SQLDialect {
         return SQLRaw("AUTOINCREMENT")
     }
 
-    public mutating func nextBindPlaceholder() -> SQLExpression {
+    public func bindPlaceholder(at position: Int) -> SQLExpression {
         return SQLRaw("?")
     }
 

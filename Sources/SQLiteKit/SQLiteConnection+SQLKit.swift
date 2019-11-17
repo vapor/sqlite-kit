@@ -15,11 +15,15 @@ private struct _SQLiteSQLDatabase: SQLDatabase {
         return self.database.logger
     }
     
+    var dialect: SQLDialect {
+        SQLiteDialect()
+    }
+    
     func execute(
         sql query: SQLExpression,
         _ onRow: @escaping (SQLRow) -> ()
     ) -> EventLoopFuture<Void> {
-        var serializer = SQLSerializer(dialect: SQLiteDialect())
+        var serializer = SQLSerializer(database: self)
         query.serialize(to: &serializer)
         let binds: [SQLiteData]
         do {
