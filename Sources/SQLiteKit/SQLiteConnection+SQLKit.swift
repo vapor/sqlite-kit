@@ -1,5 +1,24 @@
-extension SQLiteConnection: SQLDatabase {
-    public func execute(sql query: SQLExpression, _ onRow: @escaping (SQLRow) throws -> ()) -> EventLoopFuture<Void> {
+extension SQLiteDatabase {
+    public func sql() -> SQLDatabase {
+        _SQLiteSQLDatabase(database: self)
+    }
+}
+
+private struct _SQLiteSQLDatabase: SQLDatabase {
+    let database: SQLiteDatabase
+    
+    var eventLoop: EventLoop {
+        return self.database.eventLoop
+    }
+    
+    var logger: Logger {
+        return self.database.logger
+    }
+    
+    func execute(
+        sql query: SQLExpression,
+        _ onRow: @escaping (SQLRow) -> ()
+    ) -> EventLoopFuture<Void> {
         var serializer = SQLSerializer(dialect: SQLiteDialect())
         query.serialize(to: &serializer)
         let binds: [SQLiteData]
@@ -10,14 +29,12 @@ extension SQLiteConnection: SQLDatabase {
         } catch {
             return self.eventLoop.makeFailedFuture(error)
         }
-        return self.query(serializer.sql, binds) { row in
-            try onRow(row)
+        return self.database.query(
+            serializer.sql,
+            binds,
+            logger: self.logger
+        ) { row in
+            onRow(row)
         }
-    }
-}
-
-extension ConnectionPool: SQLDatabase where Source.Connection: SQLDatabase {
-    public func execute(sql query: SQLExpression, _ onRow: @escaping (SQLRow) throws -> ()) -> EventLoopFuture<Void> {
-        return self.withConnection { $0.execute(sql: query, onRow) }
     }
 }

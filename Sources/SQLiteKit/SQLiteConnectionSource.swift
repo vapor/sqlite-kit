@@ -1,37 +1,55 @@
 import Logging
 
-public final class SQLiteConnectionSource: ConnectionPoolSource {
-    private let storage: SQLiteConnection.Storage
+public struct SQLiteConnectionSource: ConnectionPoolSource {
+    private let configuration: SQLiteConfiguration
     private let threadPool: NIOThreadPool
-    private let logger: Logger
 
+    private var connectionStorage: SQLiteConnection.Storage {
+        switch self.configuration.storage {
+        case .memory:
+            return .file(
+                path: "file:\(ObjectIdentifier(threadPool).unique)?mode=memory&cache=shared"
+            )
+        case .file(let path):
+            return .file(path: path)
+        case .connection(let storage):
+            return storage
+        }
+    }
+    
     public init(
         configuration: SQLiteConfiguration,
-        threadPool: NIOThreadPool,
-        logger: Logger = .init(label: "codes.sqlite.connection-source")
+        threadPool: NIOThreadPool
     ) {
-        switch configuration.storage {
-        case .memory:
-            self.storage = .file(path: "file:\(ObjectIdentifier(threadPool).unique)?mode=memory&cache=shared")
-        case .connection(let storage):
-            self.storage = storage
-        }
+        self.configuration = configuration
         self.threadPool = threadPool
-        self.logger = logger
     }
 
-    public func makeConnection(on eventLoop: EventLoop) -> EventLoopFuture<SQLiteConnection> {
-        return SQLiteConnection.open(storage: self.storage, threadPool: self.threadPool, on: eventLoop)
+    public func makeConnection(
+        logger: Logger,
+        on eventLoop: EventLoop
+    ) -> EventLoopFuture<SQLiteConnection> {
+        return SQLiteConnection.open(
+            storage: self.connectionStorage,
+            threadPool: self.threadPool,
+            logger: logger,
+            on: eventLoop
+        )
     }
 }
 
 public struct SQLiteConfiguration {
     public enum Storage {
         case memory
+        case file(path: String)
         case connection(SQLiteConnection.Storage)
     }
 
     public var storage: Storage
+    
+    public init(file: String) {
+        self.init(storage: .file(path: file))
+    }
 
     public init(storage: Storage) {
         self.storage = storage
