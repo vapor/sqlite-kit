@@ -4,11 +4,11 @@ public struct SQLiteDialect: SQLDialect {
     }
     
     public var identifierQuote: SQLExpression {
-        return SQLRaw("'")
+        return SQLRaw("\"")
     }
 
     public var literalStringQuote: SQLExpression {
-        return SQLRaw("\"")
+        return SQLRaw("'")
     }
 
     public var autoIncrementClause: SQLExpression {
