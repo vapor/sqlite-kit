@@ -24,7 +24,12 @@ public struct SQLiteDataDecoder {
         }
 
         func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-            fatalError()
+            guard case .blob(var buffer) = self.data else {
+                fatalError()
+            }
+            let data = buffer.readBytes(length: buffer.readableBytes)!
+            let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: Data(data))
+            return try unwrapper.decoder.unkeyedContainer()
         }
 
         func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {

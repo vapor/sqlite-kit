@@ -40,11 +40,11 @@ public struct SQLiteDataEncoder {
         }
 
         func unkeyedContainer() -> UnkeyedEncodingContainer {
-            fatalError()
+            _UnkeyedEncodingContainer(self)
         }
 
         func singleValueContainer() -> SingleValueEncodingContainer {
-            return _SingleValueEncoder(self)
+            _SingleValueEncoder(self)
         }
     }
 
@@ -57,6 +57,44 @@ public struct SQLiteDataEncoder {
         }
         func encode(to encoder: Encoder) throws {
             try self.encodable.encode(to: encoder)
+        }
+    }
+
+    private struct _UnkeyedEncodingContainer: UnkeyedEncodingContainer {
+
+        var codingPath: [CodingKey] {
+            self.encoder.codingPath
+        }
+        var count: Int {
+            0
+        }
+
+        let encoder: _Encoder
+        init(_ encoder: _Encoder) {
+            self.encoder = encoder
+        }
+
+        mutating func encodeNil() throws {
+            throw DoJSON()
+        }
+
+        mutating func encode<T>(_ value: T) throws
+            where T: Encodable
+        {
+            throw DoJSON()
+        }
+
+
+        mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+            fatalError()
+        }
+
+        mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
+            fatalError()
+        }
+
+        mutating func superEncoder() -> Encoder {
+            fatalError()
         }
     }
 
