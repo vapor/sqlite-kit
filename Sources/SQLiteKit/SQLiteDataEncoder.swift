@@ -61,7 +61,6 @@ public struct SQLiteDataEncoder {
     }
 
     private struct _UnkeyedEncodingContainer: UnkeyedEncodingContainer {
-
         var codingPath: [CodingKey] {
             self.encoder.codingPath
         }
@@ -85,16 +84,20 @@ public struct SQLiteDataEncoder {
         }
 
 
-        mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-            fatalError()
+        mutating func nestedContainer<NestedKey>(
+            keyedBy keyType: NestedKey.Type
+        ) -> KeyedEncodingContainer<NestedKey>
+            where NestedKey : CodingKey
+        {
+            self.encoder.container(keyedBy: NestedKey.self)
         }
 
         mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-            fatalError()
+            self.encoder.unkeyedContainer()
         }
 
         mutating func superEncoder() -> Encoder {
-            fatalError()
+            self.encoder
         }
     }
 
@@ -109,27 +112,32 @@ public struct SQLiteDataEncoder {
         }
 
         mutating func encodeNil(forKey key: Key) throws {
-            fatalError()
+            throw DoJSON()
         }
 
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
             throw DoJSON()
         }
 
-        mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-            fatalError()
+        mutating func nestedContainer<NestedKey>(
+            keyedBy keyType: NestedKey.Type,
+            forKey key: Key
+        ) -> KeyedEncodingContainer<NestedKey>
+            where NestedKey : CodingKey
+        {
+            self.encoder.container(keyedBy: NestedKey.self)
         }
 
         mutating func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
-            fatalError()
+            self.encoder.unkeyedContainer()
         }
 
         mutating func superEncoder() -> Encoder {
-            fatalError()
+            self.encoder
         }
 
         mutating func superEncoder(forKey key: Key) -> Encoder {
-            fatalError()
+            self.encoder
         }
     }
 
