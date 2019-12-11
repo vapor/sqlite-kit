@@ -24,21 +24,22 @@ public struct SQLiteDataDecoder {
         }
 
         func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-            guard case .blob(var buffer) = self.data else {
-                fatalError()
-            }
-            let data = buffer.readBytes(length: buffer.readableBytes)!
-            let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: Data(data))
-            return try unwrapper.decoder.unkeyedContainer()
+            try self.jsonDecoder().unkeyedContainer()
         }
 
         func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-            guard case .blob(var buffer) = self.data else {
-                fatalError()
+            try self.jsonDeocder().container(keyedBy: Key.self)
+        }
+
+        func jsonDecoder() throws -> Decoder {
+            guard case .blob(let buffer) = self.data else {
+                throw DecodingError.valueNotFound(Any.self, .init(
+                    codingPath: self.codingPath,
+                    debugDescription: "Cannot decode JSON from nil data"
+                ))
             }
-            let data = buffer.readBytes(length: buffer.readableBytes)!
-            let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: Data(data))
-            return try unwrapper.decoder.container(keyedBy: Key.self)
+            let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: Data(buffer.readableBytesView))
+            return try unwrapper.decoder.
         }
 
         func singleValueContainer() throws -> SingleValueDecodingContainer {
