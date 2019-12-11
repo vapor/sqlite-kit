@@ -28,7 +28,7 @@ public struct SQLiteDataDecoder {
         }
 
         func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-            try self.jsonDeocder().container(keyedBy: Key.self)
+            try self.jsonDecoder().container(keyedBy: Key.self)
         }
 
         func jsonDecoder() throws -> Decoder {
@@ -38,8 +38,9 @@ public struct SQLiteDataDecoder {
                     debugDescription: "Cannot decode JSON from nil data"
                 ))
             }
-            let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: Data(buffer.readableBytesView))
-            return try unwrapper.decoder.
+            return try JSONDecoder()
+                .decode(DecoderUnwrapper.self, from: Data(buffer.readableBytesView))
+                .decoder
         }
 
         func singleValueContainer() throws -> SingleValueDecodingContainer {
