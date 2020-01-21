@@ -29,6 +29,14 @@ public struct SQLiteDialect: SQLDialect {
     public var literalDefault: SQLExpression {
         return SQLLiteral.null
     }
+
+    public var enumSyntax: SQLEnumSyntax {
+        .unsupported
+    }
+
+    public var supportsAutoIncrement: Bool {
+        false
+    }
     
     public init() { }
 }
