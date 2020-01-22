@@ -1,9 +1,14 @@
+import Logging
 import SQLiteKit
 import SQLKitBenchmark
 import XCTest
 
 class SQLiteTests: XCTestCase {
-    func testBenchmark() throws {
+    func testEnum() throws {
+        try self.benchmark.testEnum()
+    }
+
+    func testPlanets() throws {
         try self.db.drop(table: "planets")
             .ifExists()
             .run().wait()
@@ -83,12 +88,16 @@ class SQLiteTests: XCTestCase {
     var db: SQLDatabase {
         self.connection.sql()
     }
+    var benchmark: SQLBenchmarker {
+        .init(on: self.db)
+    }
     
     var eventLoopGroup: EventLoopGroup!
     var threadPool: NIOThreadPool!
     var connection: SQLiteConnection!
 
     override func setUp() {
+        XCTAssertTrue(isLoggingConfigured)
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.threadPool = NIOThreadPool(numberOfThreads: 2)
         self.threadPool.start()
@@ -108,3 +117,12 @@ class SQLiteTests: XCTestCase {
         self.eventLoopGroup = nil
     }
 }
+
+let isLoggingConfigured: Bool = {
+    LoggingSystem.bootstrap { label in
+        var handler = StreamLogHandler.standardOutput(label: label)
+        handler.logLevel = .trace
+        return handler
+    }
+    return true
+}()
