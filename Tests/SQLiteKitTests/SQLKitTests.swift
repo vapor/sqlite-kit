@@ -85,6 +85,11 @@ class SQLiteTests: XCTestCase {
             .run().wait()
     }
 
+    func testForeignKeysEnabled() throws {
+        let res = try self.connection.query("PRAGMA foreign_keys").wait()
+        XCTAssertEqual(res[0].column("foreign_keys"), .integer(1))
+    }
+
     var db: SQLDatabase {
         self.connection.sql()
     }
@@ -101,11 +106,10 @@ class SQLiteTests: XCTestCase {
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.threadPool = NIOThreadPool(numberOfThreads: 2)
         self.threadPool.start()
-        self.connection = try! SQLiteConnection.open(
-            storage: .memory,
-            threadPool: self.threadPool,
-            on: self.eventLoopGroup.next()
-        ).wait()
+        self.connection = try! SQLiteConnectionSource(
+            configuration: .init(storage: .memory, enableForeignKeys: true),
+            threadPool: self.threadPool
+        ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
     }
 
     override func tearDown() {
