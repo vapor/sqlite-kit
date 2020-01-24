@@ -7,10 +7,6 @@ public struct SQLiteDialect: SQLDialect {
         return SQLRaw("\"")
     }
 
-    public var literalStringQuote: SQLExpression {
-        return SQLRaw("'")
-    }
-
     public var autoIncrementClause: SQLExpression {
         return SQLRaw("AUTOINCREMENT")
     }
@@ -37,6 +33,9 @@ public struct SQLiteDialect: SQLDialect {
     public var supportsAutoIncrement: Bool {
         false
     }
+
+    public var createTriggerSupportsBody = true
+    public var createTriggerSupportsCondition = true
     
     public init() { }
 }
