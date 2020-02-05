@@ -34,8 +34,9 @@ public struct SQLiteDialect: SQLDialect {
         false
     }
 
-    public var createTriggerSupportsBody = true
-    public var createTriggerSupportsCondition = true
+    var triggerSyntax: SQLTriggerSyntax {
+        return .init(create: [.supportsBody, .supportsCondition])
+    }
     
     public init() { }
 }
