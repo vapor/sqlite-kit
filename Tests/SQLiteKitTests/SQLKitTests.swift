@@ -5,7 +5,6 @@ import XCTest
 
 class SQLiteTests: XCTestCase {
     func testSQLKitBenchmark() throws {
-        connection.logger.logLevel = .trace
         let benchmark = SQLBenchmarker(on: db)
         try benchmark.run()
     }
