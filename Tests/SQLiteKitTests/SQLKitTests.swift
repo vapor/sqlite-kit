@@ -4,6 +4,11 @@ import SQLKitBenchmark
 import XCTest
 
 class SQLiteTests: XCTestCase {
+    func testSQLKitBenchmark() throws {
+        let benchmark = SQLBenchmarker(on: db)
+        try benchmark.run()
+    }
+    
     func testEnum() throws {
         try self.benchmark.testEnum()
     }
