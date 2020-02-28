@@ -6,10 +6,13 @@ public struct SQLiteDataDecoder {
     public func decode<T>(_ type: T.Type, from data: SQLiteData) throws -> T
         where T: Decodable
     {
-        if
-            let type = type as? SQLiteDataConvertible.Type,
-            let value = type.init(sqliteData: data)
-        {
+        if let type = type as? SQLiteDataConvertible.Type {
+            guard let value = type.init(sqliteData: data) else {
+                throw DecodingError.typeMismatch(T.self, .init(
+                    codingPath: [],
+                    debugDescription: "Could not initialize \(T.self) from \(data)."
+                ))
+            }
             return value as! T
         } else {
             return try T.init(from: _Decoder(data: data))
