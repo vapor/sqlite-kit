@@ -3,12 +3,14 @@ import Logging
 public struct SQLiteConnectionSource: ConnectionPoolSource {
     private let configuration: SQLiteConfiguration
     private let threadPool: NIOThreadPool
+    private let database: String?
 
     private var connectionStorage: SQLiteConnection.Storage {
         switch self.configuration.storage {
         case .memory:
+            let identifier = self.database ?? String(describing: ObjectIdentifier(threadPool).unique)
             return .file(
-                path: "file:\(ObjectIdentifier(threadPool).unique)?mode=memory&cache=shared"
+                path: "file:\(identifier)?mode=memory&cache=shared"
             )
         case .file(let path):
             return .file(path: path)
@@ -19,10 +21,12 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
     
     public init(
         configuration: SQLiteConfiguration,
-        threadPool: NIOThreadPool
+        threadPool: NIOThreadPool,
+        database: String?
     ) {
         self.configuration = configuration
         self.threadPool = threadPool
+        self.database = database
     }
 
     public func makeConnection(
