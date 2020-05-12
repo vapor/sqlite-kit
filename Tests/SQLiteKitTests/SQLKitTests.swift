@@ -113,7 +113,8 @@ class SQLiteTests: XCTestCase {
         self.threadPool.start()
         self.connection = try! SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
-            threadPool: self.threadPool
+            threadPool: self.threadPool,
+            database: "memory"
         ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
     }
 
