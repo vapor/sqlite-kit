@@ -3,9 +3,6 @@ import PackageDescription
 
 let package = Package(
     name: "sqlite-kit",
-    platforms: [
-       .macOS(.v10_15)
-    ],
     products: [
         .library(name: "SQLiteKit", targets: ["SQLiteKit"]),
     ],
