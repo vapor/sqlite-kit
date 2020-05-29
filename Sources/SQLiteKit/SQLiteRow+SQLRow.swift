@@ -4,7 +4,10 @@ extension SQLiteRow: SQLRow {
     }
 
     public func decodeNil(column: String) throws -> Bool {
-        self.columns.offsets.keys.contains(column)
+        guard let data = self.column(column) else {
+            throw MissingColumn(column: column)
+        }
+        return data == .null
     }
 
     public func contains(column: String) -> Bool {
