@@ -3,7 +3,7 @@ import SQLiteKit
 import SQLKitBenchmark
 import XCTest
 
-class SQLiteTests: XCTestCase {
+class SQLiteKitTests: XCTestCase {
     func testSQLKitBenchmark() throws {
         let benchmark = SQLBenchmarker(on: db)
         try benchmark.run()
@@ -93,6 +93,31 @@ class SQLiteTests: XCTestCase {
     func testForeignKeysEnabled() throws {
         let res = try self.connection.query("PRAGMA foreign_keys").wait()
         XCTAssertEqual(res[0].column("foreign_keys"), .integer(1))
+    }
+
+    func testMultipleInMemoryDatabases() throws {
+        let a = SQLiteConnectionSource(
+            configuration: .init(storage: .memory, enableForeignKeys: true),
+            threadPool: self.threadPool
+        )
+        let b = SQLiteConnectionSource(
+            configuration: .init(storage: .memory, enableForeignKeys: true),
+            threadPool: self.threadPool
+        )
+
+        let a1 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        defer { try! a1.close().wait() }
+        let a2 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        defer { try! a2.close().wait() }
+        let b1 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        defer { try! b1.close().wait() }
+        let b2 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        defer { try! b2.close().wait() }
+
+        _ = try a1.query("CREATE TABLE foo (bar INTEGER)").wait()
+        _ = try a2.query("SELECT * FROM foo").wait()
+        _ = try b1.query("CREATE TABLE foo (bar INTEGER)").wait()
+        _ = try b2.query("SELECT * FROM foo").wait()
     }
 
     var db: SQLDatabase {

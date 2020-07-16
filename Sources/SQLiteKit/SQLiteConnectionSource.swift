@@ -6,14 +6,12 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
 
     private var connectionStorage: SQLiteConnection.Storage {
         switch self.configuration.storage {
-        case .memory:
+        case .memory(let identifier):
             return .file(
-                path: "file:\(ObjectIdentifier(threadPool).unique)?mode=memory&cache=shared"
+                path: "file:\(identifier)?mode=memory&cache=shared"
             )
         case .file(let path):
             return .file(path: path)
-        case .connection(let storage):
-            return storage
         }
     }
     
@@ -45,34 +43,4 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
     }
 }
 
-public struct SQLiteConfiguration {
-    public enum Storage {
-        case memory
-        case file(path: String)
-        case connection(SQLiteConnection.Storage)
-    }
-
-    public var storage: Storage
-    public var enableForeignKeys: Bool
-
-    public init(storage: Storage, enableForeignKeys: Bool = true) {
-        self.storage = storage
-        self.enableForeignKeys = enableForeignKeys
-    }
-}
-
 extension SQLiteConnection: ConnectionPoolItem { }
-
-
-private extension ObjectIdentifier {
-    var unique: String {
-        let raw = "\(self)"
-        let parts = raw.split(separator: "(")
-        switch parts.count {
-        case 2:
-            return parts[1].split(separator: ")").first.flatMap(String.init) ?? raw
-        default:
-            return raw
-        }
-    }
-}
