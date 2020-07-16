@@ -16,13 +16,17 @@ public struct SQLiteConfiguration {
         case memory(identifier: String)
 
         /// Uses the SQLite database file at the specified path.
+        ///
         /// Non-absolute paths will check the current working directory.
         case file(path: String)
     }
 
     public var storage: Storage
+
+    /// If `true`, foreign keys will be enabled automatically on new connections.
     public var enableForeignKeys: Bool
 
+    /// Creates a new `SQLiteConfiguration`.
     public init(storage: Storage, enableForeignKeys: Bool = true) {
         self.storage = storage
         self.enableForeignKeys = enableForeignKeys
