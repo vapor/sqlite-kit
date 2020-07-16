@@ -141,6 +141,15 @@ class SQLiteKitTests: XCTestCase {
             .wait()
     }
 
+    // https://github.com/vapor/sqlite-kit/issues/62
+    func testEncodeNestedArray() throws {
+        struct Foo: Encodable {
+            var bar: [String]
+        }
+        let foo = Foo(bar: ["a", "b", "c"])
+        _ = try SQLiteDataEncoder().encode(foo)
+    }
+
     var db: SQLDatabase {
         self.connection.sql()
     }
