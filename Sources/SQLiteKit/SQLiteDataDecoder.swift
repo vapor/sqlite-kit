@@ -43,9 +43,12 @@ public struct SQLiteDataDecoder {
 
         func jsonDecoder() throws -> Decoder {
             let data: Data
-            if case .blob(let buffer) = self.data {
+            switch self.data {
+            case .blob(let buffer):
                 data = Data(buffer.readableBytesView)
-            } else {
+            case .text(let string):
+                data = Data(string.utf8)
+            default:
                 data = .init()
             }
             return try JSONDecoder()
