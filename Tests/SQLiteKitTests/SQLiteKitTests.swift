@@ -103,9 +103,7 @@ class SQLiteKitTests: XCTestCase {
         struct Bar: Codable {
             var baz: String
         }
-
         let bar = try SQLiteDataDecoder().decode(Bar.self, from: rows[0].column("bar")!)
-        
         XCTAssertEqual(bar.baz, "qux")
     }
 
