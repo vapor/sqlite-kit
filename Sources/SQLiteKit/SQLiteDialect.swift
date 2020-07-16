@@ -45,6 +45,10 @@ public struct SQLiteDialect: SQLDialect {
             allowsBatch: false
         )
     }
+
+    public var triggerSyntax: SQLTriggerSyntax {
+        return .init(create: [.supportsBody, .supportsCondition])
+    }
     
     public init() { }
 }

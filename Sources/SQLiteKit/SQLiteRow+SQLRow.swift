@@ -1,6 +1,6 @@
 extension SQLiteRow: SQLRow {
     public var allColumns: [String] {
-        .init(self.columns.offsets.keys)
+        self.columns.map { $0.name }
     }
 
     public func decodeNil(column: String) throws -> Bool {
