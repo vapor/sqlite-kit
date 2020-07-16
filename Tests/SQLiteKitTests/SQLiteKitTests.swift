@@ -132,6 +132,15 @@ class SQLiteKitTests: XCTestCase {
         _ = try b2.query("SELECT * FROM foo").wait()
     }
 
+    // https://github.com/vapor/sqlite-kit/issues/56
+    func testDoubleConstraintError() throws {
+        try self.db.create(table: "foo")
+            .ifNotExists()
+            .column("id", type: .text, .primaryKey(autoIncrement: false), .notNull)
+            .run()
+            .wait()
+    }
+
     var db: SQLDatabase {
         self.connection.sql()
     }
