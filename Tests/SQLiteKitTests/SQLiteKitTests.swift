@@ -95,6 +95,18 @@ class SQLiteKitTests: XCTestCase {
         XCTAssertEqual(res[0].column("foreign_keys"), .integer(1))
     }
 
+    func testJSONStringColumn() throws {
+        _ = try self.connection.query("CREATE TABLE foo (bar TEXT)").wait()
+        _ = try self.connection.query(#"INSERT INTO foo (bar) VALUES ('{"baz": "qux"}')"#).wait()
+        let rows = try self.connection.query("SELECT * FROM foo").wait()
+
+        struct Bar: Codable {
+            var baz: String
+        }
+        let bar = try SQLiteDataDecoder().decode(Bar.self, from: rows[0].column("bar")!)
+        XCTAssertEqual(bar.baz, "qux")
+    }
+
     func testMultipleInMemoryDatabases() throws {
         let a = SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
