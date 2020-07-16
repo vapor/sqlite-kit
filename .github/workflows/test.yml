@@ -19,17 +19,17 @@ jobs:
     steps:
       - name: Install dependencies
         run: apt-get -q update && apt-get -q install -y libsqlite3-dev
-      - name: Check out SQLiteNIO
+      - name: Check out package
         uses: actions/checkout@v2
         with:
-          path: sqlite-nio
+          path: package
       - name: Check out dependent
         uses: actions/checkout@v2
         with:
           repository: vapor/${{ matrix.dependent }}
           path: dependent
-      - name: Use local SQLiteNIO
-        run: swift package edit sqlite-nio --path sqlite-nio
+      - name: Use local package
+        run: swift package edit sqlite-kit --path package
         working-directory: dependent
       - name: Run tests with Thread Sanitizer
         run: swift test --enable-test-discovery --sanitize=thread
