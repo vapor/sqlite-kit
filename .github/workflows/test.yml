@@ -19,17 +19,17 @@ jobs:
     steps:
       - name: Install dependencies
         run: apt-get -q update && apt-get -q install -y libsqlite3-dev
-      - name: Check out package
+      - name: Check out SQLiteKit
         uses: actions/checkout@v2
         with:
-          path: package
+          path: sqlite-kit
       - name: Check out dependent
         uses: actions/checkout@v2
         with:
           repository: vapor/${{ matrix.dependent }}
           path: dependent
       - name: Use local package
-        run: swift package edit sqlite-kit --path package
+        run: swift package edit sqlite-kit --path sqlite-kit
         working-directory: dependent
       - name: Run tests with Thread Sanitizer
         run: swift test --enable-test-discovery --sanitize=thread
