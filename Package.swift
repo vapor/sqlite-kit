@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "sqlite-kit",
     platforms: [
-       .macOS(.v10_15)
+       .macOS(.v10_15),
+       .iOS(.v13),
     ],
     products: [
         .library(name: "SQLiteKit", targets: ["SQLiteKit"]),
