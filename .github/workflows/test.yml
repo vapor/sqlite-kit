@@ -42,7 +42,7 @@ jobs:
           git clone https://github.com/git/git -bv2.33.1 --depth 1 && cd git
           make prefix=/usr -j all install NO_OPENSSL=1 NO_EXPAT=1 NO_TCLTK=1 NO_GETTEXT=1 NO_PERL=1
       - name: Update CentOS/AmazonLinux2's too-old SQLite
-        if: ${{ endsWith(matrix.image, 'centos7') endsWith(matrix.image, 'centos8') || endsWith(matrix.image, 'amazonlinux2') }}
+        if: ${{ endsWith(matrix.image, 'centos7') || endsWith(matrix.image, 'centos8') || endsWith(matrix.image, 'amazonlinux2') }}
         working-directory: /root
         # Cribbed from the Fedora RPM, leaves out a lot. System's Tcl is too old to run SQLite's tests.
         run: |
