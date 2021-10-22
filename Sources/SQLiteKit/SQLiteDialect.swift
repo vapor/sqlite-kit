@@ -1,3 +1,4 @@
+import SQLKit
 public struct SQLiteDialect: SQLDialect {
     public var name: String {
         "sqlite"
@@ -48,6 +49,19 @@ public struct SQLiteDialect: SQLDialect {
 
     public var triggerSyntax: SQLTriggerSyntax {
         return .init(create: [.supportsBody, .supportsCondition])
+    }
+    
+    public var upsertSyntax: SQLUpsertSyntax {
+        .standard
+    }
+    
+    public func customDataType(for dataType: SQLDataType) -> SQLExpression? {
+        if case .bigint = dataType {
+            // would prefer to do this only when `PRIMARY KEY` is also specified to minimize disruption,
+            // but can't figure that out from here without more info
+            return SQLDataType.int
+        }
+        return nil
     }
     
     public init() { }
