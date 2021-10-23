@@ -1,12 +1,9 @@
 name: test
 on:
   pull_request:
-  push:
-    branches:
-      - main
+  push: { branches: [ 'main' ] }
 defaults:
-  run:
-    shell: bash
+  run: { shell: bash }
 jobs:
   linux:
     runs-on: ubuntu-latest
@@ -25,52 +22,39 @@ jobs:
           - swift:5.5-centos8
           - swift:5.5-amazonlinux2
           - swiftlang/swift:nightly-main-focal
-        dependent:
-          - fluent-sqlite-driver
     container: ${{ matrix.image }}
     steps:
       - name: Install Ubuntu dependencies
-        run: apt-get -q update && apt-get -q install -y libsqlite3-dev
         if: ${{ endsWith(matrix.image, 'xenial') || endsWith(matrix.image, 'bionic') || endsWith(matrix.image, 'focal') }}
-      - name: Install CentOS deps
-        run: dnf install -y sqlite-devel
-        if: ${{ endsWith(matrix.image, 'centos7') || endsWith(matrix.image, 'centos8') }}
-      - name: Workaround SPM incompatibility with old Git on CentOS 7
-        if: ${{ contains(matrix.swiftos, 'centos7') }}
-        run: |
-          yum install -y make libcurl-devel
-          git clone https://github.com/git/git -bv2.33.1 --depth 1 && cd git
-          make prefix=/usr -j all install NO_OPENSSL=1 NO_EXPAT=1 NO_TCLTK=1 NO_GETTEXT=1 NO_PERL=1
+        run: apt-get -q update && apt-get -q install -y libsqlite3-dev
       - name: Update CentOS/AmazonLinux2's too-old SQLite
-        if: ${{ endsWith(matrix.image, 'centos7') || endsWith(matrix.image, 'centos8') || endsWith(matrix.image, 'amazonlinux2') }}
-        working-directory: /root
+        if: ${{ contains(matrix.image, 'centos') || contains(matrix.image, 'amazon') }}
         # Cribbed from the Fedora RPM, leaves out a lot. System's Tcl is too old to run SQLite's tests.
         run: |
-          yum install -y sqlite-devel
-          yum install -y file tcl-devel make
+          yum update -y && yum install -y sqlite-devel file tcl-devel make
           curl -L 'https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=release' | tar xz && cd sqlite
           export CFLAGS="-DSQLITE_DISABLE_DIRSYNC=1 -DSQLITE_SECURE_DELETE=1"
           ./configure --prefix=/usr --libdir=/usr/lib64 --enable-fts3 --enable-all --with-tcl=/usr/lib64
           make all install
+      - name: Workaround SPM incompatibility with old Git on CentOS 7
+        if: ${{ endsWith(matrix.image, 'centos7') }}
+        run: |
+          yum install -y make libcurl-devel
+          git clone https://github.com/git/git -bv2.33.1 --depth 1 && cd git
+          make prefix=/usr -j all install NO_OPENSSL=1 NO_EXPAT=1 NO_TCLTK=1 NO_GETTEXT=1 NO_PERL=1
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          path: sqlite-kit
+        with: { path: 'sqlite-kit' }
       - name: Check out dependent
         uses: actions/checkout@v2
-        with:
-          repository: vapor/${{ matrix.dependent }}
-          path: dependent
+        with: { repository: 'vapor/fluent-sqlite-driver', path: dependent }
       - name: Use local package
-        run: swift package edit sqlite-kit --path ../sqlite-kit
-        working-directory: dependent
+        run: swift package --package-path dependent edit sqlite-kit --path sqlite-kit
       - name: Run SQLiteKit tests with Thread Sanitizer
-        run: swift test --enable-test-discovery --sanitize=thread
-        working-directory: sqlite-kit
+        run: swift test --package-path sqlite-kit --enable-test-discovery --sanitize=thread
       - name: Run dependent tests with Thread Sanitizer
-        run: swift test --enable-test-discovery --sanitize=thread
-        working-directory: dependent
-  macOS:
+        run: swift test --package-path dependent --enable-test-discovery --sanitize=thread
+  macos:
     runs-on: macos-11
     steps:
       - name: Select latest available Xcode
