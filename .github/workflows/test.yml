@@ -31,7 +31,7 @@ jobs:
         if: ${{ contains(matrix.image, 'centos') || contains(matrix.image, 'amazon') }}
         # Cribbed from the Fedora RPM, leaves out a lot. System's Tcl is too old to run SQLite's tests.
         run: |
-          yum update -y && yum install -y sqlite-devel file tcl-devel make
+          yum update -y && yum install -y sqlite-devel file tcl-devel make && sed -i'' -e 's/__block/_block/g' /usr/include/unistd.h
           curl -L 'https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=release' | tar xz && cd sqlite
           export CFLAGS="-DSQLITE_DISABLE_DIRSYNC=1 -DSQLITE_SECURE_DELETE=1"
           ./configure --prefix=/usr --libdir=/usr/lib64 --enable-fts3 --enable-all --with-tcl=/usr/lib64
