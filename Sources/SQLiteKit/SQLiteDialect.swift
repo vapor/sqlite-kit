@@ -50,5 +50,9 @@ public struct SQLiteDialect: SQLDialect {
         return .init(create: [.supportsBody, .supportsCondition])
     }
     
+    public var unionFeatures: SQLUnionFeatures {
+        [.union, .unionAll, .intersect, .except]
+    }
+
     public init() { }
 }
