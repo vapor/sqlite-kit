@@ -1,16 +1,14 @@
 name: test
 on:
   pull_request:
-  push:
-    branches:
-      - master
+  push: { branches: [ main ] }
 defaults:
   run:
     shell: bash
 jobs:
   dependents:
     runs-on: ubuntu-latest
-    container: swift:5.2-bionic
+    container: swift:5.5-focal
     strategy:
       fail-fast: false
       matrix:
@@ -19,73 +17,53 @@ jobs:
     steps:
       - name: Install dependencies
         run: apt-get -q update && apt-get -q install -y libsqlite3-dev
-      - name: Check out SQLiteKit
+      - name: Check out package
         uses: actions/checkout@v2
         with:
-          path: sqlite-kit
+          path: package
       - name: Check out dependent
         uses: actions/checkout@v2
         with:
           repository: vapor/${{ matrix.dependent }}
           path: dependent
+          ref: main
       - name: Use local package
-        run: swift package edit sqlite-kit --path ../sqlite-kit
+        run: swift package edit sqlite-kit --path ../package
         working-directory: dependent
       - name: Run tests with Thread Sanitizer
         run: swift test --enable-test-discovery --sanitize=thread
         working-directory: dependent
   linux:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        image:
-          # 5.2 Stable
-          - swift:5.2-xenial
-          - swift:5.2-bionic
-          # 5.2 Unstable
-          - swiftlang/swift:nightly-5.2-xenial
-          - swiftlang/swift:nightly-5.2-bionic
-          # 5.3 Unstable
-          - swiftlang/swift:nightly-5.3-xenial
-          - swiftlang/swift:nightly-5.3-bionic
-          # Master Unsable
-          - swiftlang/swift:nightly-master-xenial
-          - swiftlang/swift:nightly-master-bionic
-          - swiftlang/swift:nightly-master-focal
-          - swiftlang/swift:nightly-master-centos8
-          - swiftlang/swift:nightly-master-amazonlinux2
-    container: ${{ matrix.image }}
+        runner:
+          - swift:5.2-focal
+          - swift:5.5-focal
+          - swiftlang/swift:nightly-main-focal
+    container: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Install Ubuntu dependencies
+      - name: Install dependencies
         run: apt-get -q update && apt-get -q install -y libsqlite3-dev
-        if: ${{ endsWith(matrix.image, 'xenial') || endsWith(matrix.image, 'bionic') || endsWith(matrix.image, 'focal') }}
-      - name: Install CentOS deps
-        run: dnf install -y sqlite-devel
-        if: ${{ endsWith(matrix.image, 'centos8') }}
-      - name: Update AmazonLinux2's too-old SQLite and compensate for its Postgres
-        if: ${{ endsWith(matrix.image, 'amazonlinux2') }}
-        working-directory: /root
-        # Cribbed from the Fedora RPM, leaves out a lot. System's Tcl is too old to run SQLite's tests.
-        run: |
-          yum install -y sqlite-devel
-          yum install -y file tcl-devel make
-          curl -L 'https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=release' | tar xz && cd sqlite
-          export CFLAGS="-DSQLITE_DISABLE_DIRSYNC=1 -DSQLITE_SECURE_DELETE=1"
-          ./configure --prefix=/usr --libdir=/usr/lib64 --enable-fts3 --enable-all --with-tcl=/usr/lib64
-          make all install
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v2
       - name: Run tests with Thread Sanitizer
         run: swift test --enable-test-discovery --sanitize=thread
   macOS:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - latest
+          - latest-stable
+    runs-on: macos-11
     steps:
       - name: Select latest available Xcode
-        uses: maxim-lobanov/setup-xcode@1.0
-        with:
-          xcode-version: latest
-      - name: Checkout code
+        uses: maxim-lobanov/setup-xcode@v1
+        with: 
+          xcode-version: ${{ matrix.version }}
+      - name: Check out code
         uses: actions/checkout@v2
       - name: Run tests with Thread Sanitizer
         run: swift test --enable-test-discovery --sanitize=thread
