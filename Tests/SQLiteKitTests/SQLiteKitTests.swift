@@ -117,13 +117,13 @@ class SQLiteKitTests: XCTestCase {
             threadPool: self.threadPool
         )
 
-        let a1 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        let a1 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).wait()
         defer { try! a1.close().wait() }
-        let a2 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        let a2 = try a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).wait()
         defer { try! a2.close().wait() }
-        let b1 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        let b1 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).wait()
         defer { try! b1.close().wait() }
-        let b2 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        let b2 = try b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).wait()
         defer { try! b2.close().wait() }
 
         _ = try a1.query("CREATE TABLE foo (bar INTEGER)").wait()
@@ -169,7 +169,7 @@ class SQLiteKitTests: XCTestCase {
         self.connection = try! SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
             threadPool: self.threadPool
-        ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
+        ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).wait()
     }
 
     override func tearDown() {
