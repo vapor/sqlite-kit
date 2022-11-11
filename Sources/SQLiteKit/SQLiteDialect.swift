@@ -21,6 +21,8 @@ public struct SQLiteDialect: SQLDialect {
     public var enumSyntax: SQLEnumSyntax { .unsupported }
     public var triggerSyntax: SQLTriggerSyntax { .init(create: [.supportsBody, .supportsCondition]) }
     public var alterTableSyntax: SQLAlterTableSyntax { .init(allowsBatch: false) }
+    public var upsertSyntax: SQLUpsertSyntax { self.isAtLeastVersion(3, 24, 0) ? .standard : .unsupported } // `UPSERT` was added to SQLite in 3.24.0.
+    public var supportsReturning: Bool { self.isAtLeastVersion(3, 35, 0) } // `RETURNING` was added to SQLite in 3.35.0.
     public var unionFeatures: SQLUnionFeatures { [.union, .unionAll, .intersect, .except] }
     
     public func customDataType(for dataType: SQLDataType) -> SQLExpression? {
@@ -34,5 +36,7 @@ public struct SQLiteDialect: SQLDialect {
 
     public init() { }
     
+    private func isAtLeastVersion(_ major: Int, _ minor: Int, _ patch: Int) -> Bool {
+        _SQLiteDatabaseVersion.runtimeVersion.isNotOlder(than: _SQLiteDatabaseVersion(major: major, minor: minor, patch: patch))
     }
 }
