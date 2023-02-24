@@ -1,5 +1,6 @@
-import NIO
+import NIOCore
 import Foundation
+import SQLiteNIO
 
 public struct SQLiteDataEncoder {
     public init() { }

@@ -1,3 +1,6 @@
+import SQLKit
+import SQLiteNIO
+
 extension SQLiteDatabase {
     public func sql() -> SQLDatabase {
         _SQLiteSQLDatabase(database: self)

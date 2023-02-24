@@ -1,3 +1,6 @@
+import SQLKit
+import SQLiteNIO
+
 extension SQLiteRow: SQLRow {
     public var allColumns: [String] {
         self.columns.map { $0.name }
