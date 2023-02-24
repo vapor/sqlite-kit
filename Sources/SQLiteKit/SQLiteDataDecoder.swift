@@ -1,4 +1,5 @@
 import Foundation
+import SQLiteNIO
 
 public struct SQLiteDataDecoder {
     public init() {}

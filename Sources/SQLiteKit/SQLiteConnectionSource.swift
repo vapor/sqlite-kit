@@ -1,4 +1,8 @@
 import Logging
+import AsyncKit
+import NIOPosix
+import SQLiteNIO
+import NIOCore
 
 public struct SQLiteConnectionSource: ConnectionPoolSource {
     private let configuration: SQLiteConfiguration

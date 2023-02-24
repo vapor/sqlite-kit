@@ -2,6 +2,8 @@ import Logging
 import SQLiteKit
 import SQLKitBenchmark
 import XCTest
+import SQLiteNIO
+import SQLKit
 
 class SQLiteKitTests: XCTestCase {
     func testSQLKitBenchmark() throws {
