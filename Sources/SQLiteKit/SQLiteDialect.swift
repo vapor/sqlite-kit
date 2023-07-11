@@ -34,6 +34,15 @@ public struct SQLiteDialect: SQLDialect {
         return nil
     }
 
+    public func nestedSubpathExpression(in column: any SQLExpression, for path: [String]) -> (any SQLExpression)? {
+        guard !path.isEmpty else { return nil }
+        
+        return SQLFunction("json_extract", args: [
+            column,
+            SQLLiteral.string("$.\(path.joined(separator: "."))")
+        ])
+    }
+
     public init() { }
     
     private func isAtLeastVersion(_ major: Int, _ minor: Int, _ patch: Int) -> Bool {
