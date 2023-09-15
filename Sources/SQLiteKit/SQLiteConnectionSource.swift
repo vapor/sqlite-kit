@@ -1,3 +1,4 @@
+import Foundation
 import Logging
 import AsyncKit
 import NIOPosix
@@ -6,17 +7,11 @@ import NIOCore
 
 public struct SQLiteConnectionSource: ConnectionPoolSource {
     private let configuration: SQLiteConfiguration
+    private let actualURL: URL
     private let threadPool: NIOThreadPool
 
     private var connectionStorage: SQLiteConnection.Storage {
-        switch self.configuration.storage {
-        case .memory(let identifier):
-            return .file(
-                path: "file:\(identifier)?mode=memory&cache=shared"
-            )
-        case .file(let path):
-            return .file(path: path)
-        }
+        .file(path: self.actualURL.absoluteString)
     }
     
     public init(
@@ -24,12 +19,13 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
         threadPool: NIOThreadPool
     ) {
         self.configuration = configuration
+        self.actualURL = configuration.storage.urlForSQLite
         self.threadPool = threadPool
     }
 
     public func makeConnection(
         logger: Logger,
-        on eventLoop: EventLoop
+        on eventLoop: any EventLoop
     ) -> EventLoopFuture<SQLiteConnection> {
         return SQLiteConnection.open(
             storage: self.connectionStorage,
@@ -48,3 +44,31 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
 }
 
 extension SQLiteConnection: ConnectionPoolItem { }
+
+fileprivate extension String {
+    var asSafeFilename: String {
+        #if os(Windows)
+        self.replacingOccurrences(of: ":", with: "_").replacingOccurrences(of: "\\", with: "-")
+        #else
+        self.replacingOccurrences(of: "/", with: "-")
+        #endif
+    }
+}
+
+fileprivate extension SQLiteConfiguration.Storage {
+    var urlForSQLite: URL {
+        switch self {
+        case .memory(identifier: let identifier):
+            let tempFilename = "sqlite-kit_memorydb-\(ProcessInfo.processInfo.processIdentifier)-\(identifier).sqlite3"
+            
+            return FileManager.default.temporaryDirectory
+                .appendingPathComponent(tempFilename.asSafeFilename, isDirectory: false)
+        case .file(path: let path):
+            if path.starts(with: "file:"), let url = URL(string: path) {
+                return url
+            } else {
+                return URL(fileURLWithPath: path, isDirectory: false)
+            }
+        }
+    }
+}

@@ -4,10 +4,8 @@ import SQLiteNIO
 public struct SQLiteDataDecoder {
     public init() {}
 
-    public func decode<T>(_ type: T.Type, from data: SQLiteData) throws -> T
-        where T: Decodable
-    {
-        if let type = type as? SQLiteDataConvertible.Type {
+    public func decode<T: Decodable>(_ type: T.Type, from data: SQLiteData) throws -> T {
+        if let type = type as? any SQLiteDataConvertible.Type {
             guard let value = type.init(sqliteData: data) else {
                 throw DecodingError.typeMismatch(T.self, .init(
                     codingPath: [],
@@ -21,61 +19,41 @@ public struct SQLiteDataDecoder {
     }
 
     private final class _Decoder: Decoder {
-        var codingPath: [CodingKey] {
-            return []
-        }
-
-        var userInfo: [CodingUserInfoKey : Any] {
-            return [:]
-        }
+        var codingPath: [any CodingKey] = []
+        var userInfo: [CodingUserInfoKey: Any] = [:]
 
         let data: SQLiteData
-        init(data: SQLiteData) {
-            self.data = data
-        }
+        init(data: SQLiteData) { self.data = data }
 
-        func unkeyedContainer() throws -> UnkeyedDecodingContainer {
+        func unkeyedContainer() throws -> any UnkeyedDecodingContainer {
             try self.jsonDecoder().unkeyedContainer()
         }
 
-        func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
+        func container<Key: CodingKey>(keyedBy: Key.Type) throws -> KeyedDecodingContainer<Key> {
             try self.jsonDecoder().container(keyedBy: Key.self)
         }
 
-        func jsonDecoder() throws -> Decoder {
+        func jsonDecoder() throws -> any Decoder {
             let data: Data
             switch self.data {
-            case .blob(let buffer):
-                data = Data(buffer.readableBytesView)
-            case .text(let string):
-                data = Data(string.utf8)
-            default:
-                data = .init()
+            case .blob(let buffer): data = Data(buffer.readableBytesView)
+            case .text(let string): data = Data(string.utf8)
+            default: data = .init()
             }
-            return try JSONDecoder()
-                .decode(DecoderUnwrapper.self, from: data)
-                .decoder
+            return try JSONDecoder().decode(DecoderUnwrapper.self, from: data).decoder
         }
 
-        func singleValueContainer() throws -> SingleValueDecodingContainer {
-            _SingleValueDecoder(self)
-        }
+        func singleValueContainer() throws -> any SingleValueDecodingContainer { _SingleValueDecoder(self) }
     }
 
     private struct _SingleValueDecoder: SingleValueDecodingContainer {
-        var codingPath: [CodingKey] {
-            return self.decoder.codingPath
-        }
+        var codingPath: [any CodingKey] { self.decoder.codingPath }
         let decoder: _Decoder
-        init(_ decoder: _Decoder) {
-            self.decoder = decoder
-        }
+        init(_ decoder: _Decoder) { self.decoder = decoder }
 
-        func decodeNil() -> Bool {
-            return self.decoder.data == .null
-        }
+        func decodeNil() -> Bool { self.decoder.data == .null }
 
-        func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
+        func decode<T: Decodable>(_: T.Type) throws -> T {
             try SQLiteDataDecoder().decode(T.self, from: self.decoder.data)
         }
     }

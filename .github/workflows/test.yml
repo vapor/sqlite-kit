@@ -3,34 +3,31 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
-  pull_request: { branches: ['*'] }
+  pull_request: { types: [opened, reopened, synchronize, ready_for_review] }
   push: { branches: [ main ] }
 
 env:
-  LOG_LEVEL: debug
+  LOG_LEVEL: info
   SWIFT_DETERMINISTIC_HASHING: 1
 
 jobs:
 
   # also serves as code coverage baseline update
   unit-tests:
-    uses: vapor/ci/.github/workflows/run-unit-tests.yml@reusable-workflows
-    with:
-      with_coverage: true
-      with_tsan: false
+    uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
 
   # Make sure downstream dependents still work
   dependents-check:
-    if: github.event_name == 'pull_request'
+    if: ${{ !(github.event.pull_request.draft || false) }}
     runs-on: ubuntu-latest
     container: swift:5.8-jammy
     steps:
       - name: Check out package
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: sqlite-kit
       - name: Check out FluentKit driver
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: vapor/fluent-sqlite-driver
           path: fluent-sqlite-driver

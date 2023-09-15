@@ -11,4 +11,4 @@ jobs:
      with:
        package_name: sqlite-kit
        modules: SQLiteKit
-       pathsToInvalidate: /sqlitekit
+       pathsToInvalidate: /sqlitekit/*
