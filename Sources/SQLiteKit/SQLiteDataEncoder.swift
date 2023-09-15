@@ -15,7 +15,7 @@ public struct SQLiteDataEncoder {
             case .data(let data):
                 return data
             case .unkeyed, .keyed:
-                let json = try JSONEncoder().encode(value)
+                let json = try JSONEncoder().encode(AnyEncodable(value))
                 var buffer = ByteBufferAllocator().buffer(capacity: json.count)
                 buffer.writeBytes(json)
                 return SQLiteData.blob(buffer)
@@ -81,5 +81,15 @@ public struct SQLiteDataEncoder {
             let data = try SQLiteDataEncoder().encode(value)
             self.encoder.result = .data(data)
         }
+    }
+}
+
+private struct AnyEncodable: Encodable {
+    let encodable: Encodable
+    init(_ encodable: Encodable) {
+        self.encodable = encodable
+    }
+    func encode(to encoder: Encoder) throws {
+        try self.encodable.encode(to: encoder)
     }
 }
