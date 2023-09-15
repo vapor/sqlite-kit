@@ -2,7 +2,7 @@ import SQLKit
 import SQLiteNIO
 
 extension SQLiteDatabase {
-    public func sql() -> SQLDatabase {
+    public func sql() -> any SQLDatabase {
         _SQLiteSQLDatabase(database: self)
     }
 }
@@ -65,12 +65,12 @@ internal struct _SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
     var patchVersion: Int { Self.components(of: self.intValue).patch }
 
     /// See ``SQLDatabaseReportedVersion/isEqual(to:)``.
-    func isEqual(to otherVersion: SQLDatabaseReportedVersion) -> Bool {
+    func isEqual(to otherVersion: any SQLDatabaseReportedVersion) -> Bool {
         (otherVersion as? _SQLiteDatabaseVersion).map { $0.intValue == self.intValue } ?? false
     }
     
     /// See ``SQLDatabaseReportedVersion/isOlder(than:)``.
-    func isOlder(than otherVersion: SQLDatabaseReportedVersion) -> Bool {
+    func isOlder(than otherVersion: any SQLDatabaseReportedVersion) -> Bool {
         (otherVersion as? _SQLiteDatabaseVersion).map {
             (self.majorVersion < $0.majorVersion ? true :
             (self.majorVersion > $0.majorVersion ? false :
@@ -84,11 +84,11 @@ internal struct _SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
 private struct _SQLiteSQLDatabase: SQLDatabase {
     let database: SQLiteDatabase
     
-    var eventLoop: EventLoop {
+    var eventLoop: any EventLoop {
         self.database.eventLoop
     }
     
-    var version: SQLDatabaseReportedVersion? {
+    var version: (any SQLDatabaseReportedVersion)? {
         _SQLiteDatabaseVersion.runtimeVersion
     }
     
@@ -96,13 +96,13 @@ private struct _SQLiteSQLDatabase: SQLDatabase {
         self.database.logger
     }
     
-    var dialect: SQLDialect {
+    var dialect: any SQLDialect {
         SQLiteDialect()
     }
     
     func execute(
-        sql query: SQLExpression,
-        _ onRow: @escaping (SQLRow) -> ()
+        sql query: any SQLExpression,
+        _ onRow: @escaping (any SQLRow) -> ()
     ) -> EventLoopFuture<Void> {
         var serializer = SQLSerializer(database: self)
         query.serialize(to: &serializer)

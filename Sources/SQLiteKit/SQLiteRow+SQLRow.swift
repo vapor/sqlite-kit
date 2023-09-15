@@ -14,10 +14,10 @@ extension SQLiteRow: SQLRow {
     }
 
     public func contains(column: String) -> Bool {
-        return self.column(column) != nil
+        self.column(column) != nil
     }
 
-    public func decode<D>(column: String, as type: D.Type) throws -> D where D : Decodable {
+    public func decode<D: Decodable>(column: String, as: D.Type) throws -> D {
         guard let data = self.column(column) else {
             throw MissingColumn(column: column)
         }

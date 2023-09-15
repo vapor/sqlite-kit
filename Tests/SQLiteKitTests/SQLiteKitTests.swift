@@ -5,9 +5,9 @@ import XCTest
 import SQLiteNIO
 import SQLKit
 
-class SQLiteKitTests: XCTestCase {
+final class SQLiteKitTests: XCTestCase {
     func testSQLKitBenchmark() throws {
-        let benchmark = SQLBenchmarker(on: db)
+        let benchmark = SQLBenchmarker(on: self.db)
         try benchmark.run()
     }
     
@@ -152,14 +152,10 @@ class SQLiteKitTests: XCTestCase {
         _ = try SQLiteDataEncoder().encode(foo)
     }
 
-    var db: SQLDatabase {
-        self.connection.sql()
-    }
-    var benchmark: SQLBenchmarker {
-        .init(on: self.db)
-    }
+    var db: any SQLDatabase { self.connection.sql() }
+    var benchmark: SQLBenchmarker { .init(on: self.db) }
     
-    var eventLoopGroup: EventLoopGroup!
+    var eventLoopGroup: (any EventLoopGroup)!
     var threadPool: NIOThreadPool!
     var connection: SQLiteConnection!
 
