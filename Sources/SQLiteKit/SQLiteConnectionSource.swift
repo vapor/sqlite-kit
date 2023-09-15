@@ -7,11 +7,11 @@ import NIOCore
 
 public struct SQLiteConnectionSource: ConnectionPoolSource {
     private let configuration: SQLiteConfiguration
-    private let actualPath: URL
+    private let actualURL: URL
     private let threadPool: NIOThreadPool
 
     private var connectionStorage: SQLiteConnection.Storage {
-        .file(path: self.actualPath.absoluteString)
+        .file(path: self.actualURL.absoluteString)
     }
     
     public init(
@@ -19,20 +19,13 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
         threadPool: NIOThreadPool
     ) {
         self.configuration = configuration
-        switch configuration.storage {
-        case .memory(identifier: let identifier):
-            let filenameSafeIdentifer = String(identifier.map { $0 == ":" ? "_" : ($0 == "\\" ? "+" : ($0 == "/" ? "-" : $0)) })
-            let tempFilename = "sqlite-kit_memorydb-\(ProcessInfo.processInfo.processIdentifier)-\(filenameSafeIdentifer).sqlite3"
-            self.actualPath = FileManager.default.temporaryDirectory.appendingPathComponent(tempFilename, isDirectory: false)
-        case .file(path: let path):
-            self.actualPath = URL(fileURLWithPath: path, isDirectory: false)
-        }
+        self.actualURL = configuration.storage.urlForSQLite
         self.threadPool = threadPool
     }
 
     public func makeConnection(
         logger: Logger,
-        on eventLoop: EventLoop
+        on eventLoop: any EventLoop
     ) -> EventLoopFuture<SQLiteConnection> {
         return SQLiteConnection.open(
             storage: self.connectionStorage,
@@ -51,3 +44,27 @@ public struct SQLiteConnectionSource: ConnectionPoolSource {
 }
 
 extension SQLiteConnection: ConnectionPoolItem { }
+
+fileprivate extension String {
+    var asSafeFilename: String {
+        #if os(Windows)
+        self.replacingOccurrences(of: ":", with: "_").replacingOccurrences(of: "\\", with: "-")
+        #else
+        self.replacingOccurrences(of: "/", with: "-")
+        #endif
+    }
+}
+
+fileprivate extension SQLiteConfiguration.Storage {
+    var urlForSQLite: URL {
+        switch self {
+        case .memory(identifier: let identifier):
+            let tempFilename = "sqlite-kit_memorydb-\(ProcessInfo.processInfo.processIdentifier)-\(identifier).sqlite3"
+            
+            return FileManager.default.temporaryDirectory
+                .appendingPathComponent(tempFilename.asSafeFilename, isDirectory: false)
+        case .file(path: let path):
+            return URL(fileURLWithPath: path, isDirectory: false)
+        }
+    }
+}
