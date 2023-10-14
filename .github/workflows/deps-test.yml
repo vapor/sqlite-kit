@@ -1,0 +1,21 @@
+name: Test of dependency submission
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  submit-deps:
+    runs-on: ubuntu-latest
+    container: swift:5.9-jammy
+    steps:
+      - name: Curl curl
+        run: apt update && apt upgrade -y && apt install -y curl
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Gen deps
+        uses: vapor/ci/.github/actions/generate-swift-dependencies@main
+        with:
+          branch: refs/heads/main
+          commit: '8a2f3dfefe51889bc123ccfbc4039331bc294717'
+          
