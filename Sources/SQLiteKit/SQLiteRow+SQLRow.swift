@@ -8,7 +8,7 @@ extension SQLiteRow: SQLRow {
 
     public func decodeNil(column: String) throws -> Bool {
         guard let data = self.column(column) else {
-            throw MissingColumn(column: column)
+            return true
         }
         return data == .null
     }
