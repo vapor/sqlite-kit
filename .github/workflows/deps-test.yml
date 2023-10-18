@@ -14,8 +14,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Gen deps
-        uses: vapor/ci/.github/actions/generate-swift-dependencies@main
-        with:
-          branch: refs/heads/main
-          commit: '8a2f3dfefe51889bc123ccfbc4039331bc294717'
-          
+        uses: vapor-community/swift-dependency-submission@main
