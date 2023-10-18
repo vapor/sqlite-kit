@@ -176,13 +176,13 @@ final class SQLiteKitTests: XCTestCase {
         XCTAssertEqual(try row1.decode(column: "value", as: String?.self), "abc")
         XCTAssertThrowsError(try row1.decode(column: "value", as: Int.self))
         XCTAssertThrowsError(try row1.decode(column: "nonexistent", as: String?.self))
-        XCTAssertThrowsError(try row1.decodeNil(column: "nonexistent"))
+        XCTAssertTrue(try row1.decodeNil(column: "nonexistent"))
         XCTAssertTrue(row2.contains(column: "value"))
         XCTAssertTrue(try row2.decodeNil(column: "value"))
         XCTAssertEqual(try row2.decode(column: "value", as: String?.self), nil)
         XCTAssertThrowsError(try row2.decode(column: "value", as: Int.self))
         XCTAssertThrowsError(try row2.decode(column: "nonexistent", as: String?.self))
-        XCTAssertThrowsError(try row2.decodeNil(column: "nonexistent"))
+        XCTAssertTrue(try row2.decodeNil(column: "nonexistent"))
     }
     
     func testRowEncoding() async throws {
