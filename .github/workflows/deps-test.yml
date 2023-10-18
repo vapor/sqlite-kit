@@ -13,5 +13,7 @@ jobs:
         run: apt update && apt upgrade -y && apt install -y curl
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Appease Git
+        run: 'git config --global --add safe.directory "${GITHUB_WORKSPACE}"'
       - name: Gen deps
         uses: vapor-community/swift-dependency-submission@main
