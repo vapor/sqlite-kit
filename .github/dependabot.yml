@@ -13,7 +13,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 6
+    allow:
+      - dependency-type: all
     groups:
-      dependencies:
+      all-dependencies:
         patterns:
           - "*"
