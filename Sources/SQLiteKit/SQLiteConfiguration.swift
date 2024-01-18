@@ -1,7 +1,7 @@
 import struct Foundation.UUID
 
-public struct SQLiteConfiguration {
-    public enum Storage {
+public struct SQLiteConfiguration: Sendable {
+    public enum Storage: Sendable {
         /// Stores the SQLite database in memory.
         /// 
         /// Uses a randomly generated identifier. See `memory(identifier:)`.

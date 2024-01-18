@@ -109,17 +109,18 @@ private struct _SQLiteSQLDatabase: SQLDatabase {
         let binds: [SQLiteData]
         do {
             binds = try serializer.binds.map { encodable in
-                return try SQLiteDataEncoder().encode(encodable)
+                try SQLiteDataEncoder().encode(encodable)
             }
         } catch {
             return self.eventLoop.makeFailedFuture(error)
         }
-        return self.database.query(
-            serializer.sql,
-            binds,
-            logger: self.logger
-        ) { row in
+        
+        // This temporary silliness silences a Sendable capture warning whose correct resolution
+        // requires updating SQLKit itself to be fully Sendable-compliant.
+        @Sendable func onRowWorkaround(_ row: any SQLRow) {
             onRow(row)
         }
+        return self.database.query(serializer.sql, binds, logger: self.logger, onRowWorkaround)
     }
 }
+
