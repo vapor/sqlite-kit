@@ -14,9 +14,21 @@ public struct SQLiteDataDecoder {
             }
             return value as! T
         } else {
-            return try T.init(from: _Decoder(data: data))
+            do {
+                return try T.init(from: _Decoder(data: data))
+            } catch is SentinelError {
+                let fdata: Data
+                switch data {
+                case .blob(let buf): fdata = .init(buf.readableBytesView)
+                case .text(let str): fdata = .init(str.utf8)
+                default: fdata = .init()
+                }
+                return try JSONDecoder().decode(T.self, from: fdata)
+            }
         }
     }
+    
+    private struct SentinelError: Swift.Error {}
 
     private final class _Decoder: Decoder {
         var codingPath: [any CodingKey] = []
@@ -26,21 +38,11 @@ public struct SQLiteDataDecoder {
         init(data: SQLiteData) { self.data = data }
 
         func unkeyedContainer() throws -> any UnkeyedDecodingContainer {
-            try self.jsonDecoder().unkeyedContainer()
+            throw SentinelError()
         }
 
         func container<Key: CodingKey>(keyedBy: Key.Type) throws -> KeyedDecodingContainer<Key> {
-            try self.jsonDecoder().container(keyedBy: Key.self)
-        }
-
-        func jsonDecoder() throws -> any Decoder {
-            let data: Data
-            switch self.data {
-            case .blob(let buffer): data = Data(buffer.readableBytesView)
-            case .text(let string): data = Data(string.utf8)
-            default: data = .init()
-            }
-            return try JSONDecoder().decode(DecoderUnwrapper.self, from: data).decoder
+            throw SentinelError()
         }
 
         func singleValueContainer() throws -> any SingleValueDecodingContainer { _SingleValueDecoder(self) }
@@ -56,12 +58,5 @@ public struct SQLiteDataDecoder {
         func decode<T: Decodable>(_: T.Type) throws -> T {
             try SQLiteDataDecoder().decode(T.self, from: self.decoder.data)
         }
-    }
-}
-
-private struct DecoderUnwrapper: Decodable {
-    let decoder: any Decoder
-    init(from decoder: any Decoder) {
-        self.decoder = decoder
     }
 }
