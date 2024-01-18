@@ -97,10 +97,10 @@ final class SQLiteKitTests: XCTestCase {
             configuration: .init(storage: .file(
                 path: FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).sqlite3", isDirectory: false).path
             ), enableForeignKeys: false),
-            threadPool: self.threadPool
+            threadPool: .singleton
         )
 
-        let conn2 = try await source.makeConnection(logger: self.connection.logger, on: self.eventLoopGroup.any()).get()
+        let conn2 = try await source.makeConnection(logger: self.connection.logger, on: MultiThreadedEventLoopGroup.singleton.any()).get()
         defer { try! conn2.close().wait() }
         
         let res2 = try await conn2.query("PRAGMA foreign_keys").get()
@@ -122,20 +122,20 @@ final class SQLiteKitTests: XCTestCase {
     func testMultipleInMemoryDatabases() async throws {
         let a = SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
-            threadPool: self.threadPool
+            threadPool: .singleton
         )
         let b = SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
-            threadPool: self.threadPool
+            threadPool: .singleton
         )
 
-        let a1 = try await a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).get()
+        let a1 = try await a.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
         defer { try! a1.close().wait() }
-        let a2 = try await a.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).get()
+        let a2 = try await a.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
         defer { try! a2.close().wait() }
-        let b1 = try await b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).get()
+        let b1 = try await b.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
         defer { try! b1.close().wait() }
-        let b2 = try await b.makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).get()
+        let b2 = try await b.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
         defer { try! b2.close().wait() }
 
         _ = try await a1.query("CREATE TABLE foo (bar INTEGER)").get()
@@ -192,20 +192,26 @@ final class SQLiteKitTests: XCTestCase {
             let val: String
             let nest: NestFoo
         }
-        try await self.db.create(table: "foo")
-            .column("id", type: .int, .primaryKey(autoIncrement: false), .notNull)
-            .column("value", type: .custom(SQLRaw("json")))
-            .run()
-        try await self.db.insert(into: "foo")
-            .columns("id", "value")
-            .values(SQLLiteral.numeric("1"), SQLBind(SubFoo(arr: [1,2,3], val: "a", nest: .init(x: 1.1))))
-            .values(SQLLiteral.numeric("2"), SQLBind(SubFoo?.none))
-            .run()
-        let rows = try await self.db.select()
-            .column(self.db.dialect.nestedSubpathExpression(in: SQLColumn("value"), for: ["nest", "x"])!, as: "x")
-            .from("foo")
-            .orderBy("id")
-            .all()
+        await XCTAssertNoThrowAsync(
+            try await self.db.create(table: "foo")
+                .column("id", type: .int, .primaryKey(autoIncrement: false), .notNull)
+                .column("value", type: .custom(SQLRaw("json")))
+                .run()
+        )
+        await XCTAssertNoThrowAsync(
+            try await self.db.insert(into: "foo")
+                .columns("id", "value")
+                .values(SQLLiteral.numeric("1"), SQLBind(SubFoo(arr: [1,2,3], val: "a", nest: .init(x: 1.1))))
+                .values(SQLLiteral.numeric("2"), SQLBind(SubFoo?.none))
+                .run()
+        )
+        let rows = try await XCTUnwrapAsync(
+            try await self.db.select()
+                .column(self.db.dialect.nestedSubpathExpression(in: SQLColumn("value"), for: ["nest", "x"])!, as: "x")
+                .from("foo")
+                .orderBy("id")
+                .all()
+        )
         
         XCTAssertEqual(rows.count, 2)
         let row1 = try XCTUnwrap(rows.dropFirst(0).first),
@@ -228,28 +234,19 @@ final class SQLiteKitTests: XCTestCase {
     var db: any SQLDatabase { self.connection.sql() }
     var benchmark: SQLBenchmarker { .init(on: self.db) }
     
-    var eventLoopGroup: (any EventLoopGroup)!
-    var threadPool: NIOThreadPool!
     var connection: SQLiteConnection!
 
     override func setUp() async throws {
         XCTAssertTrue(isLoggingConfigured)
-        self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
-        self.threadPool = NIOThreadPool(numberOfThreads: 2)
-        self.threadPool.start()
         self.connection = try await SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
-            threadPool: self.threadPool
-        ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.any()).get()
+            threadPool: .singleton
+        ).makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
     }
 
     override func tearDown() async throws {
         try await self.connection.close().get()
         self.connection = nil
-        try await self.threadPool.shutdownGracefully()
-        self.threadPool = nil
-        try await self.eventLoopGroup.shutdownGracefully()
-        self.eventLoopGroup = nil
     }
 }
 
@@ -265,3 +262,30 @@ let isLoggingConfigured: Bool = {
     }
     return true
 }()
+
+func XCTAssertNoThrowAsync<T>(
+    _ expression: @autoclosure () async throws -> T,
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #filePath, line: UInt = #line
+) async {
+    do {
+        _ = try await expression()
+    } catch {
+        XCTAssertNoThrow(try { throw error }(), message(), file: file, line: line)
+    }
+}
+
+func XCTUnwrapAsync<T>(
+    _ expression: @autoclosure () async throws -> T?,
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #filePath, line: UInt = #line
+) async throws -> T {
+    let result: T?
+    
+    do {
+        result = try await expression()
+    } catch {
+        return try XCTUnwrap(try { throw error }(), message(), file: file, line: line)
+    }
+    return try XCTUnwrap(result, message(), file: file, line: line)
+}
