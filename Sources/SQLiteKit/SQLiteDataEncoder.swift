@@ -9,7 +9,8 @@ public struct SQLiteDataEncoder {
         if let data = (value as? any SQLiteDataConvertible)?.sqliteData {
             return data
         } else {
-            let encoder = _Encoder()
+            let encoder = EncoderImpl()
+            
             try value.encode(to: encoder)
             switch encoder.result {
             case .data(let data):
@@ -23,7 +24,7 @@ public struct SQLiteDataEncoder {
                 // anyway, meaning this change is a bugfix. Good thing, too - otherwise we'd be stuck trying to retain
                 // bug-for-bug compatibility, starting with reverse-engineering SQLite's JSONB format (which is not the
                 // same as PostgreSQL's, of course).
-                return SQLiteData.text(.init(decoding: try JSONEncoder().encode(value), as: UTF8.self))
+                return .text(.init(decoding: try JSONEncoder().encode(value), as: UTF8.self))
             }
         }
     }
@@ -34,57 +35,49 @@ public struct SQLiteDataEncoder {
         case data(SQLiteData)
     }
 
-    private final class _Encoder: Encoder {
-        var codingPath: [any CodingKey] = []
-        var userInfo: [CodingUserInfoKey: Any] = [:]
+    private final class EncoderImpl: Encoder, SingleValueEncodingContainer {
+        private struct KeyedEncoderImpl<K: CodingKey>: KeyedEncodingContainerProtocol {
+            var codingPath: [any CodingKey] { [] }
+            mutating func encodeNil(forKey: K) throws {}
+            mutating func encode(_: some Encodable, forKey: K) throws {}
+            mutating func nestedContainer<N: CodingKey>(keyedBy: N.Type, forKey: K) -> KeyedEncodingContainer<N> { .init(KeyedEncoderImpl<N>()) }
+            mutating func nestedUnkeyedContainer(forKey: K) -> any UnkeyedEncodingContainer { UnkeyedEncoderImpl() }
+            mutating func superEncoder() -> any Encoder { EncoderImpl() }
+            mutating func superEncoder(forKey: K) -> any Encoder { EncoderImpl() }
+        }
+
+        private struct UnkeyedEncoderImpl: UnkeyedEncodingContainer {
+            var codingPath: [any CodingKey] { [] }
+            var count: Int = 0
+            mutating func encodeNil() throws {}
+            mutating func encode(_: some Encodable) throws {}
+            mutating func nestedContainer<N: CodingKey>(keyedBy: N.Type) -> KeyedEncodingContainer<N> { .init(KeyedEncoderImpl<N>()) }
+            mutating func nestedUnkeyedContainer() -> any UnkeyedEncodingContainer { UnkeyedEncoderImpl() }
+            mutating func superEncoder() -> any Encoder { EncoderImpl() }
+        }
+    
+        var codingPath: [any CodingKey] { [] }
+        var userInfo: [CodingUserInfoKey: Any] { [:] }
         var result: Result
         
         init() { self.result = .data(.null) }
 
-        func container<Key: CodingKey>(keyedBy: Key.Type) -> KeyedEncodingContainer<Key> {
+        func container<K: CodingKey>(keyedBy: K.Type) -> KeyedEncodingContainer<K> {
             self.result = .keyed
-            return .init(_KeyedEncoder())
+            return .init(KeyedEncoderImpl())
         }
 
         func unkeyedContainer() -> any UnkeyedEncodingContainer {
             self.result = .unkeyed
-            return _UnkeyedEncoder()
+            return UnkeyedEncoderImpl()
         }
 
-        func singleValueContainer() -> any SingleValueEncodingContainer { _SingleValueEncoder(encoder: self) }
-    }
+        func singleValueContainer() -> any SingleValueEncodingContainer { self }
 
-    private struct _KeyedEncoder<Key: CodingKey>: KeyedEncodingContainerProtocol {
-        var codingPath: [any CodingKey] = []
-        mutating func encodeNil(forKey: Key) throws {}
-        mutating func encode(_ value: some Encodable, forKey: Key) throws {}
-        mutating func nestedContainer<Nested: CodingKey>(keyedBy: Nested.Type, forKey: Key) -> KeyedEncodingContainer<Nested> {
-            .init(_KeyedEncoder<Nested>())
-        }
-        mutating func nestedUnkeyedContainer(forKey: Key) -> any UnkeyedEncodingContainer { _UnkeyedEncoder() }
-        mutating func superEncoder() -> any Encoder { _Encoder() }
-        mutating func superEncoder(forKey: Key) -> any Encoder { _Encoder() }
-    }
-
-    private struct _UnkeyedEncoder: UnkeyedEncodingContainer {
-        var codingPath: [any CodingKey] = []
-        var count: Int = 0
-        mutating func encodeNil() throws {}
-        mutating func encode(_ value: some Encodable) throws {}
-        mutating func nestedContainer<Nested: CodingKey>(keyedBy: Nested.Type) -> KeyedEncodingContainer<Nested> {
-            .init(_KeyedEncoder<Nested>())
-        }
-        mutating func nestedUnkeyedContainer() -> any UnkeyedEncodingContainer { _UnkeyedEncoder() }
-        mutating func superEncoder() -> any Encoder { _Encoder() }
-    }
-
-    private struct _SingleValueEncoder: SingleValueEncodingContainer {
-        var codingPath: [any CodingKey] { self.encoder.codingPath }
-        let encoder: _Encoder
-        mutating func encodeNil() throws { self.encoder.result = .data(.null) }
-        mutating func encode(_ value: some Encodable) throws {
-            let data = try SQLiteDataEncoder().encode(value)
-            self.encoder.result = .data(data)
+        func encodeNil() throws { self.result = .data(.null) }
+        
+        func encode(_ value: some Encodable) throws {
+            self.result = .data(try SQLiteDataEncoder().encode(value))
         }
     }
 }
