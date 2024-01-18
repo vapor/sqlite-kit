@@ -1,10 +1,14 @@
 import Foundation
 import SQLiteNIO
+import NIOFoundationCompat
 
 public struct SQLiteDataDecoder {
+    let json = JSONDecoder() // TODO: Add API to make this configurable
+    
     public init() {}
 
     public func decode<T: Decodable>(_ type: T.Type, from data: SQLiteData) throws -> T {
+        // If `T` can be converted directly, just do so.
         if let type = type as? any SQLiteDataConvertible.Type {
             guard let value = type.init(sqliteData: data) else {
                 throw DecodingError.typeMismatch(T.self, .init(
@@ -14,54 +18,37 @@ public struct SQLiteDataDecoder {
             }
             return value as! T
         } else {
-            return try T.init(from: _Decoder(data: data))
-        }
-    }
-
-    private final class _Decoder: Decoder {
-        var codingPath: [any CodingKey] = []
-        var userInfo: [CodingUserInfoKey: Any] = [:]
-
-        let data: SQLiteData
-        init(data: SQLiteData) { self.data = data }
-
-        func unkeyedContainer() throws -> any UnkeyedDecodingContainer {
-            try self.jsonDecoder().unkeyedContainer()
-        }
-
-        func container<Key: CodingKey>(keyedBy: Key.Type) throws -> KeyedDecodingContainer<Key> {
-            try self.jsonDecoder().container(keyedBy: Key.self)
-        }
-
-        func jsonDecoder() throws -> any Decoder {
-            let data: Data
-            switch self.data {
-            case .blob(let buffer): data = Data(buffer.readableBytesView)
-            case .text(let string): data = Data(string.utf8)
-            default: data = .init()
+            do {
+                return try T.init(from: GiftBoxUnwrapDecoder(decoder: self, data: data))
+            } catch is TryJSONSentinel {
+                // Couldn't unwrap it either. Fall back to attempting a JSON decode.
+                let buf: Data
+                switch data {
+                case .text(let str):  buf = .init(str.utf8)
+                case .blob(let blob): buf = .init(buffer: blob, byteTransferStrategy: .noCopy)
+                // The remaining cases should never happen, but we implement them anyway just in case.
+                case .integer(let n): buf = .init(String(n).utf8)
+                case .float(let n):   buf = .init(String(n).utf8)
+                case .null:           buf = .init()
+                }
+                return try self.json.decode(T.self, from: buf)
             }
-            return try JSONDecoder().decode(DecoderUnwrapper.self, from: data).decoder
-        }
-
-        func singleValueContainer() throws -> any SingleValueDecodingContainer { _SingleValueDecoder(self) }
-    }
-
-    private struct _SingleValueDecoder: SingleValueDecodingContainer {
-        var codingPath: [any CodingKey] { self.decoder.codingPath }
-        let decoder: _Decoder
-        init(_ decoder: _Decoder) { self.decoder = decoder }
-
-        func decodeNil() -> Bool { self.decoder.data == .null }
-
-        func decode<T: Decodable>(_: T.Type) throws -> T {
-            try SQLiteDataDecoder().decode(T.self, from: self.decoder.data)
         }
     }
-}
+    
+    private struct TryJSONSentinel: Swift.Error {}
 
-private struct DecoderUnwrapper: Decodable {
-    let decoder: Decoder
-    init(from decoder: Decoder) {
-        self.decoder = decoder
+    private struct GiftBoxUnwrapDecoder: Decoder, SingleValueDecodingContainer {
+        let decoder: SQLiteDataDecoder
+        let data: SQLiteData
+        
+        var codingPath: [any CodingKey] { [] }
+        var userInfo: [CodingUserInfoKey: Any] { [:] }
+
+        func container<K: CodingKey>(keyedBy: K.Type) throws -> KeyedDecodingContainer<K> { throw TryJSONSentinel() }
+        func unkeyedContainer() throws -> any UnkeyedDecodingContainer { throw TryJSONSentinel() }
+        func singleValueContainer() throws -> any SingleValueDecodingContainer { self }
+        func decodeNil() -> Bool { self.data.isNull }
+        func decode<T: Decodable>(_: T.Type) throws -> T { try self.decoder.decode(T.self, from: self.data) }
     }
 }

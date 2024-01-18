@@ -5,7 +5,7 @@ import NIOPosix
 import SQLiteNIO
 import NIOCore
 
-public struct SQLiteConnectionSource: ConnectionPoolSource {
+public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
     private let configuration: SQLiteConfiguration
     private let actualURL: URL
     private let threadPool: NIOThreadPool
