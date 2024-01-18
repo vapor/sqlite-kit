@@ -60,8 +60,8 @@ public struct SQLiteDataDecoder {
 }
 
 private struct DecoderUnwrapper: Decodable {
-    let decoder: Decoder
-    init(from decoder: Decoder) {
+    let decoder: any Decoder
+    init(from decoder: any Decoder) {
         self.decoder = decoder
     }
 }

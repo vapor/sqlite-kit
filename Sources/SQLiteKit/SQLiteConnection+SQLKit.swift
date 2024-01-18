@@ -82,7 +82,7 @@ internal struct _SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
 }
 
 private struct _SQLiteSQLDatabase: SQLDatabase {
-    let database: SQLiteDatabase
+    let database: any SQLiteDatabase
     
     var eventLoop: any EventLoop {
         self.database.eventLoop

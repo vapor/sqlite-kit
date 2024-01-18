@@ -88,13 +88,3 @@ public struct SQLiteDataEncoder {
         }
     }
 }
-
-private struct AnyEncodable: Encodable {
-    let encodable: Encodable
-    init(_ encodable: Encodable) {
-        self.encodable = encodable
-    }
-    func encode(to encoder: Encoder) throws {
-        try self.encodable.encode(to: encoder)
-    }
-}
