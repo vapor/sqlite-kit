@@ -15,10 +15,15 @@ public struct SQLiteDataEncoder {
             case .data(let data):
                 return data
             case .unkeyed, .keyed:
-                let json = try JSONEncoder().encode(AnyEncodable(value))
-                var buffer = ByteBufferAllocator().buffer(capacity: json.count)
-                buffer.writeBytes(json)
-                return SQLiteData.blob(buffer)
+                // Starting with SQLite 3.45.0 (2024-01-15), sending textual JSON as a blob will cause inexplicable
+                // errors due to the data being interpreted as JSONB (arguably not the best behavior for SQLite's API,
+                // but not technically a compatibility break). As there is no good way to get at the underlying SQLite
+                // version from the data encoder, and extending `SQLiteData` would make a rather epic mess, we now just
+                // always send JSON as text instead. This is technically what we should have been doing all along
+                // anyway, meaning this change is a bugfix. Good thing, too - otherwise we'd be stuck trying to retain
+                // bug-for-bug compatibility, starting with reverse-engineering SQLite's JSONB format (which is not the
+                // same as PostgreSQL's, of course).
+                return SQLiteData.text(.init(decoding: try JSONEncoder().encode(value), as: UTF8.self))
             }
         }
     }
