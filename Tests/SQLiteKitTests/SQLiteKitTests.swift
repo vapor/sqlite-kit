@@ -8,6 +8,7 @@ import SQLKit
 final class SQLiteKitTests: XCTestCase {
     func testSQLKitBenchmark() throws {
         let benchmark = SQLBenchmarker(on: self.db)
+
         try benchmark.run()
     }
     
@@ -18,15 +19,16 @@ final class SQLiteKitTests: XCTestCase {
         try await self.db.drop(table: "galaxies")
             .ifExists()
             .run()
+        
         try await self.db.create(table: "galaxies")
             .column("id", type: .int, .primaryKey)
             .column("name", type: .text)
             .run()
-        try await self.db.create(table: "planets")
-            .ifNotExists()
+        try await self.db.create(table: "planets").ifNotExists()
             .column("id", type: .int, .primaryKey)
             .column("galaxyID", type: .int, .references("galaxies", "id"))
             .run()
+        
         try await self.db.alter(table: "planets")
             .column("name", type: .text, .default(SQLLiteral.string("Unamed Planet")))
             .run()
@@ -35,21 +37,22 @@ final class SQLiteKitTests: XCTestCase {
             .column("id")
             .unique()
             .run()
+
         // INSERT INTO "galaxies" ("id", "name") VALUES (DEFAULT, $1)
         try await self.db.insert(into: "galaxies")
             .columns("id", "name")
             .values(SQLLiteral.null, SQLBind("Milky Way"))
             .values(SQLLiteral.null, SQLBind("Andromeda"))
-            // .value(Galaxy(name: "Milky Way"))
             .run()
+        
         // SELECT * FROM galaxies WHERE name != NULL AND (name == ? OR name == ?)
         _ = try await self.db.select()
             .column("*")
             .from("galaxies")
             .where("name", .notEqual, SQLLiteral.null)
-            .where {
-                $0.where("name", .equal, SQLBind("Milky Way"))
-                    .orWhere("name", .equal, SQLBind("Andromeda"))
+            .where { $0
+                .orWhere("name", .equal, SQLBind("Milky Way"))
+                .orWhere("name", .equal, SQLBind("Andromeda"))
             }
             .all()
 
@@ -90,6 +93,7 @@ final class SQLiteKitTests: XCTestCase {
 
     func testForeignKeysEnabledOnlyWhenRequested() async throws {
         let res = try await self.connection.query("PRAGMA foreign_keys").get()
+        
         XCTAssertEqual(res[0].column("foreign_keys"), .integer(1))
 
         // Using `.file` storage here is a quick and dirty nod to increasing test coverage.
@@ -232,16 +236,18 @@ final class SQLiteKitTests: XCTestCase {
     }
 
     var db: any SQLDatabase { self.connection.sql() }
-    var benchmark: SQLBenchmarker { .init(on: self.db) }
-    
     var connection: SQLiteConnection!
 
     override func setUp() async throws {
         XCTAssertTrue(isLoggingConfigured)
+        
         self.connection = try await SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
             threadPool: .singleton
-        ).makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
+        ).makeConnection(
+            logger: .init(label: "test"),
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
     }
 
     override func tearDown() async throws {
@@ -257,7 +263,7 @@ func env(_ name: String) -> String? {
 let isLoggingConfigured: Bool = {
     LoggingSystem.bootstrap { label in
         var handler = StreamLogHandler.standardOutput(label: label)
-        handler.logLevel = env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .debug
+        handler.logLevel = env("LOG_LEVEL").flatMap { .init(rawValue: $0) } ?? .debug
         return handler
     }
     return true
