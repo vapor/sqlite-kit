@@ -6,10 +6,10 @@ import SQLiteNIO
 import SQLKit
 
 final class SQLiteKitTests: XCTestCase {
-    func testSQLKitBenchmark() throws {
+    func testSQLKitBenchmark() async throws {
         let benchmark = SQLBenchmarker(on: self.db)
 
-        try benchmark.run()
+        try await benchmark.runAllTests()
     }
     
     func testPlanets() async throws {
