@@ -16,7 +16,7 @@ public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
     
     public init(
         configuration: SQLiteConfiguration,
-        threadPool: NIOThreadPool
+        threadPool: NIOThreadPool = .singleton
     ) {
         self.configuration = configuration
         self.actualURL = configuration.storage.urlForSQLite
@@ -27,7 +27,7 @@ public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
         logger: Logger,
         on eventLoop: any EventLoop
     ) -> EventLoopFuture<SQLiteConnection> {
-        return SQLiteConnection.open(
+        SQLiteConnection.open(
             storage: self.connectionStorage,
             threadPool: self.threadPool,
             logger: logger,
@@ -43,7 +43,7 @@ public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
     }
 }
 
-extension SQLiteConnection: ConnectionPoolItem { }
+extension SQLiteNIO.SQLiteConnection: AsyncKit.ConnectionPoolItem {}
 
 fileprivate extension String {
     var asSafeFilename: String {

@@ -46,6 +46,6 @@ public struct SQLiteDialect: SQLDialect {
     public init() {}
     
     private func isAtLeastVersion(_ major: Int, _ minor: Int, _ patch: Int) -> Bool {
-        _SQLiteDatabaseVersion.runtimeVersion.isNotOlder(than: _SQLiteDatabaseVersion(major: major, minor: minor, patch: patch))
+        SQLiteDatabaseVersion.runtimeVersion >= SQLiteDatabaseVersion(major: major, minor: minor, patch: patch)
     }
 }
