@@ -124,18 +124,23 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     
     /// An ``SQLiteDataDecoder`` used to translate `SQLiteData` values into output values in `SQLRow`s.
     let decoder: SQLiteDataDecoder
+    
+    // See `SQLDatabase.eventLoop`.
     var eventLoop: any EventLoop {
         self.database.value.eventLoop
     }
     
+    // See `SQLDatabase.version`.
     var version: (any SQLDatabaseReportedVersion)? {
         SQLiteDatabaseVersion.runtimeVersion
     }
     
+    // See `SQLDatabase.logger`.
     var logger: Logger {
         self.database.value.logger
     }
     
+    // See `SQLDatabase.dialect`.
     var dialect: any SQLDialect {
         SQLiteDialect()
     }
@@ -143,6 +148,7 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     // See `SQLDatabase.queryLogLevel`.
     var queryLogLevel: Logger.Level?
     
+    // See `SQLDatabase.execute(sql:_:)`.
     func execute(
         sql query: any SQLExpression,
         _ onRow: @escaping @Sendable (any SQLRow) -> ()

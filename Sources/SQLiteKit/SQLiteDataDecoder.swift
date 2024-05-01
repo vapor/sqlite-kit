@@ -3,6 +3,10 @@ import SQLiteNIO
 @_spi(CodableUtilities) import SQLKit
 import NIOFoundationCompat
 
+/// Translates `SQLiteData` values received from the database into `Decodable` values.
+///
+/// Types which conform to `SQLiteDataConvertible` are converted directly to the requested type. For other types,
+/// an attempt is made to interpret the database value as JSON and decode the type from it.
 public struct SQLiteDataDecoder: Sendable {
     /// A wrapper to silence `Sendable` warnings for `JSONDecoder` when not on macOS.
     struct FakeSendable<T>: @unchecked Sendable { let value: T }
@@ -18,6 +22,12 @@ public struct SQLiteDataDecoder: Sendable {
         self.json = .init(value: json)
     }
     
+    /// Convert the given `SQLiteData` into a value of type `T`, if possible.
+    ///
+    /// - Parameters:
+    ///   - type: The desired result type.
+    ///   - data: The data to decode.
+    /// - Returns: The decoded value, if successful.
     public func decode<T: Decodable>(_ type: T.Type, from data: SQLiteData) throws -> T {
         // If `T` can be converted directly, just do so.
         if let type = type as? any SQLiteDataConvertible.Type {

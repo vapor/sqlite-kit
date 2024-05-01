@@ -3,6 +3,10 @@ import Foundation
 @_spi(CodableUtilities) import SQLKit
 import SQLiteNIO
 
+/// Translates `Encodable` values into `SQLiteData` values suitable for use with an `SQLiteDatabase`.
+///
+/// Types which conform to `SQLiteDataConvertible` are converted directly to `SQLiteData`. Other types are
+/// encoded as JSON and sent to the database as text.
 public struct SQLiteDataEncoder: Sendable {
     /// A wrapper to silence `Sendable` warnings for `JSONEncoder` when not on macOS.
     struct FakeSendable<T>: @unchecked Sendable { let value: T }
@@ -14,6 +18,10 @@ public struct SQLiteDataEncoder: Sendable {
         self.json = .init(value: json)
     }
     
+    /// Convert the given `Encodable` value to an `SQLiteData` value, if possible.
+    ///
+    /// - Parameter value: The value to convert.
+    /// - Returns: A converted `SQLiteData` value, if successful.
     public func encode(_ value: any Encodable) throws -> SQLiteData {
         if let data = (value as? any SQLiteDataConvertible)?.sqliteData {
             return data
