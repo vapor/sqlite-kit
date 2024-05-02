@@ -7,7 +7,7 @@ extension SQLiteRow {
     /// - Parameter decoder: An ``SQLiteDataDecoder`` used to translate `SQLiteData` values into output values in
     ///   `SQLRow`s.
     /// - Returns: An instance of `SQLRow` which accesses the same data as `self`.
-    func sql(decoder: SQLiteDataDecoder = .init()) -> any SQLRow {
+    public func sql(decoder: SQLiteDataDecoder = .init()) -> any SQLRow {
         SQLiteSQLRow(row: self, decoder: decoder)
     }
 }
