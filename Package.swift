@@ -13,7 +13,7 @@ let package = Package(
         .library(name: "SQLiteKit", targets: ["SQLiteKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.62.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         .package(url: "https://github.com/vapor/sqlite-nio.git", from: "1.8.4"),
         .package(url: "https://github.com/vapor/sql-kit.git", from: "3.29.3"),
         .package(url: "https://github.com/vapor/async-kit.git", from: "1.19.0"),
