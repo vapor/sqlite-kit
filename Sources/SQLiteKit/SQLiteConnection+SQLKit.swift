@@ -1,5 +1,6 @@
 import SQLKit
 import SQLiteNIO
+import Logging
 
 extension SQLiteDatabase {
     /// Return an object allowing access to this database via the `SQLDatabase` interface.
@@ -10,9 +11,10 @@ extension SQLiteDatabase {
     /// - Returns: An instance of `SQLDatabase` which accesses the same database as `self`.
     public func sql(
         encoder: SQLiteDataEncoder = .init(),
-        decoder: SQLiteDataDecoder = .init()
+        decoder: SQLiteDataDecoder = .init(),
+        queryLogLevel: Logger.Level? = .debug
     ) -> any SQLDatabase {
-        SQLiteSQLDatabase(database: .init(value: self), encoder: encoder, decoder: decoder)
+        SQLiteSQLDatabase(database: self, encoder: encoder, decoder: decoder, queryLogLevel: queryLogLevel)
     }
 }
 
@@ -111,13 +113,8 @@ struct SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
 
 /// Wraps a `SQLiteDatabase` with the `SQLDatabase` protocol.
 private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
-    /// A trivial wrapper type to work around Sendable warnings due to SQLiteNIO not being Sendable-correct.
-    struct FakeSendable<T>: @unchecked Sendable {
-        let value: T
-    }
-    
     /// The underlying database.
-    let database: FakeSendable<D>
+    let database: D
     
     /// An ``SQLiteDataEncoder`` used to translate bindings into `SQLiteData` values.
     let encoder: SQLiteDataEncoder
@@ -127,7 +124,7 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     
     // See `SQLDatabase.eventLoop`.
     var eventLoop: any EventLoop {
-        self.database.value.eventLoop
+        self.database.eventLoop
     }
     
     // See `SQLDatabase.version`.
@@ -137,7 +134,7 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     
     // See `SQLDatabase.logger`.
     var logger: Logger {
-        self.database.value.logger
+        self.database.logger
     }
     
     // See `SQLDatabase.dialect`.
@@ -146,28 +143,29 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     }
     
     // See `SQLDatabase.queryLogLevel`.
-    var queryLogLevel: Logger.Level?
+    let queryLogLevel: Logger.Level?
     
     // See `SQLDatabase.execute(sql:_:)`.
     func execute(
         sql query: any SQLExpression,
         _ onRow: @escaping @Sendable (any SQLRow) -> ()
     ) -> EventLoopFuture<Void> {
-        var serializer = SQLSerializer(database: self)
-        query.serialize(to: &serializer)
+        let (sql, rawBinds) = self.serialize(query)
+        
+        if let queryLogLevel = self.queryLogLevel {
+            self.logger.log(level: queryLogLevel, "\(sql) [\(rawBinds)]")
+        }
+
         let binds: [SQLiteData]
         do {
-            binds = try serializer.binds.map { encodable in
-                try self.encoder.encode(encodable)
-            }
+            binds = try rawBinds.map { try self.encoder.encode($0) }
         } catch {
             return self.eventLoop.makeFailedFuture(error)
         }
         
-        return self.database.value.query(
-            serializer.sql,
+        return self.database.query(
+            sql,
             binds,
-            logger: self.logger,
             { onRow($0.sql(decoder: self.decoder)) }
         )
     }
@@ -177,25 +175,23 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
         sql query: any SQLExpression,
         _ onRow: @escaping @Sendable (any SQLRow) -> ()
     ) async throws {
-        var serializer = SQLSerializer(database: self)
-        query.serialize(to: &serializer)
+        let (sql, rawBinds) = self.serialize(query)
         
-        let binds = try serializer.binds.map { try self.encoder.encode($0) }
-        
-        return try await self.database.value.query(
-            serializer.sql,
-            binds,
-            logger: self.logger,
+        if let queryLogLevel = self.queryLogLevel {
+            self.logger.log(level: queryLogLevel, "\(sql) [\(rawBinds)]")
+        }
+
+        try await self.database.query(
+            sql,
+            rawBinds.map { try self.encoder.encode($0) },
             { onRow($0.sql(decoder: self.decoder)) }
-        ).get()
+        )
     }
     
     // See `SQLDatabase.withSession(_:)`.
     func withSession<R>(_ closure: @escaping @Sendable (any SQLDatabase) async throws -> R) async throws -> R {
-        try await self.database.value.withConnection { c in
-            c.eventLoop.makeFutureWithTask {
-                try await closure(c.sql(encoder: self.encoder, decoder: self.decoder))
-            }
-        }.get()
+        try await self.database.withConnection {
+            try await closure($0.sql(encoder: self.encoder, decoder: self.decoder, queryLogLevel: self.queryLogLevel))
+        }
     }
 }
