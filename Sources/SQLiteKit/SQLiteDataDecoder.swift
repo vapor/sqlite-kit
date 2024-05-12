@@ -14,11 +14,15 @@ public struct SQLiteDataDecoder: Sendable {
     /// The `JSONDecoder` used for decoding values that can't be directly converted.
     let json: FakeSendable<JSONDecoder>
 
+    /// Initialize a ``SQLiteDataDecoder`` with an unconfigured JSON decoder.
+    public init() {
+        self.init(json: .init())
+    }
+    
     /// Initialize a ``SQLiteDataDecoder`` with a JSON decoder.
     ///
-    /// - Parameter json: A `JSONDecoder` to use for decoding types that can't be directly converted. Defaults
-    ///   to an unconfigured decoder.
-    public init(json: JSONDecoder = .init()) {
+    /// - Parameter json: A `JSONDecoder` to use for decoding types that can't be directly converted.
+    public init(json: JSONDecoder) {
         self.json = .init(value: json)
     }
     
