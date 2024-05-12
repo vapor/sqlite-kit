@@ -1,4 +1,8 @@
+#if canImport(Darwin)
 import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 import Logging
 import AsyncKit
 import NIOPosix

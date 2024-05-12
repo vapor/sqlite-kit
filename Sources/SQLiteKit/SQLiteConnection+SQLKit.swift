@@ -2,17 +2,64 @@ import SQLKit
 import SQLiteNIO
 import Logging
 
+// Hint: Yes, I know what default arguments are. This ridiculous spelling out of each alternative avoids public API
+// breakage from adding the defaults.
+
 extension SQLiteDatabase {
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql() -> any SQLDatabase {
+        self.sql(encoder: .init(), decoder: .init(), queryLogLevel: .debug)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(encoder: SQLiteDataEncoder) -> any SQLDatabase {
+        self.sql(encoder: encoder, decoder: .init(), queryLogLevel: .debug)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(decoder: SQLiteDataDecoder) -> any SQLDatabase {
+        self.sql(encoder: .init(), decoder: decoder, queryLogLevel: .debug)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(encoder: SQLiteDataEncoder, decoder: SQLiteDataDecoder) -> any SQLDatabase {
+        self.sql(encoder: encoder, decoder: decoder, queryLogLevel: .debug)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(queryLogLevel: Logger.Level?) -> any SQLDatabase {
+        self.sql(encoder: .init(), decoder: .init(), queryLogLevel: queryLogLevel)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(encoder: SQLiteDataEncoder, queryLogLevel: Logger.Level?) -> any SQLDatabase {
+        self.sql(encoder: encoder, decoder: .init(), queryLogLevel: queryLogLevel)
+    }
+
+    /// Shorthand for ``sql(encoder:decoder:queryLogLevel:)``.
+    @inlinable
+    public func sql(decoder: SQLiteDataDecoder, queryLogLevel: Logger.Level?) -> any SQLDatabase {
+        self.sql(encoder: .init(), decoder: decoder, queryLogLevel: queryLogLevel)
+    }
+
     /// Return an object allowing access to this database via the `SQLDatabase` interface.
     ///
     /// - Parameters:
     ///   - encoder: An ``SQLiteDataEncoder`` used to translate bound query parameters into `SQLiteData` values.
     ///   - decoder: An ``SQLiteDataDecoder`` used to translate `SQLiteData` values into output values in `SQLRow`s.
+    ///   - queryLogLevel: The level at which SQL queries issued through the SQLKit interface will be logged.
     /// - Returns: An instance of `SQLDatabase` which accesses the same database as `self`.
+    @inlinable
     public func sql(
-        encoder: SQLiteDataEncoder = .init(),
-        decoder: SQLiteDataDecoder = .init(),
-        queryLogLevel: Logger.Level? = .debug
+        encoder: SQLiteDataEncoder,
+        decoder: SQLiteDataDecoder,
+        queryLogLevel: Logger.Level?
     ) -> any SQLDatabase {
         SQLiteSQLDatabase(database: self, encoder: encoder, decoder: decoder, queryLogLevel: queryLogLevel)
     }
@@ -112,40 +159,58 @@ struct SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
 }
 
 /// Wraps a `SQLiteDatabase` with the `SQLDatabase` protocol.
-private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
+@usableFromInline
+/*private*/ struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     /// The underlying database.
+    @usableFromInline
     let database: D
     
     /// An ``SQLiteDataEncoder`` used to translate bindings into `SQLiteData` values.
+    @usableFromInline
     let encoder: SQLiteDataEncoder
     
     /// An ``SQLiteDataDecoder`` used to translate `SQLiteData` values into output values in `SQLRow`s.
+    @usableFromInline
     let decoder: SQLiteDataDecoder
     
     // See `SQLDatabase.eventLoop`.
+    @usableFromInline
     var eventLoop: any EventLoop {
         self.database.eventLoop
     }
     
     // See `SQLDatabase.version`.
+    @usableFromInline
     var version: (any SQLDatabaseReportedVersion)? {
         SQLiteDatabaseVersion.runtimeVersion
     }
     
     // See `SQLDatabase.logger`.
+    @usableFromInline
     var logger: Logger {
         self.database.logger
     }
     
     // See `SQLDatabase.dialect`.
+    @usableFromInline
     var dialect: any SQLDialect {
         SQLiteDialect()
     }
     
     // See `SQLDatabase.queryLogLevel`.
+    @usableFromInline
     let queryLogLevel: Logger.Level?
     
+    @inlinable
+    init(database: D, encoder: SQLiteDataEncoder, decoder: SQLiteDataDecoder, queryLogLevel: Logger.Level?) {
+        self.database = database
+        self.encoder = encoder
+        self.decoder = decoder
+        self.queryLogLevel = queryLogLevel
+    }
+    
     // See `SQLDatabase.execute(sql:_:)`.
+    @usableFromInline
     func execute(
         sql query: any SQLExpression,
         _ onRow: @escaping @Sendable (any SQLRow) -> ()
@@ -171,6 +236,7 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     }
 
     // See `SQLDatabase.execute(sql:_:)`.
+    @usableFromInline
     func execute(
         sql query: any SQLExpression,
         _ onRow: @escaping @Sendable (any SQLRow) -> ()
@@ -189,6 +255,7 @@ private struct SQLiteSQLDatabase<D: SQLiteDatabase>: SQLDatabase {
     }
     
     // See `SQLDatabase.withSession(_:)`.
+    @usableFromInline
     func withSession<R>(_ closure: @escaping @Sendable (any SQLDatabase) async throws -> R) async throws -> R {
         try await self.database.withConnection {
             try await closure($0.sql(encoder: self.encoder, decoder: self.decoder, queryLogLevel: self.queryLogLevel))
