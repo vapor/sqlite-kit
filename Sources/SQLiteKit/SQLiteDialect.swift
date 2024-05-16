@@ -1,6 +1,6 @@
 import SQLKit
 
-/// The ``SQLDialect`` defintions for SQLite.
+/// The `SQLDialect` defintions for SQLite.
 ///
 /// > Note: There is only ever one SQLite library in use by SQLiteNIO in any given process (even if there are
 /// > other versions of the library being used by other things). As such, there is no need for the dialect to
