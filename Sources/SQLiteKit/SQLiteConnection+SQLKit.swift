@@ -218,7 +218,7 @@ struct SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
         let (sql, rawBinds) = self.serialize(query)
         
         if let queryLogLevel = self.queryLogLevel {
-            self.logger.log(level: queryLogLevel, "\(sql) [\(rawBinds)]")
+            self.logger.log(level: queryLogLevel, "\(sql) \(rawBinds)")
         }
 
         let binds: [SQLiteData]
@@ -244,7 +244,7 @@ struct SQLiteDatabaseVersion: SQLDatabaseReportedVersion {
         let (sql, rawBinds) = self.serialize(query)
         
         if let queryLogLevel = self.queryLogLevel {
-            self.logger.log(level: queryLogLevel, "\(sql) [\(rawBinds)]")
+            self.logger.log(level: queryLogLevel, "\(sql) \(rawBinds)")
         }
 
         try await self.database.query(
