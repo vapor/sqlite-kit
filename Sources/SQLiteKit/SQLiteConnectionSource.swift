@@ -49,8 +49,7 @@ public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
             on: eventLoop
         ).flatMap { conn in
             if self.configuration.enableForeignKeys {
-                return conn.query("PRAGMA foreign_keys = ON")
-                    .map { _ in conn }
+                return conn.query("PRAGMA foreign_keys = ON").map { _ in conn }
             } else {
                 return eventLoop.makeSucceededFuture(conn)
             }
