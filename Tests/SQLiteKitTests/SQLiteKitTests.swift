@@ -124,6 +124,11 @@ final class SQLiteKitTests: XCTestCase {
         XCTAssertEqual(bar.baz, "qux")
     }
 
+    // NOTE: The following test doesn't work in a runtime environment
+    // due to reliance on temp files. The test is elided for now
+    // for WASI targets, but could be used in the future once
+    // a persistence solution is working for WASI platforms.
+    #if !os(WASI)
     func testMultipleInMemoryDatabases() async throws {
         let a = SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
@@ -149,6 +154,7 @@ final class SQLiteKitTests: XCTestCase {
         try! await a2.close().get()
         try! await a1.close().get()
     }
+    #endif  // !os(WASI)
 
     // https://github.com/vapor/sqlite-kit/issues/56
     func testDoubleConstraintError() async throws {

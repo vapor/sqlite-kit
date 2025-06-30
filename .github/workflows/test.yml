@@ -16,6 +16,8 @@ jobs:
   unit-tests:
     uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
     secrets: inherit
+    with:
+      with_wasm: true
 
   # Make sure downstream dependents still work
   dependents-check:
