@@ -24,11 +24,11 @@ jobs:
     container: swift:5.10-jammy
     steps:
       - name: Check out package
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: sqlite-kit
       - name: Check out FluentKit driver
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: vapor/fluent-sqlite-driver
           path: fluent-sqlite-driver
