@@ -77,9 +77,8 @@ public struct SQLiteConfiguration: Sendable {
 
     /// The journal mode to use for the database.
     ///
-    /// Internally issues a `PRAGMA journal_mode = <mode>` query when the connection is opened.
-    ///
-    /// Defaults to `.delete` (SQLite's default behavior).
+    /// Internally issues a `PRAGMA journal_mode = <mode>` query when the
+    /// connection is opened.
     public var journalMode: JournalMode
 
     /// Create a new ``SQLiteConfiguration``.
