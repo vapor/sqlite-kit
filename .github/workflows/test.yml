@@ -8,11 +8,15 @@ on:
 
 jobs:
   unit-tests:
+    permissions:
+      contents: read
     uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
     secrets: inherit
 
   # Make sure downstream dependents still work
   dependents-check:
+    permissions:
+      contents: read
     if: ${{ !(github.event.pull_request.draft || false) }}
     runs-on: ubuntu-latest
     container: swift:6.3-jammy
@@ -30,3 +34,10 @@ jobs:
         run: swift package --package-path fluent-sqlite-driver edit sqlite-kit --path sqlite-kit
       - name: Run FluentSQLiteDriver tests with Thread Sanitizer
         run: swift test --package-path fluent-sqlite-driver --sanitize=thread
+
+  submit-dependencies:
+    permissions:
+      contents: write
+    if: ${{ github.event_name == 'push' }}
+    uses: vapor/ci/.github/workflows/submit-deps.yml@main
+    secrets: inherit
