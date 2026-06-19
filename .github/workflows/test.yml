@@ -6,13 +6,7 @@ on:
   pull_request: { types: [opened, reopened, synchronize, ready_for_review] }
   push: { branches: [ main ] }
 
-env:
-  LOG_LEVEL: info
-  SWIFT_DETERMINISTIC_HASHING: 1
-
 jobs:
-
-  # also serves as code coverage baseline update
   unit-tests:
     uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
     secrets: inherit
@@ -21,7 +15,7 @@ jobs:
   dependents-check:
     if: ${{ !(github.event.pull_request.draft || false) }}
     runs-on: ubuntu-latest
-    container: swift:5.10-jammy
+    container: swift:6.3-jammy
     steps:
       - name: Check out package
         uses: actions/checkout@v7
