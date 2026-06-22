@@ -111,6 +111,301 @@ final class SQLiteKitTests: XCTestCase {
         XCTAssertEqual(res2[0].column("foreign_keys"), .integer(0))
     }
 
+    func testJournalModeDelete() async throws {
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: false,
+                journalMode: .delete
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(logger: self.connection.logger, on: MultiThreadedEventLoopGroup.singleton.any()).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(res[0].column("journal_mode")?.string?.uppercased(), "DELETE")
+    }
+
+    func testJournalModeWAL() async throws {
+        let dbPath = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "\(UUID()).sqlite3",
+            isDirectory: false
+        ).path
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(path: dbPath),
+                enableForeignKeys: false,
+                journalMode: .wal
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(res[0].column("journal_mode")?.string?.uppercased(), "WAL")
+
+        // Perform a write operation to ensure WAL and SHM files are created
+        _ = try await conn.query("CREATE TABLE test_wal (id INTEGER PRIMARY KEY)").get()
+        _ = try await conn.query("INSERT INTO test_wal (id) VALUES (1)").get()
+
+        // Verify that -wal and -shm files exist
+        let walPath = dbPath + "-wal"
+        let shmPath = dbPath + "-shm"
+
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: walPath),
+            "WAL file should exist at \(walPath)"
+        )
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: shmPath),
+            "SHM file should exist at \(shmPath)"
+        )
+    }
+
+    func testJournalModeTruncate() async throws {
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: false,
+                journalMode: .truncate
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(
+            res[0].column("journal_mode")?.string?.uppercased(),
+            "TRUNCATE"
+        )
+    }
+
+    func testJournalModePersist() async throws {
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: false,
+                journalMode: .persist
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(
+            res[0].column("journal_mode")?.string?.uppercased(),
+            "PERSIST"
+        )
+    }
+
+    func testJournalModeMemory() async throws {
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: false,
+                journalMode: .memory
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(
+            res[0].column("journal_mode")?.string?.uppercased(),
+            "MEMORY"
+        )
+    }
+
+    func testJournalModeOff() async throws {
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: false,
+                journalMode: .off
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let res = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(
+            res[0].column("journal_mode")?.string?.uppercased(),
+            "OFF"
+        )
+    }
+
+    func testJournalModeWithForeignKeys() async throws {
+        // Test that both foreign keys and WAL mode can be enabled together
+        let source = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(
+                    path: FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "\(UUID()).sqlite3",
+                        isDirectory: false
+                    ).path
+                ),
+                enableForeignKeys: true,
+                journalMode: .wal
+            ),
+            threadPool: .singleton
+        )
+
+        let conn = try await source.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! conn.close().wait() }
+
+        let journalRes = try await conn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(journalRes[0].column("journal_mode")?.string?.uppercased(), "WAL")
+
+        let foreignKeysRes = try await conn.query("PRAGMA foreign_keys").get()
+        XCTAssertEqual(foreignKeysRes[0].column("foreign_keys"), .integer(1))
+
+        // Create tables with foreign key relationship
+        _ = try await conn.query("CREATE TABLE parent (id INTEGER PRIMARY KEY)").get()
+        _ = try await conn.query("CREATE TABLE child (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id))").get()
+
+        // Insert valid parent row
+        _ = try await conn.query("INSERT INTO parent (id) VALUES (1)").get()
+
+        // Insert valid child row (should succeed)
+        _ = try await conn.query("INSERT INTO child (id, parent_id) VALUES (1, 1)").get()
+
+        // Try to insert child row with non-existent parent (should fail)
+        do {
+            _ = try await conn.query("INSERT INTO child (id, parent_id) VALUES (2, 999)").get()
+            XCTFail("Expected foreign key constraint violation")
+        } catch {
+            // Expected to fail with foreign key constraint violation
+            XCTAssertTrue(
+                error.localizedDescription.contains("FOREIGN KEY constraint failed") ||
+                error.localizedDescription.contains("foreign key")
+            )
+        }
+
+        // Verify only the valid child row exists
+        let rows = try await conn.query("SELECT COUNT(*) as count FROM child").get()
+        XCTAssertEqual(rows[0].column("count"), .integer(1))
+    }
+
+    func testJournalModeWALToDelete() async throws {
+        // Test switching from WAL mode to DELETE mode
+        let dbPath = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).sqlite3", isDirectory: false).path
+
+        // First, create a connection with WAL mode
+        let walSource = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(path: dbPath),
+                enableForeignKeys: false,
+                journalMode: .wal
+            ),
+            threadPool: .singleton
+        )
+
+        let walConn = try await walSource.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+
+        // Verify WAL mode is active
+        let walRes = try await walConn.query("PRAGMA journal_mode").get()
+        XCTAssertEqual(
+            walRes[0].column("journal_mode")?.string?.uppercased(),
+            "WAL"
+        )
+
+        // Write some data
+        _ = try await walConn.query("CREATE TABLE test_wal_switch (id INTEGER PRIMARY KEY)").get()
+        _ = try await walConn.query("INSERT INTO test_wal_switch (id) VALUES (1)").get()
+
+        // Close the connection
+        try await walConn.close().get()
+
+        // Now create a new connection with DELETE mode (switching from WAL)
+        let deleteSource = SQLiteConnectionSource(
+            configuration: .init(
+                storage: .file(path: dbPath),
+                enableForeignKeys: false,
+                journalMode: .delete
+            ),
+            threadPool: .singleton
+        )
+
+        let deleteConn = try await deleteSource.makeConnection(
+            logger: self.connection.logger,
+            on: MultiThreadedEventLoopGroup.singleton.any()
+        ).get()
+        defer { try! deleteConn.close().wait() }
+
+        // Verify the mode switched to DELETE (we now explicitly set journal mode)
+        let modeRes = try await deleteConn.query("PRAGMA journal_mode").get()
+        let currentMode = modeRes[0].column("journal_mode")?.string?.uppercased()
+
+        // The journal mode should now be DELETE
+        XCTAssertEqual(
+            currentMode,
+            "DELETE",
+            "Should successfully switch from WAL to DELETE mode"
+        )
+
+        // Verify data is still accessible
+        let rows = try await deleteConn.query("SELECT COUNT(*) as count FROM test_wal_switch").get()
+        XCTAssertEqual(rows[0].column("count"), .integer(1))
+    }
+
     func testJSONStringColumn() async throws {
         _ = try await self.connection.query("CREATE TABLE foo (bar TEXT)").get()
         _ = try await self.connection.query(#"INSERT INTO foo (bar) VALUES ('{"baz": "qux"}')"#).get()

@@ -48,10 +48,12 @@ public struct SQLiteConnectionSource: ConnectionPoolSource, Sendable {
             logger: logger,
             on: eventLoop
         ).flatMap { conn in
-            if self.configuration.enableForeignKeys {
-                return conn.query("PRAGMA foreign_keys = ON").map { _ in conn }
-            } else {
-                return eventLoop.makeSucceededFuture(conn)
+            conn.query("PRAGMA journal_mode = \(self.configuration.journalMode.rawValue)").flatMap { _ in
+                if self.configuration.enableForeignKeys {
+                    return conn.query("PRAGMA foreign_keys = ON").map { _ in conn }
+                } else {
+                    return eventLoop.makeSucceededFuture(conn)
+                }
             }
         }
     }
