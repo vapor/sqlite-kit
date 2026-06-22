@@ -105,10 +105,11 @@ final class SQLiteKitTests: XCTestCase {
         )
 
         let conn2 = try await source.makeConnection(logger: self.connection.logger, on: MultiThreadedEventLoopGroup.singleton.any()).get()
-        defer { try! conn2.close().wait() }
         
         let res2 = try await conn2.query("PRAGMA foreign_keys").get()
         XCTAssertEqual(res2[0].column("foreign_keys"), .integer(0))
+
+        try! await conn2.close().get()
     }
 
     func testJSONStringColumn() async throws {
@@ -123,6 +124,11 @@ final class SQLiteKitTests: XCTestCase {
         XCTAssertEqual(bar.baz, "qux")
     }
 
+    // NOTE: The following test doesn't work in a runtime environment
+    // due to reliance on temp files. The test is elided for now
+    // for WASI targets, but could be used in the future once
+    // a persistence solution is working for WASI platforms.
+    #if !os(WASI)
     func testMultipleInMemoryDatabases() async throws {
         let a = SQLiteConnectionSource(
             configuration: .init(storage: .memory, enableForeignKeys: true),
@@ -134,19 +140,21 @@ final class SQLiteKitTests: XCTestCase {
         )
 
         let a1 = try await a.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
-        defer { try! a1.close().wait() }
         let a2 = try await a.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
-        defer { try! a2.close().wait() }
         let b1 = try await b.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
-        defer { try! b1.close().wait() }
         let b2 = try await b.makeConnection(logger: .init(label: "test"), on: MultiThreadedEventLoopGroup.singleton.any()).get()
-        defer { try! b2.close().wait() }
 
         _ = try await a1.query("CREATE TABLE foo (bar INTEGER)").get()
         _ = try await a2.query("SELECT * FROM foo").get()
         _ = try await b1.query("CREATE TABLE foo (bar INTEGER)").get()
         _ = try await b2.query("SELECT * FROM foo").get()
+
+        try! await b2.close().get()
+        try! await b1.close().get()
+        try! await a2.close().get()
+        try! await a1.close().get()
     }
+    #endif  // !os(WASI)
 
     // https://github.com/vapor/sqlite-kit/issues/56
     func testDoubleConstraintError() async throws {
